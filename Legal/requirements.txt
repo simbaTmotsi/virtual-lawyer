@@ -1,0 +1,7 @@
+asgiref
+Django
+django-sass-processor
+django-widget-tweaks
+libsass
+sqlparse
+psycopg2

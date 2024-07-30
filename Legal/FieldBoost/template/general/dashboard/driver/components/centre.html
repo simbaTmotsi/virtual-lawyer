@@ -1,0 +1,125 @@
+{% load static %} {% load sass_tags %}
+
+<div class="col-xxl-4 col-xl-5 col-md-6 col-sm-7 notification box-col-6">
+  <div class="card height-equal"> 
+    <div class="card-header card-no-border">
+      <div class="header-top">
+        <h5 class="m-0">Activity</h5>
+      </div>
+    </div>
+    <div class="card-body pt-0">
+      <ul>
+        <li class="d-flex">
+          <div class="activity-dot-warning"></div>
+          <div class="w-100 ms-3">
+            <p class="d-flex justify-content-between mb-2"><span class="date-content light-background">1 June, 2024 </span><span>Today</span></p>
+            <h6>Jane Cooper<span class="dot-notification"></span></h6>
+            <p>20 Kgs Fertiliser </p>
+          </div>
+        </li> 
+        <li class="d-flex">
+          <div class="activity-dot-primary"></div>
+          <div class="w-100 ms-3">
+            <p class="d-flex justify-content-between mb-2"><span class="date-content light-background">1 June, 2024 </span><span>Today</span></p>
+            <h6>Brooklyn Simmons<span class="dot-notification"></span></h6>
+            <p class="f-light">40Kgs Sunflower Seed</p>
+          </div>
+        </li>
+        <li class="d-flex">
+          <div class="activity-dot-secondary"></div>
+          <div class="w-100 ms-3">
+            <p class="d-flex justify-content-between mb-2"><span class="date-content light-background">1 June, 2024 </span><span>Today</span></p>
+            <h6>Leslie Alexander<span class="dot-notification"></span></h6>
+            <p>20 Kgs Soya Bean Seed </p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="col-xxl-4 col-md-6 appointment-sec box-col-6">
+  <div class="appointment">
+    <div class="card">
+      <div class="card-header card-no-border">
+        <div class="header-top">
+          <h5 class="m-0">Recent Deliveries</h5>
+        </div>
+      </div>
+      <div class="card-body pt-0">
+        <div class="appointment-table table-responsive">
+          <table class="table table-bordernone">
+            <tbody>
+              <tr>
+                <td><img class="img-fluid img-40 rounded-circle" src="{% static 'assets/images/dashboard/user/1.jpg'%}" alt="user"></td>
+                <td class="img-content-box"><a class="d-block f-w-500" href="user-profile.html">Jane Cooper</a><span class="f-light">10 minutes ago</span></td>
+                <td class="text-end">
+                  <p class="m-0 font-success">DELIVERED</p>
+                </td>
+              </tr>
+              <tr>
+                <td><img class="img-fluid img-40 rounded-circle" src="{% static 'assets/images/dashboard/user/2.jpg'%}" alt="user"></td>
+                <td class="img-content-box"><a class="d-block f-w-500" href="user-profile.html">Brooklyn Simmons</a><span class="f-light">19 minutes ago</span></td>
+                <td class="text-end">
+                  <p class="m-0 font-success">DELIVERED</p>
+                </td>
+              </tr>
+              <tr>
+                <td><img class="img-fluid img-40 rounded-circle" src="{% static 'assets/images/dashboard/user/3.jpg'%}" alt="user"></td>
+                <td class="img-content-box"><a class="d-block f-w-500" href="user-profile.html">Leslie Alexander</a><span class="f-light">2 hours ago</span></td>
+                <td class="text-end">
+                  <p class="m-0 font-success">DELIVERED</p>
+                </td>
+              </tr>
+              <tr>
+                <td><img class="img-fluid img-40 rounded-circle" src="{% static 'assets/images/dashboard/user/4.jpg'%}" alt="user"></td>
+                <td class="img-content-box"><a class="d-block f-w-500" href="user-profile.html">Travis Wright</a><span class="f-light">8 hours ago</span></td>
+                <td class="text-end">
+                  <p class="m-0 font-success">DELIVERED</p>
+                </td>
+              </tr>
+              <tr>
+                <td><img class="img-fluid img-40 rounded-circle" src="{% static 'assets/images/dashboard/user/5.jpg'%}" alt="user"></td>
+                <td class="img-content-box"><a class="d-block f-w-500" href="user-profile.html">Mark Green</a><span class="f-light">1 day ago</span></td>
+                <td class="text-end">
+                  <p class="m-0 font-success">DELIVERED</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="col-xxl-4 col-xl-7 col-md-6 col-sm-5 box-col-6">
+  <div class="card height-equal"> 
+    <div class="card-header card-no-border"> 
+      <div class="header-top">
+        <h5>Recent Deliveries</h5>
+      </div>
+    </div>
+    <div class="card-body pt-0">
+      <div class="row recent-wrapper">
+        <div class="col-xl-6">
+          <div class="recent-chart"> 
+            <div id="recentchart"></div>
+          </div>
+        </div>
+        <div class="col-xl-6"> 
+          <ul class="order-content">
+            <li> <span class="recent-circle bg-primary"> </span>
+              <div> <span class="f-light f-w-500">Cancelled </span>
+                <h4 class="mt-1 mb-0">2,302<span class="f-light f-14 f-w-400 ms-1">(Last 6 Month) </span></h4>
+              </div>
+            </li>
+            <li> <span class="recent-circle bg-info"></span>
+              <div> <span class="f-light f-w-500">Delivered</span>
+                <h4 class="mt-1 mb-0">6,302<span class="f-light f-14 f-w-400 ms-1">(Last 6 Month) </span></h4>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
