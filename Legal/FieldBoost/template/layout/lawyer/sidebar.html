@@ -39,13 +39,13 @@
             </div>
           </li>
           <li class="sidebar-list">
-            <label class="badge badge-light-secondary">New</label><a class="sidebar-link sidebar-title" href="#">
+            <a class="sidebar-link sidebar-title" href="#">
               <svg class="stroke-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-project"></use>
               </svg>
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-project"></use>
-              </svg><span>Trip Management                </span></a>
+              </svg><span>Document Management                </span></a>
             <ul class="sidebar-submenu">
               <li><a href="/projects">Active Trips</a></li>
               <li><a href="/projectcreate">Upcoming Trips</a></li>
@@ -54,13 +54,13 @@
           </li>
           
           <li class="sidebar-list">
-            <label class="badge badge-light-secondary">New</label><a class="sidebar-link sidebar-title" href="#">
+            <a class="sidebar-link sidebar-title" href="#">
               <svg class="stroke-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-board"></use>
               </svg>
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-board"></use>
-              </svg><span>Route Planning               </span></a>
+              </svg><span>Case Management               </span></a>
             <ul class="sidebar-submenu">
               <li><a href="/projects">Maps and Navigation</a></li>
               <li><a href="/projectcreate">Alternative Routes</a></li>
@@ -74,7 +74,7 @@
               </svg>
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-ecommerce"></use>
-              </svg><span>Communication</span></a>
+              </svg><span>Client Management</span></a>
             <ul class="sidebar-submenu">
               <li><a href="/product_cards">Contact Dispatcher</a></li>
               <li><a href="/product_page">Messaging System</a></li>
@@ -86,7 +86,7 @@
               </svg>
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-email"></use>
-              </svg><span>Vehicle Management</span></a>
+              </svg><span>Analytics and Reporting</span></a>
             <ul class="sidebar-submenu">
               <li><a href="/email_application">Vehicle Status</a></li>
               <li><a href="/email_compose">Maintenance Schedule</a></li>
@@ -106,28 +106,17 @@
           </li>
           <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="#">
             <svg class="stroke-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-others"></use>
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-chat"></use>
             </svg>
             <svg class="fill-icon">
-              <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-others"></use>
-            </svg><span>Fuel Management</span></a>
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-chat"></use>
+            </svg><span>To-Do List</span></a>
           <ul class="sidebar-submenu">
-            <li><a href="user_profile">Fuel Tracking</a></li>
-            <li><a href="edit_profile">Fuel Prices</a></li>
+            <li><a href="/chat_app">Documents</a></li>
+            <li><a href="/chat_video">Compliance Checklist</a></li>
           </ul>
         </li>
-          <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="#">
-              <svg class="stroke-icon">
-                <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-user"></use>
-              </svg>
-              <svg class="fill-icon">
-                <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-user"></use>
-              </svg><span>Safety</span></a>
-            <ul class="sidebar-submenu">
-              <li><a href="user_profile">Emergency Contacts</a></li>
-              <li><a href="edit_profile">Incident Reporting</a></li>
-            </ul>
-          </li>
+          
           
           <li class="sidebar-main-title">
             <div>
@@ -140,7 +129,25 @@
               </svg>
               <svg class="fill-icon">
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-sample-page"></use>
-              </svg><span>Edit Profile</span></a></li>
+              </svg><span>Edit Profile</span></a>
+          </li>
+          
+          <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="/sample_page">
+                <svg class="stroke-icon">
+                  <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-faq"></use>
+                </svg>
+                <svg class="fill-icon">
+                  <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-faq"></use>
+                </svg><span>FAQ</span></a>
+          </li>
+          <li class="sidebar-list"><a class="sidebar-link sidebar-title link-nav" href="/sample_page">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-faq"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-faq"></use>
+            </svg><span>Submit Feedback</span></a>
+      </li>
         </ul>
       </div>
       <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
