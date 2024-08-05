@@ -94,7 +94,7 @@ DATABASES = {
 # db connection values
 username = 'postgres'
 password = 'root'
-database_name = 'farm_boost'
+database_name = 'easy_law'
 host = '127.0.0.1'
 port = '5432'
 
