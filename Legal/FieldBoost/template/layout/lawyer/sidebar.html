@@ -38,6 +38,7 @@
               <h6>Overview</h6>
             </div>
           </li>
+
           <li class="sidebar-list">
             <a class="sidebar-link sidebar-title" href="#">
               <svg class="stroke-icon">
@@ -47,15 +48,14 @@
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-project"></use>
               </svg><span>Document Management                </span></a>
             <ul class="sidebar-submenu">
-              <li><a href="/projects">Document Creation</a></li>
-              <li><a href="/projectcreate">Document Storage</a></li>
-              <li><a href="#">Document Sharing</a></li>
-              <li><a href="#">Collaboration</a></li>
-              <li><a href="#">Review and Approval</a></li>
-              <li><a href="#">Document Search</a></li>
-              <li><a href="#">Automation</a></li>
-              <li><a href="#">Import and Export</a></li>
-              <li><a href="#">Document Security</a></li>
+              <li><a href="{% url 'lawyer_document_create' %}">Document Creation</a></li>
+              <li><a href="{% url 'lawyer_document_storage' %}">Document Storage</a></li>
+              <li><a href="{% url 'lawyer_document_sharing' %}">Document Sharing</a></li>
+              <li><a href="{% url 'lawyer_document_table_collaboration' %}">Collaboration</a></li>
+              <li><a href="{% url 'lawyer_document_table_review' %}">Review and Approval</a></li>
+              <li><a href="{% url 'lawyer_document_table_search' %}">Document Search</a></li>
+              <li><a href="{% url 'lawyer_document_table_automation' %}">Automation</a></li>
+              <li><a href="{% url 'lawyer_document_table_import_export' %}">Import and Export</a></li>
             </ul>
           </li>
           
@@ -146,7 +146,19 @@
               <li><a href="/chat_app">Compliance Training and Resources</a></li>
               <li><a href="/chat_app">Compliance Reporting</a></li>
             </ul>
-          </li>          
+          </li>
+          <li class="sidebar-list"><a class="sidebar-link sidebar-title" href="#">
+            <svg class="stroke-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#stroke-chat"></use>
+            </svg>
+            <svg class="fill-icon">
+              <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-chat"></use>
+            </svg><span>To-Do List</span></a>
+          <ul class="sidebar-submenu">
+            <li><a href="/chat_app">Documents</a></li>To-Do
+          </ul>
+        </li>
+          
           
           <li class="sidebar-main-title">
             <div>

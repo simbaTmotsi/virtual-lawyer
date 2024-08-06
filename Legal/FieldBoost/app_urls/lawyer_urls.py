@@ -23,9 +23,15 @@ from django.conf.urls.static import static
 urlpatterns = [
     #-------------------------General(Dashboards,Widgets & Layout)---------------------------------------
     
-    path('', lawyer_views.index, name="lawyer_home"),
-    path('dashboard_02/', lawyer_views.dashboard_02, name="dashboard_02"),
-    path('online_course/', lawyer_views.online_course, name="online_course"),
-    path('crypto/', lawyer_views.crypto, name="crypto"),
-    path('social/', lawyer_views.social, name="social")
+    path('', lawyer_views.DashboardView.as_view(), name='lawyer_home'),
+    #--------------- Documents
+    path('CreateDocument/', lawyer_views.DocumentCreation.as_view(), name='lawyer_document_create'),
+    path('DocumentStorage/', lawyer_views.DocumentStorage.as_view(), name='lawyer_document_storage'),
+    path('DocumentSharing/', lawyer_views.DocumentTable.as_view(), name='lawyer_document_sharing'),
+    path('DocumentCollaboration/', lawyer_views.DocumentCollaboration.as_view(), name='lawyer_document_table_collaboration'),
+    path('DocumentReview/', lawyer_views.DocumentReview.as_view(), name='lawyer_document_table_review'),
+    path('DocumentSearch/', lawyer_views.DocumentSearch.as_view(), name='lawyer_document_table_search'),
+    path('DocumentAutomation/', lawyer_views.DocumentAutomation.as_view(), name='lawyer_document_table_automation'),
+    path('DocumentImportExport/', lawyer_views.DocumentImportExport.as_view(), name='lawyer_document_table_import_export'),
+    #---------------------------------------------------------------------------------------
 ]+static(settings.MEDIA_URL, document_root=settings.FIELDBOOST_DOCS_ROOT)
