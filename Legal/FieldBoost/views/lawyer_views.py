@@ -130,17 +130,12 @@ def to_do_database(request):
 
     return render(request,'applications/to-do/to-do.html',context)
     
-
-
 def markAllComplete(request):
     allTasks = Task.objects.all()
     for oneTask in allTasks:
         oneTask.complete = True
         oneTask.save()
     return HttpResponseRedirect("/to_do_database")
-
-
-
 
 def markAllIncomplete(request):
     allTasks = Task.objects.all()
