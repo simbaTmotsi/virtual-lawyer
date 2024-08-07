@@ -34,4 +34,4 @@ urlpatterns = [
     path('DocumentAutomation/', lawyer_views.DocumentAutomation.as_view(), name='lawyer_document_table_automation'),
     path('DocumentImportExport/', lawyer_views.DocumentImportExport.as_view(), name='lawyer_document_table_import_export'),
     #---------------------------------------------------------------------------------------
-]+static(settings.MEDIA_URL, document_root=settings.FIELDBOOST_DOCS_ROOT)
+]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

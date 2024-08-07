@@ -18,9 +18,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_DIR = os.path.join(CORE_DIR, "FieldBoost/template")  # ROOT dir for templates
 
-# Media files directories
-FIELDBOOST_DOCS_ROOT = os.path.join(BASE_DIR, f"{BASE_DIR}/")
-MEDIA_URL = ""
+# Media files (Uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Custom media files directories (ensure this is correctly set)
+EASYLAW_DOCS_ROOT = os.path.join(MEDIA_ROOT, 'easylaw_docs')  # Adjusted to be under media
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -161,8 +164,8 @@ STATICFILES_FINDERS = [
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 # STATIC_URL = 'static/'
-STATIC_URL = '/FarmProject/FieldBoost/static/'
-
+#STATIC_URL = '/Legal/FieldBoost/static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'FieldBoost/static'
 
 SASS_PROCESSOR_ROOT = BASE_DIR / 'static'
@@ -173,3 +176,4 @@ SASS_PROCESSOR_ROOT = BASE_DIR / 'static'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'FieldBoost.CustomUser'
+
