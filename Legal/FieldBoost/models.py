@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
-# User Models
+# Custom User Manager
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -17,6 +17,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+# Custom User Model
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
         FARMER = "farmer", "Farmer"
@@ -58,7 +59,8 @@ class Task(models.Model):
 # Document Management Models
 class Document(models.Model):
     title = models.CharField(max_length=200)
-    content = models.TextField()
+    content = models.TextField(blank=True, null=True)  # Allow documents to have either text content or file
+    file = models.FileField(upload_to='documents/', blank=True, null=True)  # File upload field
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -70,11 +72,27 @@ class Document(models.Model):
 class DocumentVersion(models.Model):
     document = models.ForeignKey(Document, related_name='versions', on_delete=models.CASCADE)
     version_number = models.IntegerField()
-    content = models.TextField()
+    content = models.TextField(blank=True, null=True)  # Allow version content to be text or file
+    file = models.FileField(upload_to='document_versions/', blank=True, null=True)  # File upload field
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.document.title} - Version {self.version_number}"
+
+class DocumentTag(models.Model):
+    document = models.ForeignKey(Document, related_name='tags', on_delete=models.CASCADE)
+    tag = models.ForeignKey('Tag', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.tag.name} - {self.document.title}"
+
+# Tag Model
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 # Case Management Models
 class Case(models.Model):
@@ -89,6 +107,13 @@ class Case(models.Model):
     def __str__(self):
         return self.title
 
+class CaseDocument(models.Model):
+    case = models.ForeignKey(Case, related_name='documents', on_delete=models.CASCADE)
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Document for {self.case.title}"
+
 class CaseNote(models.Model):
     case = models.ForeignKey(Case, related_name='notes', on_delete=models.CASCADE)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
@@ -97,6 +122,18 @@ class CaseNote(models.Model):
 
     def __str__(self):
         return f"Note by {self.author.email} on {self.case.title}"
+
+class CaseTask(models.Model):
+    case = models.ForeignKey(Case, related_name='tasks', on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    assigned_to = models.ForeignKey(CustomUser, related_name='case_tasks', on_delete=models.CASCADE)
+    due_date = models.DateField()
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Task: {self.title} - Due: {self.due_date}"
 
 # Client Management Models
 class Client(models.Model):
@@ -130,3 +167,31 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"Audit log for {self.document.title} by {self.performed_by.email}"
 
+# Notification Model
+class Notification(models.Model):
+    user = models.ForeignKey(CustomUser, related_name='notifications', on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Notification for {self.user.email} - {'Read' if self.is_read else 'Unread'}"
+
+# Billing and Payment Models
+class Invoice(models.Model):
+    client = models.ForeignKey(Client, related_name='invoices', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    issued_date = models.DateField()
+    due_date = models.DateField()
+    status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Paid', 'Paid'), ('Overdue', 'Overdue')])
+
+    def __str__(self):
+        return f"Invoice {self.id} for {self.client}"
+
+class Payment(models.Model):
+    invoice = models.ForeignKey(Invoice, related_name='payments', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+
+    def __str__(self):
+        return f"Payment {self.id} for Invoice {self.invoice.id}"
