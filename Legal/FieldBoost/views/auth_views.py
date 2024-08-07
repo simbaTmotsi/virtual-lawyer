@@ -1,13 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
-from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from .forms import CustomAuthenticationForm  # TaskForm commented out
-from FieldBoost.models import Task, CustomUser  # Ensure Task and CustomUser are imported
 
 # Authentication Views
 def login_home(request):
@@ -64,51 +61,3 @@ def index(request):
     elif request.user.role == 'lawyer':
         context = {"breadcrumb": {"parent": "Dashboard", "child": "Default"}, "jsFunction": 'startTime()'}
         return render(request, "general/dashboard/lawyer/index.html", context)
-
-# Task Management Views
-@login_required(login_url=reverse_lazy('login_home'))
-def to_do(request):
-    context = {"breadcrumb": {"parent": "Apps", "child": "To-Do"}}
-    return render(request, "applications/to-do/main-todo.html", context)
-
-@login_required(login_url=reverse_lazy('login_home'))
-def to_do_database(request):
-    tasks = Task.objects.all()
-
-    # TaskForm commented out since it's not a key issue at the moment
-    # form = TaskForm()
-    form = None  # Placeholder
-
-    if request.method == 'POST':
-        form = TaskForm(request.POST)
-        if form.is_valid():
-            form.save()
-        return redirect('/to_do_database')
-
-    completedTasks = all(task.complete for task in tasks)
-
-    context = {'tasks': tasks, 'form': form, 'completedTasks': completedTasks, "breadcrumb": {"parent": "Todo", "child": "Todo with database"}}
-    return render(request, 'applications/to-do/to-do.html', context)
-
-@login_required(login_url=reverse_lazy('login_home'))
-def markAllComplete(request):
-    Task.objects.all().update(complete=True)
-    return HttpResponseRedirect("/to_do_database")
-
-@login_required(login_url=reverse_lazy('login_home'))
-def markAllIncomplete(request):
-    Task.objects.all().update(complete=False)
-    return HttpResponseRedirect("/to_do_database")
-
-@login_required(login_url=reverse_lazy('login_home'))
-def deleteTask(request, pk):
-    task = get_object_or_404(Task, id=pk)
-    task.delete()
-    return HttpResponseRedirect("/to_do_database")
-
-@login_required(login_url=reverse_lazy('login_home'))
-def updateTask(request, pk):
-    task = get_object_or_404(Task, id=pk)
-    task.complete = not task.complete
-    task.save()
-    return HttpResponseRedirect("/to_do_database")

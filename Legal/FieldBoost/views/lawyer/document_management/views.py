@@ -18,19 +18,6 @@ from django.urls import reverse_lazy
 
 # Create your views here.
 # class based views
-#-------------------------General(Dashboards,Widgets & Layout)---------------------------------------
-
-#---------------Dashboard  
-class DashboardView(LoginRequiredMixin, TemplateView):
-    template_name = "general/dashboard/lawyer/index.html"
-    login_url = reverse_lazy('login_home')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
-        context['jsFunction'] = 'startTime()'
-        return context
-#---------------------------------------------------------------------------------------
 #--------------- Documents
 
 class DocumentCreation(LoginRequiredMixin, TemplateView):
