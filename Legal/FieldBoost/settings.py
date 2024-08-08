@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'sass_processor',
     'FieldBoost',
     'widget_tweaks',
-    'crispy_forms'
+    'crispy_forms',
+    'crispy_bootstrap5'
 ]
 
 MIDDLEWARE = [
@@ -178,4 +179,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'FieldBoost.CustomUser'
 
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"

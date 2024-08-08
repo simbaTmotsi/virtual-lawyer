@@ -1,0 +1,73 @@
+{% load static %}
+<div class="col-sm-12">
+  <div class="card">
+    <div class="card-header pb-0 card-no-border">
+      <h3>Document List</h3>
+      <span>Below is a list of documents managed within the system.</span>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="display" id="basic-6">
+          <thead>
+            <tr>
+              <th rowspan="2">Title</th>
+              <th colspan="2">Content</th>
+              <th colspan="2">Creator</th>
+              <th colspan="2">Created At</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for document in documents %}
+            <tr>
+              <td>{{ document.title }}</td>
+              <td colspan="2">{{ document.content|truncatewords:20 }}</td>
+              <td colspan="2">{{ document.created_by }}</td>
+              <td colspan="2">{{ document.created_at }}</td>
+              <td class="action">
+                <ul class="action">
+                  <li class="view">
+                    <a class="btn btn-primary btn-sm" href="{% url 'document_detail' document.id %}">
+                      <i class="icon-eye"></i>
+                    </a>
+                  </li>
+                  <li class="edit">
+                    <a class="btn btn-warning btn-sm" href="{% url 'document_update' document.id %}">
+                      <i class="icon-pencil-alt"></i>
+                    </a>
+                  </li>
+                  <li class="delete">
+                    <a class="btn btn-danger btn-sm" href="{% url 'document_delete' document.id %}">
+                      <i style="color: white" class="icon-trash"></i>
+                    </a>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Title</th>
+              <th>Content</th>
+              <th>Creator</th>
+              <th>Created At</th>
+              <th>Actions</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include DataTables library -->
+<link rel="stylesheet" type="text/css" href="{% static 'datatables/css/jquery.dataTables.css' %}">
+<script type="text/javascript" charset="utf8" src="{% static 'datatables/js/jquery.dataTables.js' %}"></script>
+
+<!-- Initialize DataTables -->
+<script>
+  $(document).ready(function() {
+    $('#basic-6').DataTable();
+  });
+</script>
