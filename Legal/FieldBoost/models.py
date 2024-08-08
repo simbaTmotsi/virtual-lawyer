@@ -60,7 +60,7 @@ class Task(models.Model):
 class Document(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True, null=True)  # Allow documents to have either text content or file
-    file = models.FileField(upload_to='documents/', blank=True, null=True)  # File upload field
+    file = models.FileField(upload_to='documents/', blank=False, null=False)  # File upload field
     created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

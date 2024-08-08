@@ -74,9 +74,13 @@ class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
 class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = Document
     template_name = "modules/lawyer/document_management/document_confirm_delete.html"
-    success_message = "Document deleted successfully."
     success_url = reverse_lazy('document_list')
-    login_url = reverse_lazy('login_home')
+    success_message = "Document was deleted successfully."
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(self.request, self.success_message)
+        return response
 
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
