@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth import get_user_model
 from django.db import models
 
 # Custom User Manager
@@ -6,7 +7,19 @@ class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
+        
         email = self.normalize_email(email)
+        display_name = email.split('@')[0]  # Extract the part before '@'
+
+        # Ensure display_name is unique
+        counter = 1
+        original_display_name = display_name
+        while CustomUser.objects.filter(display_name=display_name).exists():
+            display_name = f"{original_display_name}{counter}"
+            counter += 1
+        
+        extra_fields.setdefault('display_name', display_name)  # Set the display_name
+        
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -26,12 +39,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         LAWYER = "lawyer", "Lawyer"
 
     email = models.EmailField(unique=True)
+    display_name = models.CharField(max_length=255, unique=False, blank=True)
     role = models.CharField(max_length=15, choices=UserRole.choices, default=UserRole.FARMER)
     first_name = models.CharField(max_length=35, blank=True)
     surname = models.CharField(max_length=15, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    storage_quota = models.BigIntegerField(default=5 * 1024 * 1024 * 1024)  # Default to 5 GB (in bytes)
 
     objects = CustomUserManager()
 
@@ -46,6 +61,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def has_module_perms(self, app_label):
         return self.is_superuser
+    
+    def calculate_storage_used(self):
+        documents = Document.objects.filter(created_by=self)
+        total_used = sum(doc.file.size for doc in documents if doc.file)
+        return total_used
 
 # Task Model
 class Task(models.Model):
@@ -85,6 +105,18 @@ class DocumentTag(models.Model):
 
     def __str__(self):
         return f"{self.tag.name} - {self.document.title}"
+
+class DocumentShare(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sent_documents')
+    recipient = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='received_documents', null=True, blank=True)
+    external_email = models.EmailField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('reviewed', 'Reviewed'), ('approved', 'Approved'), ('edited', 'Edited')], default='pending')
+    message = models.TextField(blank=True)
+    shared_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.document.title} shared by {self.sender.email}"
 
 # Tag Model
 class Tag(models.Model):
@@ -195,3 +227,19 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.id} for Invoice {self.invoice.id}"
+
+class Folder(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def document_count(self):
+        return self.documents.count()  # Assuming a reverse relationship from Document to Folder
+
+    @property
+    def size(self):
+        return sum(doc.file.size for doc in self.documents.all()) / (1024 * 1024)  # size in MB

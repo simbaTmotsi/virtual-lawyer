@@ -19,26 +19,19 @@
             <li>
               <div class="btn btn-light"><i data-feather="star"></i>Starred </div>
             </li>
-            <li>
-              <div class="btn btn-light"><i data-feather="alert-circle"></i>Recovery </div>
-            </li>
-            <li>
-              <div class="btn btn-light"><i data-feather="trash-2"></i>Deleted </div>
-            </li>
           </ul>
           <hr>
           <ul>
             <li>
-              <div class="btn btn-outline-primary"><i data-feather="database"> </i>Storage </div>
+              <div class="btn btn-outline-primary"><i data-feather="database"> </i>Storage</div>
               <div class="m-t-15">
                 <div class="progress sm-progress-bar mb-1">
-                  <div class="progress-bar bg-primary" role="progressbar" style="width: 25%" aria-valuenow="25"
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: {{ used_percentage }}%" aria-valuenow="{{ used_percentage }}"
                     aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <p>25 GB of 100 GB used</p>
+                <p>{{ total_used_gb|floatformat:2 }} GB of {{ storage_quota_gb|floatformat:2 }} GB used</p>
               </div>
-            </li>
-          </ul>
+            </li>            
           <hr>
           <ul>
             <li>
@@ -48,7 +41,7 @@
               <div class="pricing-plan">
                 <h6>Trial Version </h6>
                 <h5>FREE</h5>
-                <p> 100 GB Space</p>
+                <p> 5 GB Space</p>
                 <div class="btn btn-outline-primary btn-xs">Selected</div><img class="bg-img"
                   src="{% static 'assets/images/dashboard/folder.png'%}" alt="">
               </div>
@@ -57,7 +50,7 @@
               <div class="pricing-plan">
                 <h6>Premium</h6>
                 <h5>$5/month</h5>
-                <p> 200 GB Space</p>
+                <p> 10 GB Space</p>
                 <div class="btn btn-outline-primary btn-xs">Contact Us</div><img class="bg-img"
                   src="{% static 'assets/images/dashboard/folder1.png'%}" alt="">
               </div>
@@ -72,11 +65,6 @@
       <div class="card">
         <div class="card-header">
           <div class="media">
-            <form class="form-inline" action="#" method="get">
-              <div class="form-group mb-0"> <i class="fa fa-search"></i>
-                <input class="form-control-plaintext" type="text" placeholder="Search...">
-              </div>
-            </form>
             <div class="media-body text-end">
               <form class="d-inline-flex" action="#" method="POST" enctype="multipart/form-data" name="myForm">
                 <div class="btn btn-primary" onclick="getFile()"> <i data-feather="plus-square"></i>Add New</div>

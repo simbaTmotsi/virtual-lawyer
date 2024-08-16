@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sass_processor',
+    'django.contrib.humanize',
     'FieldBoost',
     'widget_tweaks',
     'crispy_forms',

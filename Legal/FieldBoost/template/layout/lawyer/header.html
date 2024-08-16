@@ -55,7 +55,7 @@
         </li>
         <li class="profile-nav onhover-dropdown pe-0 py-0">
           <div class="media profile-media"><img class="b-r-10" src="{% static 'assets/images/dashboard/profile.png'%}" alt="">
-            <div class="media-body"><span>{{ request.user.first_name.upper }} {{ request.user.surname.upper }}</span>
+            <div class="media-body"><span>{{ request.user.display_name.upper }}</span>
               <p class="mb-0 font-roboto">{{ request.user.role.upper }} <i class="middle fa fa-angle-down"></i></p>
             </div>
           </div>

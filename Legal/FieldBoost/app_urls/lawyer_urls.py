@@ -38,12 +38,14 @@ urlpatterns = [
 
     path('CreateDocument/', doc_views.DocumentCreation.as_view(), name='lawyer_document_create'),
     path('DocumentList/', doc_views.DocumentListView.as_view(), name='document_list'),
+    path('DocumentShareListView/', doc_views.DocumentShareListView.as_view(), name='document_share_list'),
     path('Document/<int:pk>/', doc_views.DocumentDetailView.as_view(), name='document_detail'),
     path('Document/<int:pk>/update/', doc_views.DocumentUpdateView.as_view(), name='document_update'),
     path('Document/<int:pk>/delete/', doc_views.DocumentDeleteView.as_view(), name='document_delete'),
     
     path('DocumentStorage/', doc_views.DocumentStorage.as_view(), name='lawyer_document_storage'),
     path('DocumentSharing/', doc_views.DocumentTable.as_view(), name='lawyer_document_sharing'),
+    path('document/<int:document_id>/share/', doc_views.DocumentShareView.as_view(), name='document_share'),
     path('DocumentCollaboration/', doc_views.DocumentCollaboration.as_view(), name='lawyer_document_table_collaboration'),
     path('DocumentReview/', doc_views.DocumentReview.as_view(), name='lawyer_document_table_review'),
     path('DocumentSearch/', doc_views.DocumentSearch.as_view(), name='lawyer_document_table_search'),

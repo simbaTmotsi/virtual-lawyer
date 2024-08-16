@@ -41,8 +41,18 @@
               <td class="action">
                 <ul class="action">
                   <li class="view">
-                    <a class="btn btn-primary btn-sm" href="{% url 'document_share' document.id %}">
-                      <i class="icon-share"></i>
+                    <a class="btn btn-primary btn-sm" href="{% url 'document_detail' document.id %}">
+                      <i class="icon-eye"></i>
+                    </a>
+                  </li>&nbsp;
+                  <li class="edit">
+                    <a class="btn btn-warning btn-sm" href="{% url 'document_update' document.id %}">
+                      <i class="icon-pencil-alt"></i>
+                    </a>
+                  </li>
+                  <li class="delete">
+                    <a class="btn btn-danger btn-sm" href="{% url 'document_delete' document.id %}">
+                      <i style="color: white" class="icon-trash"></i>
                     </a>
                   </li>
                 </ul>
