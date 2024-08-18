@@ -12,6 +12,8 @@ from django.views.generic import TemplateView
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from django.core.files import File
 
 from django.urls import reverse_lazy
 
@@ -136,6 +138,11 @@ class DocumentShareView(LoginRequiredMixin, CreateView):
     template_name = "modules/lawyer/document_management/document_sharing/document_share.html"
     login_url = reverse_lazy('login_home')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['document'] = get_object_or_404(Document, pk=self.kwargs['document_id'])
+        return context
+
     def form_valid(self, form):
         document = get_object_or_404(Document, pk=self.kwargs['document_id'])
         form.instance.document = document
@@ -150,11 +157,11 @@ class DocumentShareView(LoginRequiredMixin, CreateView):
         # Sending the document externally
         if form.instance.external_email:
             try:
-                sender_email=self.request.user.email 
+                sender_email = "DailyMarketInsights@canslyafrica.com"
                 sender_password = 'f@k3p@55w0rd1'
                 receiver_emails = [form.instance.external_email]
-                subject=f"Document Share: {document.title}"
-                message=f"A document has been shared with you.\n\n{form.instance.message}",
+                subject = f"Document Share: {document.title}"
+                message = f"A document has been shared with you.\n\n{form.instance.message}"
 
                 # Create a secure SSL/TLS connection with the SMTP server
                 server = smtplib.SMTP_SSL('premium53.web-hosting.com', 465)
@@ -166,17 +173,20 @@ class DocumentShareView(LoginRequiredMixin, CreateView):
                 for receiver_email in receiver_emails:
                     msg = MIMEMultipart()
                     msg['From'] = sender_email
-                    msg['To'] = ", ".join(receiver_emails)
+                    msg['To'] = receiver_email
                     msg['Subject'] = subject
 
-                    # Construct the message body
-                    message_body = f"<p>{message}</p>"
-                     # Attach the message body
-                    msg.attach(MIMEText(message_body, 'html'))
-                    
-                    msg.replace_header('To', receiver_email)
+                    # Attach the message body
+                    msg.attach(MIMEText(message, 'plain'))
+
+                    # Attach the document file
+                    with document.file.open('rb') as file:
+                        attach_file = MIMEApplication(file.read(), Name=document.file.name)
+                        attach_file['Content-Disposition'] = f'attachment; filename="{document.file.name}"'
+                        msg.attach(attach_file)
+
+                    # Send the email
                     server.sendmail(sender_email, receiver_email, msg.as_string())
-                    #print(f"Email sent successfully to {receiver_email}!")
 
             except Exception as e:
                 print("An error occurred while sending the email:", str(e))
@@ -186,7 +196,7 @@ class DocumentShareView(LoginRequiredMixin, CreateView):
                 server.quit()
             messages.success(self.request, f"Document {document.title} sent successfully.")
         return redirect('document_list')  # Redirect to the document list or another appropriate view
-    
+
 class DocumentTable(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
     login_url = reverse_lazy('login_home')

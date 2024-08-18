@@ -40,6 +40,7 @@ urlpatterns = [
     path('DocumentList/', doc_views.DocumentListView.as_view(), name='document_list'),
     path('DocumentShareListView/', doc_views.DocumentShareListView.as_view(), name='document_share_list'),
     path('Document/<int:pk>/', doc_views.DocumentDetailView.as_view(), name='document_detail'),
+    path('document/<int:document_id>/share/', doc_views.DocumentShareView.as_view(), name='document_share'),
     path('Document/<int:pk>/update/', doc_views.DocumentUpdateView.as_view(), name='document_update'),
     path('Document/<int:pk>/delete/', doc_views.DocumentDeleteView.as_view(), name='document_delete'),
     
