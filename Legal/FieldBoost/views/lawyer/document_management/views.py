@@ -20,8 +20,12 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 
-from FieldBoost.models import Document, Folder, DocumentShare  # Correct the import path
+from FieldBoost.models import Document, Folder, DocumentShare, DocumentPermission  # Correct the import path
 from FieldBoost.forms import DocumentShareForm
+
+from django.shortcuts import get_object_or_404
+from django.views.generic.edit import FormView
+
 
 class DocumentForm(forms.ModelForm):
     class Meta:
@@ -57,8 +61,9 @@ class DocumentListView(LoginRequiredMixin, ListView):
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     model = Document
     template_name = "modules/lawyer/document_management/document_detail.html"
-    context_object_name = 'document'
     login_url = reverse_lazy('login_home')
+    context_object_name = 'document'
+
 
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document

@@ -26,3 +26,8 @@ class DocumentShareForm(forms.ModelForm):
             raise forms.ValidationError("You must provide either a recipient or an external email address.")
 
         return cleaned_data
+
+class DocumentPermissionForm(forms.ModelForm):
+    class Meta:
+        model = DocumentPermission
+        fields = ['user', 'can_view', 'can_edit']

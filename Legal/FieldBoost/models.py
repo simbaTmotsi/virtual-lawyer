@@ -118,6 +118,18 @@ class DocumentShare(models.Model):
     def __str__(self):
         return f"{self.document.title} shared by {self.sender.email}"
 
+class DocumentPermission(models.Model):
+    document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    can_view = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('document', 'user')
+
+    def __str__(self):
+        return f"{self.user} - {self.document}"
+    
 # Tag Model
 class Tag(models.Model):
     name = models.CharField(max_length=50)
