@@ -206,14 +206,11 @@ class DocumentTable(LoginRequiredMixin, TemplateView):
         #context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
         return context
     
-class DocumentCollaboration(LoginRequiredMixin, TemplateView):
-    template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
+class DocumentCollaboration(LoginRequiredMixin, ListView):
+    model = Document
+    template_name = "modules/lawyer/document_management/document_collaboration/table/data-table/datatable-basic/datatable-basic-init.html"
+    context_object_name = 'documents'
     login_url = reverse_lazy('login_home')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        #context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
-        return context
 
 class DocumentReview(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"

@@ -1,0 +1,78 @@
+{% load static %}
+<div class="col-sm-12">
+  <!-- Display messages -->
+  {% if messages %}
+  <div class="container mt-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-header pb-0 card-no-border">
+      <h3>Document List</h3>
+      <span>Below is a list of documents managed within the system.</span>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="display" id="basic-6">
+          <thead>
+            <tr>
+              <th rowspan="2"></th>
+              <th rowspan="2">Title</th>
+              <th colspan="2">Content</th>
+              <th colspan="2">Creator</th>
+              <th colspan="2">Created At</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for document in documents %}
+            <tr>
+              <td>{{ document.id }}</td>
+              <td>{{ document.title }}</td>
+              <td colspan="2">{{ document.content|truncatewords:20 }}</td>
+              <td colspan="2">{{ document.created_by }}</td>
+              <td colspan="2">{{ document.created_at }}</td>
+              <td class="action">
+                <ul class="action">
+                  <li class="view">
+                    <a class="btn btn-primary btn-sm" href="{% url 'document_share' document.id %}">
+                      <i class="icofont icofont-ui-social-link"></i>
+                    </a>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th rowspan="2"></th>
+              <th rowspan="2">Title</th>
+              <th colspan="2">Content</th>
+              <th colspan="2">Creator</th>
+              <th colspan="2">Created At</th>
+              <th rowspan="2">Actions</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include DataTables library -->
+<link rel="stylesheet" type="text/css" href="{% static 'datatables/css/jquery.dataTables.css' %}">
+<script type="text/javascript" charset="utf8" src="{% static 'datatables/js/jquery.dataTables.js' %}"></script>
+
+<!-- Initialize DataTables -->
+<script>
+  $(document).ready(function() {
+    $('#basic-6').DataTable();
+  });
+</script>
