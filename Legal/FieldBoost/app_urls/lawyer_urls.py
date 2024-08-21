@@ -49,8 +49,6 @@ urlpatterns = [
     path('document/<int:document_id>/share/', doc_views.DocumentShareView.as_view(), name='document_share'),
     
     path('DocumentReview/', doc_views.DocumentReview.as_view(), name='lawyer_document_table_review'),
-    path('DocumentSearch/', doc_views.DocumentSearch.as_view(), name='lawyer_document_table_search'),
-    path('DocumentAutomation/', doc_views.DocumentAutomation.as_view(), name='lawyer_document_table_automation'),
-    path('DocumentImportExport/', doc_views.DocumentImportExport.as_view(), name='lawyer_document_table_import_export'),
+    path('DocumentSearch/', doc_views.DocumentSearch.as_view(), name='lawyer_document_table_search')
     #---------------------------------------------------------------------------------------
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)
