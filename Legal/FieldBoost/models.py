@@ -144,7 +144,7 @@ class Case(models.Model):
     description = models.TextField()
     assigned_to = models.ForeignKey(CustomUser, related_name='cases', on_delete=models.CASCADE)
     client = models.ForeignKey('Client', related_name='cases', on_delete=models.CASCADE)
-    status = models.CharField(max_length=50)
+    status = models.CharField(max_length=50, choices=[('open', 'Open'), ('closed', 'Closed')])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -240,6 +240,7 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.id} for Invoice {self.invoice.id}"
 
+# Folder Model for Document Management
 class Folder(models.Model):
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)

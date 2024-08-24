@@ -66,8 +66,10 @@
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-board"></use>
               </svg><span>Case Management               </span></a>
             <ul class="sidebar-submenu">
-              <li><a href="/projects">Case Overview</a></li>
-              <li><a href="/projectcreate">Case Details</a></li>
+              <li><a href="{% url 'case_overview' %}">Case Overview</a></li>
+              <li><a href="{% url 'case_create' %}">New Case</a></li>
+              <li><a href="{% url 'case_list' %}">Case List</a></li>
+              <li><a href="#">Case Details</a></li>
               <li><a href="#">Task Management</a></li>
               <li><a href="/projects">Appointments and Deadlines</a></li>
               <li><a href="/projectcreate">Client Communication</a></li>
@@ -92,6 +94,7 @@
               </svg><span>Client Management</span></a>
             <ul class="sidebar-submenu">
               <li><a href="/product_cards">Client Overview</a></li>
+              <li><a href="/product_cards">Client Onboarding</a></li>
               <li><a href="/product_page">Client Profiles</a></li>
               <li><a href="/product_cards">Client Communication</a></li>
               <li><a href="/product_page">Appointments and Meetings</a></li>
@@ -99,7 +102,6 @@
               <li><a href="/product_page">Client Tasks and To-Dos</a></li>
               <li><a href="/product_cards">Client Feedback and Satisfaction</a></li>
               <li><a href="/product_page">Client Analytics</a></li>
-              <li><a href="/product_cards">Client Onboarding</a></li>
               <li><a href="/product_page">Client Segmentation</a></li>
               <li><a href="/product_page">Client Portal</a></li>
             </ul>
