@@ -76,6 +76,19 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
+# Document Management Models
+class Document(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField(blank=True, null=True)  # Allow documents to have either text content or file
+    file = models.FileField(upload_to='documents/', blank=False, null=False)  # File upload field
+    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_template = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.title
+
 class DocumentVersion(models.Model):
     document = models.ForeignKey(Document, related_name='versions', on_delete=models.CASCADE)
     version_number = models.IntegerField()
@@ -115,7 +128,7 @@ class DocumentPermission(models.Model):
         unique_together = ('document', 'user')
 
     def __str__(self):
-        return f"{self.user.email} - {self.document.title} - View: {self.can_view}, Edit: {self.can_edit}"    
+        return f"{self.user} - {self.document}"
     
 # Tag Model
 class Tag(models.Model):
@@ -134,20 +147,6 @@ class Case(models.Model):
     status = models.CharField(max_length=50, choices=[('open', 'Open'), ('closed', 'Closed')])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.title
-
-# Document Management Models
-class Document(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField(blank=True, null=True)  # Allow documents to have either text content or file
-    file = models.FileField(upload_to='documents/', blank=False, null=False)  # File upload field
-    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_template = models.BooleanField(default=False)
-    case = models.ForeignKey(Case, related_name='documents', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.title

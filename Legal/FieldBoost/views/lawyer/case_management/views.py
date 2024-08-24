@@ -2,7 +2,7 @@ from django.views.generic import TemplateView, CreateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import DetailView
-from FieldBoost.models import Case
+from FieldBoost.models import Case, Document, DocumentPermission, CustomUser
 from django.urls import reverse_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
@@ -38,3 +38,34 @@ class CaseDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         # Add any additional context data if needed
         return context
+    
+class CaseCollaborationView(LoginRequiredMixin, TemplateView):
+    template_name = 'modules/lawyer/case_management/case_collaboration.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        case = get_object_or_404(Case, pk=self.kwargs['pk'])
+        documents = case.documents.all()
+        users = CustomUser.objects.all()
+        
+        context['case'] = case
+        context['documents'] = documents
+        context['users'] = users
+        return context
+
+    def post(self, request, *args, **kwargs):
+        case = get_object_or_404(Case, pk=self.kwargs['pk'])
+        documents = case.documents.all()
+        
+        for document in documents:
+            for user in CustomUser.objects.all():
+                view_permission = request.POST.get(f'view_{document.id}_{user.id}')
+                edit_permission = request.POST.get(f'edit_{document.id}_{user.id}')
+                
+                permission, created = DocumentPermission.objects.get_or_create(document=document, user=user)
+                permission.can_view = bool(view_permission)
+                permission.can_edit = bool(edit_permission)
+                permission.save()
+
+        messages.success(request, "Permissions updated successfully.")
+        return redirect('case_collaboration', pk=case.id)
