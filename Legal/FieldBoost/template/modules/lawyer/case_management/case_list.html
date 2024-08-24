@@ -3,10 +3,24 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Cases</h2>
-    <ul>
-        {% for case in cases %}
-            <li>{{ case.title }} - {{ case.status }}</li>
-        {% endfor %}
-    </ul>
+    <div class="table-responsive">
+        <table class="display" id="basic-1">
+            <ul>
+                {% for case in cases %}
+                    <tr>
+                        <td>
+                            <li>{{ case.title }} - {{ case.status }}</li>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </ul>
+        </table>
+    </div>
 </div>
 {% endblock %}
+
+<!-- Plugins JS start-->
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js'%}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js'%}"></script>
+<script src="{% static 'assets/js/tooltip-init.js'%}"></script>
+<!-- Plugins JS Ends-->

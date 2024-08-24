@@ -1,6 +1,7 @@
 from django.views.generic import TemplateView, CreateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages  
 from django.views.generic import DetailView
 from FieldBoost.models import Case, Document, DocumentPermission, CustomUser
 from django.urls import reverse_lazy
@@ -69,3 +70,26 @@ class CaseCollaborationView(LoginRequiredMixin, TemplateView):
 
         messages.success(request, "Permissions updated successfully.")
         return redirect('case_collaboration', pk=case.id)
+
+def archive_case_view(request, case_id):
+    case = get_object_or_404(Case, id=case_id)
+    case.is_archived = True
+    case.save()
+    messages.success(request, f"Case '{case.title}' has been archived.")
+    return redirect('case_list')  # Redirect to the list of active cases
+
+def restore_case_view(request, case_id):
+    case = get_object_or_404(Case, id=case_id)
+    case.is_archived = False
+    case.save()
+    messages.success(request, f"Case '{case.title}' has been restored.")
+    return redirect('archived_cases')  # Redirect to the list of archived cases
+
+class ArchivedCaseListView(LoginRequiredMixin, ListView):
+    model = Case
+    template_name = "modules/lawyer/case_management/archived_cases_list.html"
+    context_object_name = 'archived_cases'
+    login_url = reverse_lazy('login_home')
+
+    def get_queryset(self):
+        return Case.objects.filter(is_archived=True)

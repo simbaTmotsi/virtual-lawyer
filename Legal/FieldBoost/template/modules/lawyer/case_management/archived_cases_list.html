@@ -1,0 +1,50 @@
+{% extends "lawyer_base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Archived Cases</h2>
+                </div>
+                <div class="card-body">
+                    {% if archived_cases %}
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Assigned To</th>
+                                    <th>Client</th>
+                                    <th>Status</th>
+                                    <th>Archived At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in archived_cases %}
+                                    <tr>
+                                        <td>{{ case.title }}</td>
+                                        <td>{{ case.assigned_to.email }}</td>
+                                        <td>{{ case.client }}</td>
+                                        <td>{{ case.get_status_display }}</td>
+                                        <td>{{ case.updated_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <a href="{% url 'restore_case' case.id %}" class="btn btn-primary">Restore</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No archived cases found.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{% url 'case_list' %}" class="btn btn-secondary">Back to Active Cases</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

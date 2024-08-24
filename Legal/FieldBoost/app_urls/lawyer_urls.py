@@ -55,6 +55,9 @@ urlpatterns = [
     path('cases_overview/', case_views.CaseOverviewView.as_view(), name='case_overview'),
     path('cases_details/', case_views.CaseOverviewView.as_view(), name='case_details'),
     path('case/<int:pk>/', case_views.CaseDetailView.as_view(), name='case_detail'),
+    path('case/<int:case_id>/archive/', case_views.archive_case_view, name='archive_case'),
+    path('archived-cases/', case_views.ArchivedCaseListView.as_view(), name='archived_cases'),
+    path('case/<int:case_id>/restore/', case_views.restore_case_view, name='restore_case'),
     #---------------------------------------------------------------------------------------
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

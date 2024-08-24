@@ -140,16 +140,25 @@ class Tag(models.Model):
 
 # Case Management Models
 class Case(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('closed', 'Closed'),
+        ('on_hold', 'On Hold'),
+    ]
+
     title = models.CharField(max_length=200)
     description = models.TextField()
     assigned_to = models.ForeignKey(CustomUser, related_name='cases', on_delete=models.CASCADE)
     client = models.ForeignKey('Client', related_name='cases', on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, choices=[('open', 'Open'), ('closed', 'Closed')])
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='open')
+    is_archived = models.BooleanField(default=False)  # New field to track archiving
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+
 
 class CaseDocument(models.Model):
     case = models.ForeignKey(Case, related_name='documents', on_delete=models.CASCADE)
