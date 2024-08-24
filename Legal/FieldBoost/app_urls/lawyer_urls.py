@@ -53,6 +53,8 @@ urlpatterns = [
     path('cases_list/', case_views.CaseListView.as_view(), name='case_list'),
     path('cases_new/', case_views.CaseCreateView.as_view(), name='case_create'),
     path('cases_overview/', case_views.CaseOverviewView.as_view(), name='case_overview'),
+    path('cases_details/', case_views.CaseOverviewView.as_view(), name='case_details'),
+    path('case/<int:pk>/', case_views.CaseDetailView.as_view(), name='case_detail'),
     #---------------------------------------------------------------------------------------
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)
