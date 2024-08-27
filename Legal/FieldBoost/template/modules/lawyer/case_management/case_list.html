@@ -1,26 +1,50 @@
 {% extends "lawyer_base.html" %}
+{% load static %}
 
 {% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        
+
 <div class="container mt-5">
-    <h2>Cases</h2>
-    <div class="table-responsive">
-        <table class="display" id="basic-1">
-            <ul>
+    <div class="card">
+    <div class="card-header"><br>
+        <h2>Cases</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+          {% if cases %}
+          <table class="display" id="basic-1">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
                 {% for case in cases %}
-                    <tr>
-                        <td>
-                            <li>{{ case.title }} - {{ case.status }}</li>
-                        </td>
-                    </tr>
+                <tr>
+                    <td>{{ case.title }}</td>
+                    <td>{{ case.status }}</td>
+                </tr>
                 {% endfor %}
-            </ul>
-        </table>
+            </tbody>
+          </table>
+          {% else %}
+            <p>No cases found.</p>
+          {% endif %}
+        </div>
+    </div>
     </div>
 </div>
-{% endblock %}
+
+</div>
+</div>
+
+</div>{% endblock %}
 
 <!-- Plugins JS start-->
-<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js'%}"></script>
-<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js'%}"></script>
-<script src="{% static 'assets/js/tooltip-init.js'%}"></script>
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js' %}"></script>
+<script src="{% static 'assets/js/tooltip-init.js' %}"></script>
 <!-- Plugins JS Ends-->
