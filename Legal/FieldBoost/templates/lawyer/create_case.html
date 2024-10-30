@@ -1,0 +1,6 @@
+<h2>Create a New Case</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit">Submit</button>
+</form>

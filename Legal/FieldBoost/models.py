@@ -33,192 +33,57 @@ class CustomUserManager(BaseUserManager):
 # Custom User Model
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
-        FARMER = "farmer", "Farmer"
-        SUPPLIER = "supplier", "Supplier"
-        DRIVER = "driver", "Driver"
         LAWYER = "lawyer", "Lawyer"
+        PARALEGAL = "paralegal", "Paralegal"
+        CLIENT = "client", "Client"
+        ADMIN = "admin", "Admin"
 
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=255, unique=False, blank=True)
-    role = models.CharField(max_length=15, choices=UserRole.choices, default=UserRole.FARMER)
+    role = models.CharField(max_length=15, choices=UserRole.choices, default=UserRole.CLIENT)
     first_name = models.CharField(max_length=35, blank=True)
     surname = models.CharField(max_length=15, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    storage_quota = models.BigIntegerField(default=5 * 1024 * 1024 * 1024)  # Default to 5 GB (in bytes)
-
-    objects = CustomUserManager()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
+    objects = CustomUserManager()
+
     def __str__(self):
         return self.email
 
-    def has_perm(self, perm, obj=None):
-        return self.is_superuser
-
-    def has_module_perms(self, app_label):
-        return self.is_superuser
-    
-    def calculate_storage_used(self):
-        documents = Document.objects.filter(created_by=self)
-        total_used = sum(doc.file.size for doc in documents if doc.file)
-        return total_used
-
-# Task Model
-class Task(models.Model):
-    title = models.CharField(max_length=200, null=False)
-    complete = models.BooleanField(default=False)
-    created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
-# Document Management Models
+# Document Model
 class Document(models.Model):
-    title = models.CharField(max_length=200)
-    content = models.TextField(blank=True, null=True)  # Allow documents to have either text content or file
-    file = models.FileField(upload_to='documents/', blank=False, null=False)  # File upload field
-    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='documents/')
+    created_by = models.ForeignKey(CustomUser, related_name='documents_created', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(CustomUser, related_name='documents_assigned', on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_template = models.BooleanField(default=False)
+    tags = models.CharField(max_length=255, blank=True)  # New field for classification tags
+    analysis_summary = models.TextField(blank=True)  # New field for storing AI analysis results
 
     def __str__(self):
         return self.title
 
-class DocumentVersion(models.Model):
-    document = models.ForeignKey(Document, related_name='versions', on_delete=models.CASCADE)
-    version_number = models.IntegerField()
-    content = models.TextField(blank=True, null=True)  # Allow version content to be text or file
-    file = models.FileField(upload_to='document_versions/', blank=True, null=True)  # File upload field
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.document.title} - Version {self.version_number}"
-
-class DocumentTag(models.Model):
-    document = models.ForeignKey(Document, related_name='tags', on_delete=models.CASCADE)
-    tag = models.ForeignKey('Tag', on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.tag.name} - {self.document.title}"
-
-class DocumentShare(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sent_documents')
-    recipient = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='received_documents', null=True, blank=True)
-    external_email = models.EmailField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('reviewed', 'Reviewed'), ('approved', 'Approved'), ('edited', 'Edited')], default='pending')
-    message = models.TextField(blank=True)
-    shared_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.document.title} shared by {self.sender.email}"
-
-class DocumentPermission(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    can_view = models.BooleanField(default=False)
-    can_edit = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('document', 'user')
-
-    def __str__(self):
-        return f"{self.user} - {self.document}"
-    
-# Tag Model
-class Tag(models.Model):
-    name = models.CharField(max_length=50)
-    created_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
-
-# Case Management Models
+# Case Model
 class Case(models.Model):
-    STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('in_progress', 'In Progress'),
-        ('closed', 'Closed'),
-        ('on_hold', 'On Hold'),
-    ]
-
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=255)
     description = models.TextField()
-    assigned_to = models.ForeignKey(CustomUser, related_name='cases', on_delete=models.CASCADE)
-    client = models.ForeignKey('Client', related_name='cases', on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='open')
-    is_archived = models.BooleanField(default=False)  # New field to track archiving
+    assigned_to = models.ForeignKey(CustomUser, related_name='cases_assigned', on_delete=models.SET_NULL, null=True, blank=True)
+    client = models.ForeignKey(CustomUser, related_name='client_cases', on_delete=models.CASCADE)
+    status = models.CharField(max_length=50, choices=[('Open', 'Open'), ('Closed', 'Closed'), ('Pending', 'Pending')], default='Open')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    risk_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # New field for compliance scoring
 
     def __str__(self):
         return self.title
-
-
-class CaseDocument(models.Model):
-    case = models.ForeignKey(Case, related_name='documents', on_delete=models.CASCADE)
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"Document for {self.case.title}"
-
-class CaseNote(models.Model):
-    case = models.ForeignKey(Case, related_name='notes', on_delete=models.CASCADE)
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    note = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Note by {self.author.email} on {self.case.title}"
-
-class CaseTask(models.Model):
-    case = models.ForeignKey(Case, related_name='tasks', on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    assigned_to = models.ForeignKey(CustomUser, related_name='case_tasks', on_delete=models.CASCADE)
-    due_date = models.DateField()
-    completed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Task: {self.title} - Due: {self.due_date}"
-
-# Client Management Models
-class Client(models.Model):
-    first_name = models.CharField(max_length=35)
-    last_name = models.CharField(max_length=35)
-    email = models.EmailField(unique=True)
-    phone = models.CharField(max_length=15, blank=True)
-    address = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name}"
-
-# Compliance Models
-class ComplianceChecklist(models.Model):
-    case = models.ForeignKey(Case, related_name='compliance_checklists', on_delete=models.CASCADE)
-    checklist_item = models.CharField(max_length=200)
-    completed = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.checklist_item
-
-class AuditLog(models.Model):
-    document = models.ForeignKey(Document, related_name='audit_logs', on_delete=models.CASCADE)
-    action = models.CharField(max_length=50)
-    performed_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    performed_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Audit log for {self.document.title} by {self.performed_by.email}"
 
 # Notification Model
 class Notification(models.Model):
@@ -229,25 +94,6 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.email} - {'Read' if self.is_read else 'Unread'}"
-
-# Billing and Payment Models
-class Invoice(models.Model):
-    client = models.ForeignKey(Client, related_name='invoices', on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    issued_date = models.DateField()
-    due_date = models.DateField()
-    status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Paid', 'Paid'), ('Overdue', 'Overdue')])
-
-    def __str__(self):
-        return f"Invoice {self.id} for {self.client}"
-
-class Payment(models.Model):
-    invoice = models.ForeignKey(Invoice, related_name='payments', on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateField()
-
-    def __str__(self):
-        return f"Payment {self.id} for Invoice {self.invoice.id}"
 
 # Folder Model for Document Management
 class Folder(models.Model):

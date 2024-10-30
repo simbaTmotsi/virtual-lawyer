@@ -16,11 +16,7 @@ def login_home(request):
             user = authenticate(username=email, password=password)
             if user is not None:
                 login(request, user)
-                if user.role == "farmer":
-                    return redirect("farmer_home")
-                elif user.role == "driver":
-                    return redirect("driver_home")
-                elif user.role == "lawyer":
+                if user.role == "lawyer":
                     return redirect("lawyer_home")
             else:
                 messages.error(request, "Wrong credentials")

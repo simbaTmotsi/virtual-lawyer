@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages  
 from django.views.generic import DetailView
-from FieldBoost.models import Case, Document, DocumentPermission, CustomUser
+from FieldBoost.models import Case, Document, CustomUser
 from django.urls import reverse_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
