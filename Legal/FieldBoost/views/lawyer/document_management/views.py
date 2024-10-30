@@ -92,7 +92,7 @@ class DocumentStorage(LoginRequiredMixin, TemplateView):
 
         # Calculate storage used by the current user
         user = self.request.user
-        total_used = user.calculate_storage_used()  # This method calculates the used storage
+        total_used = user.calculate_storage_used()  # This method calculates the used storage 
         storage_quota = user.storage_quota
         used_percentage = (total_used / storage_quota) * 100 if storage_quota > 0 else 0
 
@@ -107,6 +107,7 @@ class DocumentStorage(LoginRequiredMixin, TemplateView):
         context['storage_quota_gb'] = storage_quota_gb
         context['used_percentage'] = used_percentage
         return context
+
 
 class DocumentShareListView(LoginRequiredMixin, ListView):
     model = Document

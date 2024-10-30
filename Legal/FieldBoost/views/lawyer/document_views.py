@@ -24,7 +24,7 @@ class DocumentForm(forms.ModelForm):
 class DocumentUploadView(CreateView):
     model = Document
     form_class = DocumentForm
-    template_name = 'lawyer/upload_document.html'
+    template_name = 'modules/lawyer/document_management/document_form.html'
     success_url = reverse_lazy('document_list')  # Redirect after successful document upload
 
     def form_valid(self, form):

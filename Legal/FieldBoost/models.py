@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Sum
 
 # Custom User Manager
 class CustomUserManager(BaseUserManager):
@@ -29,6 +30,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
+    
 
 # Custom User Model
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -48,15 +50,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    storage_quota = models.BigIntegerField(default=2 * 1024 ** 3)  # Default 2 GB quota in byte
+
+    objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()
 
+    def calculate_storage_used(self):
+        # Calculate total size of all documents uploaded by the user
+        documents = self.documents_created.all()  # Fetch all documents created by the user
+        total_size = sum(document.file.size for document in documents if document.file)  # Sum file sizes
+        return total_size
+    
     def __str__(self):
         return self.email
-
+    
+    
 # Document Model
 class Document(models.Model):
     title = models.CharField(max_length=255)
