@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import user_passes_test
-from Legal.FieldBoost.models import CustomUser
+#from Legal.FieldBoost.models import CustomUser
+from FieldBoost.models import CustomUser
 
 # Decorator for lawyer role
 def lawyer_required(function=None):

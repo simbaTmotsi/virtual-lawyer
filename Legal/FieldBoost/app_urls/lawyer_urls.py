@@ -13,7 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from FieldBoost.views.lawyer import auth_views as dashboard_views
+from FieldBoost.views.lawyer import dashboard_views 
+from FieldBoost.views.lawyer import case_views, document_views
 from FieldBoost.views.lawyer.document_management import views as doc_views
 from FieldBoost.views.lawyer.case_management import views as case_views
 from FieldBoost.views.lawyer.client_management import views as client_views
@@ -24,17 +25,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-        path('create_case/', CaseCreateView.as_view(), name='create_case'),
-    path('upload_document/', DocumentUploadView.as_view(), name='upload_document'),
+    path('create_case/', case_views.CaseCreateView.as_view(), name='create_case'),
+    path('upload_document/', document_views.DocumentUploadView.as_view(), name='lawyer_document_create'),
     #-------------------------General(Dashboards,Widgets & Layout)---------------------------------------
     
     path('', dashboard_views.DashboardView.as_view(), name='lawyer_home'),
-    path('to_do/', dashboard_views.to_do, name='to_do'),
-    path('to_do_database/', dashboard_views.to_do_database, name='to_do_database'),
-    path('mark_all_complete/', dashboard_views.markAllComplete, name='mark_all_complete'),
-    path('mark_all_incomplete/', dashboard_views.markAllIncomplete, name='mark_all_incomplete'),
-    path('delete_task/<int:pk>/', dashboard_views.deleteTask, name='delete_task'),
-    path('update_task/<int:pk>/', dashboard_views.updateTask, name='update_task'),
 
     #--------------- # Document Management
     #path('CreateDocument/', doc_views.DocumentCreation.as_view(), name='lawyer_document_create'),
