@@ -24,6 +24,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+        path('create_case/', CaseCreateView.as_view(), name='create_case'),
+    path('upload_document/', DocumentUploadView.as_view(), name='upload_document'),
     #-------------------------General(Dashboards,Widgets & Layout)---------------------------------------
     
     path('', dashboard_views.DashboardView.as_view(), name='lawyer_home'),
