@@ -79,6 +79,8 @@ class Document(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     tags = models.CharField(max_length=255, blank=True)  # New field for classification tags
     analysis_summary = models.TextField(blank=True)  # New field for storing AI analysis results
+    recipient = models.CharField(max_length=255, blank=True)  # Field for document sharing recipient
+    recipient_email = models.EmailField(blank=True)  # Field for document sharing recipient email
 
     def __str__(self):
         return self.title

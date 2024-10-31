@@ -182,3 +182,13 @@ AUTH_USER_MODEL = 'FieldBoost.CustomUser'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'solution42.xyz'  # The outgoing SMTP server
+EMAIL_PORT = 465  # SMTP port for SSL
+EMAIL_USE_SSL = True  # Use SSL for a secure connection
+EMAIL_HOST_USER = 'notifications@solution42.xyz'  # Your email address
+EMAIL_HOST_PASSWORD = '1f0rg0t1t_M0t51'  # The password for the email account
+
+DEFAULT_FROM_EMAIL = 'notifications@solution42.xyz'

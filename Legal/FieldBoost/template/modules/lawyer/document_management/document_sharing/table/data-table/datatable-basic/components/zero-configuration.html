@@ -28,7 +28,9 @@
               <td>{{ document.updated_at }}</td>
               <td> 
                 <ul class="action"> 
-                  <li class="view"><a href="{% url 'document_share' document.id %}"><i class="icon-share"></i></a></li>
+                  <li class="view">
+                    <a href="{% url 'document_share' document.id %}"><i class="icon-share"></i></a>
+                  </li>
                 </ul>
               </td>
             </tr>

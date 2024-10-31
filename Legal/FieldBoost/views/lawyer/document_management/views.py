@@ -16,16 +16,17 @@ from email.mime.application import MIMEApplication
 from django.core.files import File
 
 from django.urls import reverse_lazy
-
+import mimetypes
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 
 from FieldBoost.models import Document, Folder  # Correct the import path
 
-
+from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404
 from django.views.generic.edit import FormView
 
+from django.http import HttpResponseRedirect
 
 
 
@@ -40,7 +41,6 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
     template_name = "modules/lawyer/document_management/document_detail.html"
     login_url = reverse_lazy('login_home')
     context_object_name = 'document'
-
 
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
@@ -108,12 +108,70 @@ class DocumentStorage(LoginRequiredMixin, TemplateView):
         context['used_percentage'] = used_percentage
         return context
 
-
 class DocumentShareListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
     context_object_name = 'documents'
     login_url = reverse_lazy('login_home')
+
+
+class DocumentShareView(LoginRequiredMixin, UpdateView):
+    model = Document
+    fields = ['recipient', 'recipient_email']
+    template_name = "modules/lawyer/document_management/document_sharing/document_share.html"
+    login_url = reverse_lazy('login_home')
+    success_url = reverse_lazy('document_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add crispy form helper for better rendering of the form
+        helper = FormHelper()
+        helper.form_method = 'post'
+        helper.add_input(Submit('submit', 'Share Document'))
+        context['helper'] = helper
+
+        return context
+
+    def form_valid(self, form):
+        # Send email to the recipient with document details
+        document = form.save(commit=False)
+        recipient_email = form.cleaned_data['recipient_email']
+        sender = self.request.user  # The current logged-in user
+        message_content = self.request.POST.get('message', '')  # Get the message from the form
+
+        # Create an email with an attachment
+        email_body = (
+            f"Dear {form.cleaned_data['recipient']},\n\n"
+            f"{sender.first_name} {sender.surname} ({sender.email}) has shared a document titled: '{document.title}' with you.\n\n"
+            f"Message from {sender.first_name}: {message_content}\n\n"
+            f"Please find the document attached.\n\n"
+            "Best regards,\n"
+            f"{sender.first_name} {sender.surname}\n\n"
+            f"- Using the Easy Law Platform"
+        )
+
+        email = EmailMessage(
+            subject=f"Shared Document: {document.title}",
+            body=email_body,
+            from_email='notifications@solution42.xyz',
+            to=[recipient_email],
+        )
+
+        # Attach the document file with the correct MIME type
+        if document.file:
+            content_type, encoding = mimetypes.guess_type(document.file.path)
+            content_type = content_type or 'application/octet-stream'  # Default if content type cannot be guessed
+            email.attach(document.file.name, document.file.read(), content_type)
+
+        try:
+            email.send()
+            messages.success(self.request, 'Document shared successfully.')
+        except Exception as e:
+            messages.error(self.request, f"Failed to send email: {str(e)}")
+
+        document.save()
+        return redirect("document_list")
 
 
 class DocumentTable(LoginRequiredMixin, TemplateView):
