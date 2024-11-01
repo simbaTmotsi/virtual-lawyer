@@ -67,9 +67,11 @@ class ClientCommunicationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Limit recipients to clients only
         super().__init__(*args, **kwargs)
+        # Limit recipients to clients only
         self.fields['recipient'].queryset = CustomUser.objects.filter(role=CustomUser.UserRole.CLIENT)
+        # Set the display format for the recipient dropdown to include both name and email
+        self.fields['recipient'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
 
 # lawyer_client_views.py
 class ClientCommunicationView(LoginRequiredMixin, FormView):
@@ -80,21 +82,26 @@ class ClientCommunicationView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         communication = form.save(commit=False)
         communication.sender = self.request.user  # Set the sender to the logged-in lawyer
-        
-        # Append the signature to the message
-        signature = "\n\n---\nSent using the Easy Law platform"
-        communication.message += signature
         communication.save()
 
-        # Send an email notification
-        subject = communication.subject
-        message = f"{communication.message}\n\n"
-        recipient_email = communication.recipient.email
-        sender_email = settings.DEFAULT_FROM_EMAIL
-        send_mail(subject, message, sender_email, [recipient_email], fail_silently=False)
-
+        # Send email notification
+        self.send_communication_email(communication)
+        
         messages.success(self.request, 'Message sent successfully.')
         return super().form_valid(form)
+
+    def send_communication_email(self, communication):
+        subject = communication.subject
+        message = (
+            f"Hello {communication.recipient.first_name},\n\n"
+            f"You have received a new message:\n\n"
+            f"Subject: {communication.subject}\n\n"
+            f"Message:\n{communication.message}\n\n"
+            f"---\nSent by {communication.sender.first_name} {communication.sender.surname} "
+            f"({communication.sender.email}) using the Easy Law platform"
+        )
+        recipient_email = communication.recipient.email
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [recipient_email], fail_silently=False)
 
 class ClientMessageListView(LoginRequiredMixin, ListView):
     model = ClientCommunication
