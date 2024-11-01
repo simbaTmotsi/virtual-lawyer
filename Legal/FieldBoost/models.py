@@ -51,6 +51,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     storage_quota = models.BigIntegerField(default=2 * 1024 ** 3)  # Default 2 GB quota in byte
+    company_name = models.CharField(max_length=255, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
 
     objects = CustomUserManager()
 

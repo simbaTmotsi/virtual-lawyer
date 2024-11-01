@@ -1,47 +1,35 @@
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib import messages  
-from django.core.mail import send_mail
-from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-
 from django.views.generic import ListView, DetailView, DeleteView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import UpdateView
 from django.views.generic import TemplateView
-
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-from django.core.files import File
-
 from django.urls import reverse_lazy
 import mimetypes
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
-
 from FieldBoost.models import Document, Folder  # Correct the import path
-
 from django.core.mail import EmailMessage
-from django.shortcuts import get_object_or_404
-from django.views.generic.edit import FormView
-
-from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
+from FieldBoost.decorators import lawyer_required
 
 
-
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = "modules/lawyer/document_management/document_creation/table/data-table/datatable-basic/datatable-basic-init.html"
     context_object_name = 'documents'
     login_url = reverse_lazy('login_home')
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentDetailView(LoginRequiredMixin, DetailView):
     model = Document
     template_name = "modules/lawyer/document_management/document_detail.html"
     login_url = reverse_lazy('login_home')
     context_object_name = 'document'
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
     fields = ['title', 'content', 'file']
@@ -50,6 +38,7 @@ class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     success_url = reverse_lazy('document_list')
     login_url = reverse_lazy('login_home')
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = Document
     template_name = "modules/lawyer/document_management/document_confirm_delete.html"
@@ -61,6 +50,7 @@ class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         messages.success(self.request, self.success_message)
         return response
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
     fields = ['title', 'content', 'file']
@@ -69,6 +59,7 @@ class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     success_url = reverse_lazy('document_list')
     login_url = reverse_lazy('login_home')
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     model = Document
     template_name = "modules/lawyer/document_management/document_confirm_delete.html"
@@ -76,6 +67,7 @@ class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
     success_url = reverse_lazy('document_list')
     login_url = reverse_lazy('login_home')
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentStorage(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_management/document_storage/file-manager.html"
     login_url = reverse_lazy('login_home')
@@ -108,13 +100,14 @@ class DocumentStorage(LoginRequiredMixin, TemplateView):
         context['used_percentage'] = used_percentage
         return context
 
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentShareListView(LoginRequiredMixin, ListView):
     model = Document
     template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
     context_object_name = 'documents'
     login_url = reverse_lazy('login_home')
 
-
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentShareView(LoginRequiredMixin, UpdateView):
     model = Document
     fields = ['recipient', 'recipient_email']
@@ -173,7 +166,7 @@ class DocumentShareView(LoginRequiredMixin, UpdateView):
         document.save()
         return redirect("document_list")
 
-
+@method_decorator(lawyer_required, name='dispatch')
 class DocumentTable(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
     login_url = reverse_lazy('login_home')
@@ -183,24 +176,5 @@ class DocumentTable(LoginRequiredMixin, TemplateView):
         #context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
         return context
     
-class DocumentReview(LoginRequiredMixin, ListView):
-    model = Document
-    template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
-    login_url = reverse_lazy('login_home')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        #context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
-        return context
-    
-class DocumentSearch(LoginRequiredMixin, ListView):
-    template_name = "modules/lawyer/document_management/document_sharing/table/data-table/datatable-basic/datatable-basic-init.html"
-    login_url = reverse_lazy('login_home')
-    model = Document
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        #context['breadcrumb'] = {"parent":"Dashboard","child":"Default"}
-        return context 
 
 #---------------------------------------------------------------------------------------

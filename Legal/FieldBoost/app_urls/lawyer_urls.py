@@ -15,11 +15,8 @@ Including another URLconf
 """
 from FieldBoost.views.lawyer import dashboard_views 
 from FieldBoost.views.lawyer import case_views, document_views
-from FieldBoost.views.lawyer.document_management import views as doc_views
+#from FieldBoost.views.lawyer.document_management import views as doc_views
 from FieldBoost.views.lawyer.case_management import views as case_views
-from FieldBoost.views.lawyer.client_management import views as client_views
-from FieldBoost.views.lawyer.analytics_reporting import views as analytics_views
-from FieldBoost.views.lawyer.documents_compliance import views as compliance_views
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -32,18 +29,16 @@ urlpatterns = [
     path('', dashboard_views.DashboardView.as_view(), name='lawyer_home'),
 
     #--------------- # Document Management
-    #path('CreateDocument/', doc_views.DocumentCreation.as_view(), name='lawyer_document_create'),
-    path('DocumentList/', doc_views.DocumentListView.as_view(), name='document_list'),
-    path('DocumentShareListView/', doc_views.DocumentShareListView.as_view(), name='document_share_list'),
-    path('Document/<int:pk>/', doc_views.DocumentDetailView.as_view(), name='document_detail'),
-    path('document/<int:document_id>/share/', doc_views.DocumentShareView.as_view(), name='document_share'),
-    path('Document/<int:pk>/update/', doc_views.DocumentUpdateView.as_view(), name='document_update'),
-    path('Document/<int:pk>/delete/', doc_views.DocumentDeleteView.as_view(), name='document_delete'),
-    path('DocumentStorage/', doc_views.DocumentStorage.as_view(), name='lawyer_document_storage'),
-    path('DocumentSharing/', doc_views.DocumentTable.as_view(), name='lawyer_document_sharing'),
-    path('share/<int:pk>/', doc_views.DocumentShareView.as_view(), name='document_share'),
-    path('DocumentReview/', doc_views.DocumentReview.as_view(), name='lawyer_document_table_review'),
-    path('DocumentSearch/', doc_views.DocumentSearch.as_view(), name='lawyer_document_table_search'),
+    #path('CreateDocument/', document_views.DocumentCreation.as_view(), name='lawyer_document_create'),
+    path('DocumentList/', document_views.DocumentListView.as_view(), name='document_list'),
+    path('DocumentShareListView/', document_views.DocumentShareListView.as_view(), name='document_share_list'),
+    path('Document/<int:pk>/', document_views.DocumentDetailView.as_view(), name='document_detail'),
+    path('document/<int:document_id>/share/', document_views.DocumentShareView.as_view(), name='document_share'),
+    path('Document/<int:pk>/update/', document_views.DocumentUpdateView.as_view(), name='document_update'),
+    path('Document/<int:pk>/delete/', document_views.DocumentDeleteView.as_view(), name='document_delete'),
+    path('DocumentStorage/', document_views.DocumentStorage.as_view(), name='lawyer_document_storage'),
+    path('DocumentSharing/', document_views.DocumentTable.as_view(), name='lawyer_document_sharing'),
+    path('share/<int:pk>/', document_views.DocumentShareView.as_view(), name='document_share'),
     #---------------------------------------------------------------------------------------
     
     #--------------- # Case Management
