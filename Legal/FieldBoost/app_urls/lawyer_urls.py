@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from FieldBoost.views.lawyer import dashboard_views 
-from FieldBoost.views.lawyer import case_views, document_views
+from FieldBoost.views.lawyer import case_views, document_views, lawyer_client_views
 #from FieldBoost.views.lawyer.document_management import views as doc_views
 from FieldBoost.views.lawyer.case_management import views as case_views
 from django.urls import path
@@ -50,6 +50,15 @@ urlpatterns = [
     path('case/<int:case_id>/archive/', case_views.archive_case_view, name='archive_case'),
     path('archived-cases/', case_views.ArchivedCaseListView.as_view(), name='archived_cases'),
     path('case/<int:case_id>/restore/', case_views.restore_case_view, name='restore_case'),
+    #---------------------------------------------------------------------------------------
+
+    #--------------- # Client Management
+    path('onboard-client/', lawyer_client_views.ClientOnboardingView.as_view(), name='lawyer_client_onboarding'),
+    path('client-list/', lawyer_client_views.LawyerClientListView.as_view(), name='lawyer_client_list'),  # Added URL pattern
+    path('client/<int:pk>/', lawyer_client_views.ClientDetailView.as_view(), name='client_detail'),  # Client detail URL
+
+    path('client/<int:pk>/edit/', lawyer_client_views.ClientEditView.as_view(), name='client_edit'),  # Edit URL
+    path('client/<int:pk>/delete/', lawyer_client_views.ClientDeleteView.as_view(), name='client_delete'),  # Delete URL
     #---------------------------------------------------------------------------------------
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

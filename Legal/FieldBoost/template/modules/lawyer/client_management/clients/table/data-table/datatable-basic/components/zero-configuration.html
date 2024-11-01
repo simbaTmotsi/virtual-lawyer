@@ -1,0 +1,68 @@
+
+{% load static %}
+
+
+<!-- Zero Configuration  Starts-->
+<div class="col-sm-12">
+  <div class="card">
+    <div class="card-header pb-0 card-no-border">
+      <h3>Client List</h3>
+      <span>Below is a list of clients managed within the system.</span>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="display" id="basic-1">
+          <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Surname</th>
+              <th>Email</th>
+              <th>Phone Number</th>
+              <th>Company Name</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for client in clients %}
+            <tr>
+              <td>{{ client.first_name }}</td>
+              <td>{{ client.surname }}</td>
+              <td>{{ client.email }}</td>
+              <td>{{ client.phone_number }}</td>
+              <td>{{ client.company_name }}</td>
+              <td> 
+                <ul class="action"> 
+                  <li class="view">
+                    <a href="{% url 'client_detail' client.id %}"><i class="icon-eye"></i></a>
+                  </li>
+                  &nbsp;
+                  <li class="edit">
+                    <a href="{% url 'client_edit' client.id %}"><i class="icon-write"></i></a>
+                  </li>
+                  &nbsp;
+                  <li class="delete">
+                    <a href="{% url 'client_delete' client.id %}" onclick="return confirm('Are you sure you want to delete this client?');">
+                      <i class="icon-trash"></i>
+                    </a>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Zero Configuration  Ends-->
+
+<!-- Include the necessary DataTable JS -->
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    $('#basic-1').DataTable();
+  });
+</script>
+
