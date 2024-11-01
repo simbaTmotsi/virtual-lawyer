@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import Sum
+from django.conf import settings
 
 # Custom User Manager
 class CustomUserManager(BaseUserManager):
@@ -31,7 +30,6 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
     
-
 # Custom User Model
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
@@ -70,7 +68,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.email
-    
     
 # Document Model
 class Document(models.Model):
@@ -128,3 +125,36 @@ class Folder(models.Model):
     @property
     def size(self):
         return sum(doc.file.size for doc in self.documents.all()) / (1024 * 1024)  # size in MB
+
+class ClientCommunication(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='sent_messages', on_delete=models.CASCADE)
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='received_messages', on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Message from {self.sender} to {self.recipient} - {self.subject}"
+
+class Appointment(models.Model):
+    STATUS_CHOICES = [
+        ('Scheduled', 'Scheduled'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled')
+    ]
+
+    title = models.CharField(max_length=255)
+    lawyer = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='lawyer_appointments', on_delete=models.CASCADE)
+    client = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='client_appointments', on_delete=models.CASCADE)
+    date = models.DateTimeField()
+    location = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Scheduled')
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} with {self.client} on {self.date}"
+
+
+

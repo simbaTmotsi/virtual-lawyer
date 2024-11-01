@@ -10,6 +10,14 @@
       <span>Below is a list of clients managed within the system.</span>
     </div>
     <div class="card-body">
+      <!-- Display any messages -->
+      {% if messages %}
+      <div class="alert alert-info">
+          {% for message in messages %}
+              {{ message }}
+          {% endfor %}
+      </div>
+      {% endif %}
       <div class="table-responsive">
         <table class="display" id="basic-1">
           <thead>

@@ -56,9 +56,16 @@ urlpatterns = [
     path('onboard-client/', lawyer_client_views.ClientOnboardingView.as_view(), name='lawyer_client_onboarding'),
     path('client-list/', lawyer_client_views.LawyerClientListView.as_view(), name='lawyer_client_list'),  # Added URL pattern
     path('client/<int:pk>/', lawyer_client_views.ClientDetailView.as_view(), name='client_detail'),  # Client detail URL
-
     path('client/<int:pk>/edit/', lawyer_client_views.ClientEditView.as_view(), name='client_edit'),  # Edit URL
     path('client/<int:pk>/delete/', lawyer_client_views.ClientDeleteView.as_view(), name='client_delete'),  # Delete URL
+    path('client-communication/', lawyer_client_views.ClientCommunicationView.as_view(), name='client_communication'),  # Communication URL
+    path('messages/', lawyer_client_views.ClientMessageListView.as_view(), name='client_messages'),
+
+    #-----------------Appointments
+    path('appointment/create/', lawyer_client_views.AppointmentCreateView.as_view(), name='appointment_create'),
+    path('appointment/list/', lawyer_client_views.AppointmentListView.as_view(), name='appointment_list'),
+    path('appointment/<int:pk>/edit/', lawyer_client_views.AppointmentEditView.as_view(), name='appointment_edit'),
+    path('appointment/<int:pk>/delete/', lawyer_client_views.AppointmentDeleteView.as_view(), name='appointment_delete'),
     #---------------------------------------------------------------------------------------
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

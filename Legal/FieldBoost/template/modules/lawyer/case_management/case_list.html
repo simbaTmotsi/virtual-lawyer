@@ -8,6 +8,14 @@
 
 <div class="container mt-5">
     <div class="card">
+        <!-- Display any messages -->
+      {% if messages %}
+      <div class="alert alert-info">
+          {% for message in messages %}
+              {{ message }}
+          {% endfor %}
+      </div>
+      {% endif %}
     <div class="card-header"><br>
         <h2>Cases</h2>
     </div>
