@@ -3,7 +3,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from FieldBoost.models import CustomUser, ClientCommunication, Appointment
+from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document
 from django import forms
 from django.views.generic import ListView, DetailView
 from django.conf import settings
@@ -185,7 +185,6 @@ class AppointmentEditView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Appointment updated successfully.')
         return response
 
-
 class AppointmentDeleteView(LoginRequiredMixin, DeleteView):
     model = Appointment
     template_name = "modules/lawyer/appointments/appointment_confirm_delete.html"
@@ -194,6 +193,51 @@ class AppointmentDeleteView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Appointment deleted successfully.')
         return super().delete(request, *args, **kwargs)
+
+class DocumentUploadView(LoginRequiredMixin, CreateView):
+    model = Document
+    fields = ['title', 'file', 'client']
+    template_name = "modules/lawyer/client_documents/document_upload.html"
+    success_url = reverse_lazy('client_document_list')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, 'Document uploaded successfully.')
+        return super().form_valid(form)
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        form.fields['client'].queryset = CustomUser.objects.filter(role=CustomUser.UserRole.CLIENT)
+        form.fields['client'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
+        return form
+
+class DocumentListView(LoginRequiredMixin, ListView):
+    model = Document
+    template_name = "modules/lawyer/client_documents/client_documents/table/data-table/datatable-basic/datatable-basic-init.html"
+    context_object_name = 'documents'
+
+    def get_queryset(self):
+        return Document.objects.filter(created_by=self.request.user)
+    
+class DocumentUpdateView(LoginRequiredMixin, UpdateView):
+    model = Document
+    fields = ['title', 'file']
+    template_name = "modules/lawyer/client_documents/document_edit.html"
+    success_url = reverse_lazy('client_document_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Document updated successfully.')
+        return super().form_valid(form)
+
+class DocumentDeleteView(LoginRequiredMixin, DeleteView):
+    model = Document
+    template_name = "modules/lawyer/client_documents/document_confirm_delete.html"
+    success_url = reverse_lazy('client_document_list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Document deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
 
 
 

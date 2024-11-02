@@ -73,17 +73,18 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Document(models.Model):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents/')
-    created_by = models.ForeignKey(CustomUser, related_name='documents_created', on_delete=models.CASCADE)
-    assigned_to = models.ForeignKey(CustomUser, related_name='documents_assigned', on_delete=models.SET_NULL, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    tags = models.CharField(max_length=255, blank=True)  # New field for classification tags
-    analysis_summary = models.TextField(blank=True)  # New field for storing AI analysis results
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents_created', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents_assigned', on_delete=models.SET_NULL, null=True, blank=True)
+    client = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='client_documents', on_delete=models.CASCADE, blank=True, null=True)  # New field to associate document with a client
+    tags = models.CharField(max_length=255, blank=True)  # Field for classification tags
+    analysis_summary = models.TextField(blank=True)  # Field for storing AI analysis results
     recipient = models.CharField(max_length=255, blank=True)  # Field for document sharing recipient
     recipient_email = models.EmailField(blank=True)  # Field for document sharing recipient email
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} - {self.client.first_name} {self.client.surname} ({self.client.email})"
 
 # Case Model
 class Case(models.Model):

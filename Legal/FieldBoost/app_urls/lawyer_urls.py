@@ -68,4 +68,11 @@ urlpatterns = [
     path('appointment/<int:pk>/delete/', lawyer_client_views.AppointmentDeleteView.as_view(), name='appointment_delete'),
     #---------------------------------------------------------------------------------------
 
+    #-----------------Appointments
+    path('document/upload/', lawyer_client_views.DocumentUploadView.as_view(), name='document_upload'),
+    path('document/list/', lawyer_client_views.DocumentListView.as_view(), name='client_document_list'),
+    path('document/<int:pk>/edit/', lawyer_client_views.DocumentUpdateView.as_view(), name='document_edit'),
+    path('document/<int:pk>/delete/', lawyer_client_views.DocumentDeleteView.as_view(), name='document_delete'),
+    
+
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)
