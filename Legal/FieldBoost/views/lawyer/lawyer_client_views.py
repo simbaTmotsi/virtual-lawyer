@@ -1,5 +1,7 @@
 # views.py
-from django.shortcuts import get_object_or_404
+import os
+import google.generativeai as genai
+from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +11,9 @@ from django import forms
 from django.views.generic import ListView, DetailView, TemplateView
 from django.conf import settings
 from django.core.mail import send_mail
+
+# Configure Gemini API
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 # Client Management Module
 class ClientOnboardingView(LoginRequiredMixin, CreateView):
@@ -322,27 +327,7 @@ class EvidenceUploadView(LoginRequiredMixin, CreateView):
         # Retrieve the case object based on the case_id passed in the URL
         case_id = self.kwargs.get('case_id')
         return Case.objects.get(pk=case_id)
-
-
-# class EvidenceCreateView(LoginRequiredMixin, CreateView):
-#     model = Evidence
-#     fields = ['title', 'description', 'file', 'case']
-#     template_name = "modules/lawyer/evidence_management/evidence_create.html"
-#     success_url = reverse_lazy('case_list')
-
-#     def form_valid(self, form):
-#         # Set the case and created_by fields before saving the form
-#         case = self.get_case()
-#         form.instance.case = case
-#         form.instance.created_by = self.request.user
-#         messages.success(self.request, 'Evidence added successfully.')
-#         return super().form_valid(form)
-
-#     def get_case(self):
-#         # Retrieve the case object based on the case_id in the URL
-#         case_id = self.kwargs.get('case_id')
-#         return Case.objects.get(pk=case_id)
-    
+   
 # View for uploading evidence related to a specific case
 class EvidenceCreateView(LoginRequiredMixin, CreateView):
     model = Evidence
@@ -369,17 +354,8 @@ class EvidenceListView(LoginRequiredMixin, ListView):
         # Filter evidence by the case specified in the URL
         case_id = self.kwargs.get('case_id')
         return Evidence.objects.filter(case_id=case_id)
-    
-# class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
-#     model = Evidence
-#     fields = ['title', 'description', 'file']
-#     template_name = "modules/lawyer/evidence_management/evidence_edit.html"
-#     success_url = reverse_lazy('case_list')
+#
 
-#     def form_valid(self, form):
-#         messages.success(self.request, 'Evidence updated successfully.')
-#         return super().form_valid(form)
-    
  # View for editing evidence
 class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
     model = Evidence
@@ -393,17 +369,7 @@ class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('cases_with_evidence')   
-
-
-# class EvidenceDeleteView(LoginRequiredMixin, DeleteView):
-#     model = Evidence
-#     template_name = "modules/lawyer/evidence_management/evidence_confirm_delete.html"
-#     success_url = reverse_lazy('case_list')
-
-#     def delete(self, request, *args, **kwargs):
-#         messages.success(self.request, 'Evidence deleted successfully.')
-#         return super().delete(request, *args, **kwargs)
-    
+  
 # View for deleting evidence
 class EvidenceDeleteView(LoginRequiredMixin, DeleteView):
     model = Evidence
@@ -495,4 +461,55 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
         # Fetch all cases from the database
         context['cases'] = Case.objects.all()
         return context
+
+class LegalResearchView(LoginRequiredMixin, TemplateView):
+    template_name = "modules/lawyer/legal_research/legal_research.html"
+    login_url = reverse_lazy('login_home')
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        user_query = request.POST.get('query')
+        if user_query:
+            try:
+                # Create the model with the specified generation configuration
+                generation_config = {
+                    "temperature": 1,
+                    "top_p": 0.95,
+                    "top_k": 40,
+                    "max_output_tokens": 8192,
+                    "response_mime_type": "application/json",
+                }
+
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    generation_config=generation_config,
+                )
+
+                # Start a chat session
+                chat_session = model.start_chat(
+                    history=[
+                        {
+                            "role": "user",
+                            "parts": [user_query],
+                        },
+                    ]
+                )
+
+                # Send user input to the Gemini model
+                response = chat_session.send_message(user_query)
+
+                # Extract response text
+                response_text = response.text
+
+                return render(request, self.template_name, {'query': user_query, 'response': response_text})
+
+            except Exception as e:
+                messages.error(request, f"Failed to process your request: {str(e)}")
+                return redirect('legal_research')
+
+        else:
+            messages.error(request, "Please enter a legal query.")
+            return redirect('legal_research')
 

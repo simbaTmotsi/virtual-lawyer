@@ -90,8 +90,11 @@ urlpatterns = [
     path('case/<int:case_id>/evidence/upload/', lawyer_client_views.EvidenceUploadView.as_view(), name='evidence_upload'),
     path('evidence/upload/', lawyer_client_views.StandaloneEvidenceUploadView.as_view(), name='standalone_evidence_upload'),
     path('case/<int:case_id>/evidence/', lawyer_client_views.CaseEvidenceListView.as_view(), name='case_evidence_list'),  # New case evidence list
-    
     path('cases-with-evidence/', lawyer_client_views.CasesWithEvidenceListView.as_view(), name='cases_with_evidence'),
+    #---------------------------------------------------------------------------------------
+
+    #---------------- # Legal research
+    path('legal-research/', lawyer_client_views.LegalResearchView.as_view(), name='legal_research'),
     #---------------------------------------------------------------------------------------
     
 
