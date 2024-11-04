@@ -1,0 +1,49 @@
+{% load static %}
+
+<!-- Zero Configuration Starts -->
+<div class="col-sm-12">
+  <div class="card">
+    <div class="card-header pb-0 card-no-border">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h3>Cases with Evidence</h3>
+          <span>Below is a list of cases and their evidence.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="display" id="basic-1">
+          <thead>
+            <tr>
+              <th>Case Title</th>
+              <th>Client Name</th>
+              <th>Evidence Count</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for case in cases %}
+            <tr>
+              <td>{{ case.title }}</td>
+              <td>{{ case.client.first_name }} {{ case.client.surname }} ({{ case.client.email }})</td>
+              <td>{{ case.evidence.count }}</td>
+              <td>
+                <a href="{% url 'case_evidence_list' case.id %}" class="btn btn-info">View Evidence</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include the necessary DataTable JS -->
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    $('#basic-1').DataTable();
+  });
+</script>

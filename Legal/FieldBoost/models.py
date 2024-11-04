@@ -73,18 +73,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 class Document(models.Model):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents/')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents_created', on_delete=models.CASCADE)
-    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents_assigned', on_delete=models.SET_NULL, null=True, blank=True)
+    created_by = models.ForeignKey(CustomUser, related_name='documents_created', on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(CustomUser, related_name='documents_assigned', on_delete=models.SET_NULL, null=True, blank=True)
+    case = models.ForeignKey('Case', related_name='documents', on_delete=models.SET_NULL, null=True, blank=True)  # Link document to a case
     client = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='client_documents', on_delete=models.CASCADE, blank=True, null=True)  # New field to associate document with a client
-    tags = models.CharField(max_length=255, blank=True)  # Field for classification tags
-    analysis_summary = models.TextField(blank=True)  # Field for storing AI analysis results
-    recipient = models.CharField(max_length=255, blank=True)  # Field for document sharing recipient
-    recipient_email = models.EmailField(blank=True)  # Field for document sharing recipient email
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    tags = models.CharField(max_length=255, blank=True)  # New field for classification tags
+    analysis_summary = models.TextField(blank=True)  # New field for storing AI analysis results
+    recipient = models.CharField(max_length=255, blank=True)  # Field for document sharing recipient
+    recipient_email = models.EmailField(blank=True)  # Field for document sharing recipient email
 
     def __str__(self):
-        return f"{self.title} - {self.client.first_name} {self.client.surname} ({self.client.email})"
+        case_info = f" (Case: {self.case.title}, Client: {self.case.client.first_name} {self.case.client.surname})" if self.case else ""
+        return f"{self.title}{case_info}"
 
 # Case Model
 class Case(models.Model):
@@ -100,7 +102,7 @@ class Case(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_cases', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} (Client: {self.client.first_name} {self.client.surname})"
 
 # Notification Model
 class Notification(models.Model):
@@ -160,14 +162,14 @@ class Appointment(models.Model):
         return f"{self.title} with {self.client} on {self.date}"
 
 class Evidence(models.Model):
-    case = models.ForeignKey('Case', related_name='evidence', on_delete=models.CASCADE)  # Link evidence to a case
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     file = models.FileField(upload_to='evidence/')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='evidence_created', on_delete=models.CASCADE)
+    created_by = models.ForeignKey(CustomUser, related_name='evidence_created', on_delete=models.CASCADE)
+    case = models.ForeignKey(Case, related_name='evidence', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.title
+        return f"{self.title} (Case: {self.case.title})"
 

@@ -1,0 +1,62 @@
+{% load static %}
+
+<div class="col-sm-12">
+  <div class="card">
+    <div class="card-header pb-0 card-no-border">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h3>Evidence for Case: {{ case.title }}</h3>
+          <span>Below is a list of evidence related to this case.</span>
+        </div>
+        <div>
+          <a href="{% url 'standalone_evidence_upload' %}" class="btn btn-primary">Upload Evidence</a>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="display" id="basic-1">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Uploaded By</th>
+              <th>Uploaded On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for evidence in evidence_list %}
+            <tr>
+              <td>{{ evidence.title }}</td>
+              <td>{{ evidence.created_by.first_name }} {{ evidence.created_by.surname }} ({{ evidence.created_by.email }})</td>
+              <td>{{ evidence.created_at }}</td>
+              <td> 
+                <ul class="action"> 
+                  <li class="edit">
+                    <a href="{% url 'evidence_edit' evidence.id %}"><i class="icon-write"></i></a>
+                  </li>
+                  &nbsp;
+                  <li class="delete">
+                    <a href="{% url 'evidence_delete' evidence.id %}" onclick="return confirm('Are you sure you want to delete this evidence?');">
+                      <i class="icon-trash"></i>
+                    </a>
+                  </li>
+                </ul>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include the necessary DataTable JS -->
+<script src="{% static 'assets/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/js/datatable/datatables/datatable.custom.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    $('#basic-1').DataTable();
+  });
+</script>

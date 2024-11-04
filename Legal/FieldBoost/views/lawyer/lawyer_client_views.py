@@ -1,11 +1,12 @@
 # views.py
+from django.shortcuts import get_object_or_404
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence
 from django import forms
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, TemplateView
 from django.conf import settings
 from django.core.mail import send_mail
 
@@ -303,56 +304,195 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 # Evidence
-class EvidenceCreateView(LoginRequiredMixin, CreateView):
+class EvidenceUploadView(LoginRequiredMixin, CreateView):
     model = Evidence
     fields = ['title', 'description', 'file']
-    template_name = "modules/lawyer/evidence_management/evidence_create.html"
-    success_url = reverse_lazy('case_list')
+    template_name = "modules/lawyer/evidence_management/evidence_upload.html"
+    success_url = reverse_lazy('case_list')  # Redirect to the case list after successful upload
 
     def form_valid(self, form):
-        # Set the case and created_by fields before saving the form
+        # Link the evidence to the correct case and set the created_by field
         case = self.get_case()
         form.instance.case = case
         form.instance.created_by = self.request.user
-        messages.success(self.request, 'Evidence added successfully.')
+        messages.success(self.request, 'Evidence uploaded successfully.')
         return super().form_valid(form)
 
     def get_case(self):
-        # Retrieve the case object based on the case_id in the URL
+        # Retrieve the case object based on the case_id passed in the URL
         case_id = self.kwargs.get('case_id')
         return Case.objects.get(pk=case_id)
+
+
+# class EvidenceCreateView(LoginRequiredMixin, CreateView):
+#     model = Evidence
+#     fields = ['title', 'description', 'file', 'case']
+#     template_name = "modules/lawyer/evidence_management/evidence_create.html"
+#     success_url = reverse_lazy('case_list')
+
+#     def form_valid(self, form):
+#         # Set the case and created_by fields before saving the form
+#         case = self.get_case()
+#         form.instance.case = case
+#         form.instance.created_by = self.request.user
+#         messages.success(self.request, 'Evidence added successfully.')
+#         return super().form_valid(form)
+
+#     def get_case(self):
+#         # Retrieve the case object based on the case_id in the URL
+#         case_id = self.kwargs.get('case_id')
+#         return Case.objects.get(pk=case_id)
+    
+# View for uploading evidence related to a specific case
+class EvidenceCreateView(LoginRequiredMixin, CreateView):
+    model = Evidence
+    fields = ['title', 'description', 'file', 'case']
+    template_name = "modules/lawyer/evidence_management/evidence_upload.html"
+    login_url = reverse_lazy('login_home')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        form.instance.case_id = self.kwargs['case_id']
+        messages.success(self.request, 'Evidence uploaded successfully.')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('cases_with_evidence')
     
 class EvidenceListView(LoginRequiredMixin, ListView):
     model = Evidence
-    template_name = "modules/lawyer/evidence_management/evidence_list.html"
-    context_object_name = 'evidence_items'
+    #template_name = "modules/lawyer/evidence_management/evidence_list.html"
+    template_name = "modules/lawyer/evidence_management/evidence_management_list/table/data-table/datatable-basic/datatable-basic-init.html"
+    context_object_name = 'evidence_list'
 
     def get_queryset(self):
         # Filter evidence by the case specified in the URL
         case_id = self.kwargs.get('case_id')
         return Evidence.objects.filter(case_id=case_id)
     
+# class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
+#     model = Evidence
+#     fields = ['title', 'description', 'file']
+#     template_name = "modules/lawyer/evidence_management/evidence_edit.html"
+#     success_url = reverse_lazy('case_list')
+
+#     def form_valid(self, form):
+#         messages.success(self.request, 'Evidence updated successfully.')
+#         return super().form_valid(form)
+    
+ # View for editing evidence
 class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
     model = Evidence
     fields = ['title', 'description', 'file']
     template_name = "modules/lawyer/evidence_management/evidence_edit.html"
-    success_url = reverse_lazy('case_list')
+    login_url = reverse_lazy('login_home')
 
     def form_valid(self, form):
         messages.success(self.request, 'Evidence updated successfully.')
         return super().form_valid(form)
 
+    def get_success_url(self):
+        return reverse_lazy('cases_with_evidence')   
+
+
+# class EvidenceDeleteView(LoginRequiredMixin, DeleteView):
+#     model = Evidence
+#     template_name = "modules/lawyer/evidence_management/evidence_confirm_delete.html"
+#     success_url = reverse_lazy('case_list')
+
+#     def delete(self, request, *args, **kwargs):
+#         messages.success(self.request, 'Evidence deleted successfully.')
+#         return super().delete(request, *args, **kwargs)
+    
+# View for deleting evidence
 class EvidenceDeleteView(LoginRequiredMixin, DeleteView):
     model = Evidence
     template_name = "modules/lawyer/evidence_management/evidence_confirm_delete.html"
-    success_url = reverse_lazy('case_list')
+    login_url = reverse_lazy('login_home')
 
-    def delete(self, request, *args, **kwargs):
+    def get_success_url(self):
         messages.success(self.request, 'Evidence deleted successfully.')
-        return super().delete(request, *args, **kwargs)
+        return reverse_lazy('cases_with_evidence')    
+
+class StandaloneEvidenceUploadView(LoginRequiredMixin, CreateView):
+    model = Evidence
+    fields = ['title', 'description', 'file', 'case']
+    template_name = "modules/lawyer/evidence_management/evidence_upload_standalone.html"
+
+    def get_success_url(self):
+        # Redirect to the appropriate evidence list based on the case chosen
+        case_id = self.object.case.id if self.object.case else None
+        if case_id:
+            return reverse_lazy('case_evidence_list', kwargs={'case_id': case_id})
+        else:
+            return reverse_lazy('evidence_list')  # Standalone evidence list if no case selected
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, 'Evidence uploaded successfully.')
+        return super().form_valid(form)
+
+class CaseEvidenceListView(LoginRequiredMixin, ListView):
+    model = Evidence
+    template_name = "modules/lawyer/evidence_management/evidence_management_list/table/data-table/datatable-basic/datatable-basic-init.html"
+    context_object_name = 'evidence_list'
+
+    def get_queryset(self):
+        # Filter evidence by case ID provided in the URL
+        case_id = self.kwargs.get('case_id')
+        return Evidence.objects.filter(case__id=case_id).select_related('case__client')  # Load client details along with case
+
+    def get_context_data(self, **kwargs):
+        # Add case details to context
+        context = super().get_context_data(**kwargs)
+        case_id = self.kwargs.get('case_id')
+
+        # Fetch the case object or return 404 if not found
+        case = get_object_or_404(Case.objects.select_related('client'), id=case_id)
+        context['case'] = case
+
+        return context
+
+class ClientsWithEvidenceListView(LoginRequiredMixin, TemplateView):
+    template_name = "modules/lawyer/client_documents/clients_with_evidence.html"
+    login_url = reverse_lazy('login_home')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        clients = CustomUser.objects.filter(role=CustomUser.UserRole.CLIENT)
+        evidence_data = []
+
+        for client in clients:
+            evidence_items = Evidence.objects.filter(created_by=client)
+            if evidence_items.exists():
+                evidence_data.append({
+                    'client': client,
+                    'evidence_items': evidence_items,
+                })
+
+        context['evidence_data'] = evidence_data
+        return context
 
 
+# View for listing cases with evidence
+class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
+    template_name = "modules/lawyer/evidence_management/evidence_management/table/data-table/datatable-basic/datatable-basic-init.html"
+    login_url = reverse_lazy('login_home')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cases = Case.objects.prefetch_related('evidence').all()
+        context['cases'] = cases
+        return context
+    
+class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
+    #template_name = "modules/lawyer/evidence_management/cases_with_evidence.html"
+    template_name = "modules/lawyer/evidence_management/evidence_management/table/data-table/datatable-basic/datatable-basic-init.html"
+    login_url = reverse_lazy('login_home')
 
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Fetch all cases from the database
+        context['cases'] = Case.objects.all()
+        return context
 

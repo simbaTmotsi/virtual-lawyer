@@ -83,10 +83,15 @@ urlpatterns = [
     #---------------------------------------------------------------------------------------
 
     #---------------- # Evidence management
-    path('case/<int:case_id>/evidence/add/', lawyer_client_views.EvidenceCreateView.as_view(), name='evidence_add'),
+    path('case/<int:case_id>/evidence/upload/', lawyer_client_views.EvidenceCreateView.as_view(), name='evidence_add'),
     path('case/<int:case_id>/evidence/', lawyer_client_views.EvidenceListView.as_view(), name='evidence_list'),
     path('evidence/<int:pk>/edit/', lawyer_client_views.EvidenceUpdateView.as_view(), name='evidence_edit'),
     path('evidence/<int:pk>/delete/', lawyer_client_views.EvidenceDeleteView.as_view(), name='evidence_delete'),
+    path('case/<int:case_id>/evidence/upload/', lawyer_client_views.EvidenceUploadView.as_view(), name='evidence_upload'),
+    path('evidence/upload/', lawyer_client_views.StandaloneEvidenceUploadView.as_view(), name='standalone_evidence_upload'),
+    path('case/<int:case_id>/evidence/', lawyer_client_views.CaseEvidenceListView.as_view(), name='case_evidence_list'),  # New case evidence list
+    
+    path('cases-with-evidence/', lawyer_client_views.CasesWithEvidenceListView.as_view(), name='cases_with_evidence'),
     #---------------------------------------------------------------------------------------
     
 
