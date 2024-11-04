@@ -63,17 +63,15 @@
             <svg class="fill-icon">
               <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-ecommerce"></use>
             </svg><span>Client Management</span></a>
-          <ul class="sidebar-submenu">
-            <li><a href="{% url 'lawyer_client_onboarding' %}">Client Onboarding</a></li>
-            <li><a href="{% url 'lawyer_client_list' %}">Client Profiles</a></li>
-            <li><a href="{% url 'client_communication' %}">Client Communication</a></li>
-            <li><a href="{% url 'client_messages' %}">Client Message List</a></li>
-            <li><a href="{% url 'appointment_list' %}">Appointments and Meetings</a></li>
-            <li><a href="{% url 'document_upload' %}">Upload Client Documents</a></li>
-            <li><a href="{% url 'client_document_list' %}">Client Document List</a></li>
-            <!-- <li><a href="/product_page">Client Analytics</a></li> -->
-          </ul>
-        </li>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'lawyer_client_onboarding' %}">Client Onboarding</a></li>
+              <li><a href="{% url 'lawyer_client_list' %}">Client Profiles</a></li>
+              <li><a href="{% url 'client_messages' %}">Client Message List</a></li>
+              <li><a href="{% url 'document_upload' %}">Upload Client Documents</a></li>
+              <li><a href="{% url 'client_document_list' %}">Client Document List</a></li>
+              <!-- <li><a href="/product_page">Client Analytics</a></li> -->
+            </ul>
+          </li>
           
           <li class="sidebar-list">
             <a class="sidebar-link sidebar-title" href="#">
@@ -84,13 +82,13 @@
                 <use href="{% static 'assets/svg/icon-sprite.svg'%}#fill-board"></use>
               </svg><span>Case Management               </span></a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'case_overview' %}">Case Overview</a></li>
+              <!-- <li><a href="{% url 'case_overview' %}">Case Overview</a></li> -->
               <li><a href="{% url 'case_create' %}">New Case</a></li>
               <li><a href="{% url 'case_list' %}">Case List</a></li>
               <li><a href="{% url 'archived_cases' %}">Case Archiving</a></li>
-              <li><a href="#">Client Communication</a></li>
+              <li><a href="{% url 'client_communication' %}">Message Client</a></li>
               <li><a href="#">Task Management</a></li>
-              <li><a href="#">Appointments and Deadlines</a></li>
+              <li><a href="{% url 'appointment_list' %}">Appointments and Meetings</a></li>
               <li><a href="#">Time Tracking and Billing</a></li>
               <li><a href="#">Evidence Management</a></li>
               <li><a href="#">Legal Research</a></li>

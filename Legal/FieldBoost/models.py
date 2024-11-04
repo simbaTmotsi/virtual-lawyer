@@ -96,6 +96,8 @@ class Case(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     risk_score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # New field for compliance scoring
+    # New field to track who created the case
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_cases', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.title

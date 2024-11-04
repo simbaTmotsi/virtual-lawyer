@@ -42,14 +42,20 @@ urlpatterns = [
     #---------------------------------------------------------------------------------------
     
     #--------------- # Case Management
-    path('cases_list/', case_views.CaseListView.as_view(), name='case_list'),
-    path('cases_new/', case_views.CaseCreateView.as_view(), name='case_create'),
+    #path('cases_list/', case_views.CaseListView.as_view(), name='case_list'),
+    #path('cases_new/', case_views.CaseCreateView.as_view(), name='case_create'),
     path('cases_overview/', case_views.CaseOverviewView.as_view(), name='case_overview'),
     path('cases_details/', case_views.CaseOverviewView.as_view(), name='case_details'),
-    path('case/<int:pk>/', case_views.CaseDetailView.as_view(), name='case_detail'),
+    #path('case/<int:pk>/', case_views.CaseDetailView.as_view(), name='case_detail'),
     path('case/<int:case_id>/archive/', case_views.archive_case_view, name='archive_case'),
     path('archived-cases/', case_views.ArchivedCaseListView.as_view(), name='archived_cases'),
     path('case/<int:case_id>/restore/', case_views.restore_case_view, name='restore_case'),
+
+    path('case/create/', lawyer_client_views.CaseCreateView.as_view(), name='case_create'),
+    path('case/list/', lawyer_client_views.CaseListView.as_view(), name='case_list'),
+    path('case/<int:pk>/', lawyer_client_views.CaseDetailView.as_view(), name='case_detail'),
+    path('case/<int:pk>/edit/', lawyer_client_views.CaseUpdateView.as_view(), name='case_edit'),
+    path('case/<int:pk>/delete/', lawyer_client_views.CaseDeleteView.as_view(), name='case_delete'),
     #---------------------------------------------------------------------------------------
 
     #--------------- # Client Management

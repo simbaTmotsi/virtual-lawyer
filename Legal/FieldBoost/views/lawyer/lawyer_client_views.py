@@ -3,12 +3,13 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document
+from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case
 from django import forms
 from django.views.generic import ListView, DetailView
 from django.conf import settings
 from django.core.mail import send_mail
 
+# Client Management Module
 class ClientOnboardingView(LoginRequiredMixin, CreateView):
     model = CustomUser
     fields = ['first_name', 'surname', 'email', 'phone_number', 'company_name', 'address']
@@ -73,7 +74,6 @@ class ClientCommunicationForm(forms.ModelForm):
         # Set the display format for the recipient dropdown to include both name and email
         self.fields['recipient'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
 
-# lawyer_client_views.py
 class ClientCommunicationView(LoginRequiredMixin, FormView):
     template_name = "modules/lawyer/client_management/client_communication.html"
     form_class = ClientCommunicationForm
@@ -111,7 +111,8 @@ class ClientMessageListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Filter messages where the recipient is the logged-in client
         return ClientCommunication.objects.filter(sender=self.request.user)
-    
+
+# Appointments and meetings  
 class AppointmentForm(forms.ModelForm):
     class Meta:
         model = Appointment
@@ -194,6 +195,7 @@ class AppointmentDeleteView(LoginRequiredMixin, DeleteView):
         messages.success(self.request, 'Appointment deleted successfully.')
         return super().delete(request, *args, **kwargs)
 
+# Document Management
 class DocumentUploadView(LoginRequiredMixin, CreateView):
     model = Document
     fields = ['title', 'file', 'client']
@@ -238,6 +240,67 @@ class DocumentDeleteView(LoginRequiredMixin, DeleteView):
         messages.success(self.request, 'Document deleted successfully.')
         return super().delete(request, *args, **kwargs)
 
+# Case Management
+class CaseCreateView(LoginRequiredMixin, CreateView):
+    model = Case
+    fields = ['title', 'description', 'client', 'assigned_to', 'status', 'risk_score']
+    template_name = "modules/lawyer/case_management/case_create.html"
+    success_url = reverse_lazy('case_list')
+
+    def form_valid(self, form):
+        # Set the `created_by` to the currently logged-in user
+        form.instance.created_by = self.request.user
+        messages.success(self.request, 'Case created successfully.')
+        return super().form_valid(form)
+
+    def get_form(self, *args, **kwargs):
+        form = super().get_form(*args, **kwargs)
+        
+        # Limit client selection to users with CLIENT role
+        form.fields['client'].queryset = CustomUser.objects.filter(role=CustomUser.UserRole.CLIENT)
+        # Set the display format for client dropdown to include name and email
+        form.fields['client'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
+
+        # Limit assigned_to selection to users with LAWYER or PARALEGAL role
+        form.fields['assigned_to'].queryset = CustomUser.objects.filter(role__in=[CustomUser.UserRole.LAWYER, CustomUser.UserRole.PARALEGAL])
+        # Set the display format for assigned_to dropdown to include name and email
+        form.fields['assigned_to'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
+
+        return form
+
+class CaseListView(LoginRequiredMixin, ListView):
+    model = Case
+    template_name = "modules/lawyer/case_management/case_management/table/data-table/datatable-basic/datatable-basic-init.html"
+    #template_name = "modules/lawyer/case_management/case_list.html"
+    context_object_name = 'cases'
+
+    def get_queryset(self):
+        return Case.objects.filter(assigned_to=self.request.user) | Case.objects.filter(created_by=self.request.user)
+
+    
+class CaseDetailView(LoginRequiredMixin, DetailView):
+    model = Case
+    template_name = "modules/lawyer/case_management/case_detail.html"
+    context_object_name = 'case'
+
+class CaseUpdateView(LoginRequiredMixin, UpdateView):
+    model = Case
+    fields = ['title', 'description', 'assigned_to', 'status', 'risk_score']
+    template_name = "modules/lawyer/case_management/case_edit.html"
+    success_url = reverse_lazy('case_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Case updated successfully.')
+        return super().form_valid(form)
+
+class CaseDeleteView(LoginRequiredMixin, DeleteView):
+    model = Case
+    template_name = "modules/lawyer/case_management/case_confirm_delete.html"
+    success_url = reverse_lazy('case_list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Case deleted successfully.')
+        return super().delete(request, *args, **kwargs)
 
 
 
