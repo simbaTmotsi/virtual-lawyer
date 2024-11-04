@@ -66,6 +66,7 @@ urlpatterns = [
     path('client/<int:pk>/delete/', lawyer_client_views.ClientDeleteView.as_view(), name='client_delete'),  # Delete URL
     path('client-communication/', lawyer_client_views.ClientCommunicationView.as_view(), name='client_communication'),  # Communication URL
     path('messages/', lawyer_client_views.ClientMessageListView.as_view(), name='client_messages'),
+    #---------------------------------------------------------------------------------------
 
     #-----------------Appointments
     path('appointment/create/', lawyer_client_views.AppointmentCreateView.as_view(), name='appointment_create'),
@@ -74,11 +75,19 @@ urlpatterns = [
     path('appointment/<int:pk>/delete/', lawyer_client_views.AppointmentDeleteView.as_view(), name='appointment_delete'),
     #---------------------------------------------------------------------------------------
 
-    #-----------------Appointments
+    #----------------- Documents
     path('document/upload/', lawyer_client_views.DocumentUploadView.as_view(), name='document_upload'),
     path('document/list/', lawyer_client_views.DocumentListView.as_view(), name='client_document_list'),
     path('document/<int:pk>/edit/', lawyer_client_views.DocumentUpdateView.as_view(), name='document_edit'),
     path('document/<int:pk>/delete/', lawyer_client_views.DocumentDeleteView.as_view(), name='document_delete'),
+    #---------------------------------------------------------------------------------------
+
+    #---------------- # Evidence management
+    path('case/<int:case_id>/evidence/add/', lawyer_client_views.EvidenceCreateView.as_view(), name='evidence_add'),
+    path('case/<int:case_id>/evidence/', lawyer_client_views.EvidenceListView.as_view(), name='evidence_list'),
+    path('evidence/<int:pk>/edit/', lawyer_client_views.EvidenceUpdateView.as_view(), name='evidence_edit'),
+    path('evidence/<int:pk>/delete/', lawyer_client_views.EvidenceDeleteView.as_view(), name='evidence_delete'),
+    #---------------------------------------------------------------------------------------
     
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

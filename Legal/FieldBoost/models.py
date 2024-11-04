@@ -159,5 +159,15 @@ class Appointment(models.Model):
     def __str__(self):
         return f"{self.title} with {self.client} on {self.date}"
 
+class Evidence(models.Model):
+    case = models.ForeignKey('Case', related_name='evidence', on_delete=models.CASCADE)  # Link evidence to a case
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    file = models.FileField(upload_to='evidence/')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='evidence_created', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.title
 

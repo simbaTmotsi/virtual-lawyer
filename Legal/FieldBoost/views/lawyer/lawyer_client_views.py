@@ -3,7 +3,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case
+from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence
 from django import forms
 from django.views.generic import ListView, DetailView
 from django.conf import settings
@@ -301,6 +301,58 @@ class CaseDeleteView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Case deleted successfully.')
         return super().delete(request, *args, **kwargs)
+
+# Evidence
+class EvidenceCreateView(LoginRequiredMixin, CreateView):
+    model = Evidence
+    fields = ['title', 'description', 'file']
+    template_name = "modules/lawyer/evidence_management/evidence_create.html"
+    success_url = reverse_lazy('case_list')
+
+    def form_valid(self, form):
+        # Set the case and created_by fields before saving the form
+        case = self.get_case()
+        form.instance.case = case
+        form.instance.created_by = self.request.user
+        messages.success(self.request, 'Evidence added successfully.')
+        return super().form_valid(form)
+
+    def get_case(self):
+        # Retrieve the case object based on the case_id in the URL
+        case_id = self.kwargs.get('case_id')
+        return Case.objects.get(pk=case_id)
+    
+class EvidenceListView(LoginRequiredMixin, ListView):
+    model = Evidence
+    template_name = "modules/lawyer/evidence_management/evidence_list.html"
+    context_object_name = 'evidence_items'
+
+    def get_queryset(self):
+        # Filter evidence by the case specified in the URL
+        case_id = self.kwargs.get('case_id')
+        return Evidence.objects.filter(case_id=case_id)
+    
+class EvidenceUpdateView(LoginRequiredMixin, UpdateView):
+    model = Evidence
+    fields = ['title', 'description', 'file']
+    template_name = "modules/lawyer/evidence_management/evidence_edit.html"
+    success_url = reverse_lazy('case_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Evidence updated successfully.')
+        return super().form_valid(form)
+
+class EvidenceDeleteView(LoginRequiredMixin, DeleteView):
+    model = Evidence
+    template_name = "modules/lawyer/evidence_management/evidence_confirm_delete.html"
+    success_url = reverse_lazy('case_list')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Evidence deleted successfully.')
+        return super().delete(request, *args, **kwargs)
+
+
+
 
 
 
