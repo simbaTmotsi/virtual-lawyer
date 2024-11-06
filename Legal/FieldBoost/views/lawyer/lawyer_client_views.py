@@ -14,6 +14,9 @@ from django.views.generic import ListView, DetailView, TemplateView
 from django.conf import settings
 from django.http import JsonResponse
 from django.core.mail import send_mail
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+import markdown
 
 
 
@@ -467,17 +470,6 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
 def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
 
-import os
-import google.generativeai as genai
-from django.views import View
-
-import requests
-import json
-from django.contrib import messages
-from django.views.generic import TemplateView
-from django.shortcuts import render
-from django.contrib.auth.mixins import LoginRequiredMixin
-
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
     login_url = '/login/'
@@ -498,7 +490,7 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 chat_history.append({"role": "user", "text": user_query})
 
                 # Prepare the API request to Gemini
-                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace this with your API Key securely
+                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace with your actual API key
                 model_name = "models/gemini-1.5-flash"
                 url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={API_KEY}"
 
@@ -521,24 +513,20 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 # Convert payload to JSON string
                 payload_json = json.dumps(payload)
 
-                # Debugging - Print headers, payload, and URL to compare with Postman
-                print("URL:", url)
-                print("Headers:", headers)
-                print("Payload:", payload_json)
-
                 # Make the POST request to the API
                 response = requests.post(url, headers=headers, data=payload_json)
-
-                # Debugging - Print the response
-                print("Response status code:", response.status_code)
-                print("Response content:", response.content)
 
                 # Handle and process the response
                 if response.status_code == 200:
                     response_json = response.json()
-                    # Extract the response from the 'candidates' field correctly
+                    # Extract the response from the 'candidates' field
                     response_text = response_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "No response generated.")
-                    chat_history.append({"role": "model", "text": response_text})
+
+                    # Convert the response text from Markdown to HTML
+                    response_html = markdown.markdown(response_text)
+
+                    # Add the response to chat history
+                    chat_history.append({"role": "model", "text": response_html, "is_html": True})
                 else:
                     response_text = f"Error: Unable to get a response from the model. Status Code: {response.status_code}"
                     messages.error(request, response_text)
@@ -561,6 +549,14 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
             chat_history = request.session.get('chat_history', [])
             return render(request, self.template_name, {'chat_history': chat_history})
 
-
-
+@csrf_exempt
+def clear_chat(request):
+    if request.method == 'POST':
+        try:
+            # Clear the chat history from session
+            request.session['chat_history'] = []
+            request.session.modified = True
+            return JsonResponse({'message': 'Chat history cleared successfully.'})
+        except Exception as e:
+            return JsonResponse({'error': f"Failed to clear chat history: {str(e)}"}, status=400)
 

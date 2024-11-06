@@ -3,43 +3,101 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-<div class="container mt-5"><hr/><hr/>
-    <h2>Legal Research Assistant</h2>
+<div class="container mt-5">
     
-    <!-- Form to input user query -->
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <textarea name="query" class="form-control" rows="3" placeholder="Enter your legal question here..."></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary mt-2">Submit</button>
-    </form>
-    
-    <!-- Display Chat History -->
-    <div class="chat-history mt-5">
-        {% if chat_history %}
-            <h4>Chat History:</h4>
-            <div class="card">
+    <hr>
+
+    <div class="chat-history mt-5" id="chat-history">
+        <h4>Chat History</h4>
+        {% for message in chat_history %}
+            <div class="card my-2">
                 <div class="card-body">
-                    {% for chat in chat_history %}
-                        {% if chat.role == "user" %}
-                            <div class="user-message">
-                                <strong>User:</strong> {{ chat.text }}
-                            </div>
+                    {% if message.role == 'user' %}
+                        <strong>User:</strong>
+                        <p>{{ message.text }}</p>
+                    {% elif message.role == 'model' %}
+                        <strong>Legal Assistant:</strong>
+                        {% if message.is_html %}
+                            <div>{{ message.text|safe }}</div>  <!-- Use safe filter to render HTML -->
                         {% else %}
-                            <div class="model-response mt-2">
-                                <strong>Assistant:</strong> {{ chat.text }}
-                            </div>
+                            <p>{{ message.text }}</p>
                         {% endif %}
-                    {% endfor %}
+                    {% endif %}
                 </div>
             </div>
-        {% else %}
-            <p>No chat history available.</p>
-        {% endif %}
+        {% endfor %}
     </div>
+
+    <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
+
+    <hr>
+
+    <h2>Legal Research Assistant</h2>
+    <form id="legal-research-form" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="query">Enter your legal research question:</label>
+            <input type="text" id="query" name="query" class="form-control" placeholder="Ask me anything...">
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+    <hr>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Scroll to the bottom of the chat history on page load
+        const chatHistory = document.getElementById('chat-history');
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        // Scroll to the bottom of the entire page on page load
+        window.scrollTo(0, document.body.scrollHeight);
+
+        // Scroll to the bottom of the chat history on form submission
+        $('#legal-research-form').on('submit', function(event) {
+            event.preventDefault();
+            const query = $('#query').val();
+            if (query.trim() !== "") {
+                $.ajax({
+                    url: "{% url 'legal_research' %}",
+                    type: "POST",
+                    data: {
+                        'query': query,
+                        'csrfmiddlewaretoken': '{{ csrf_token }}'
+                    },
+                    success: function(response) {
+                        $('.chat-history').html($(response).find('.chat-history').html());
+                        $('#query').val('');
+                        chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after updating chat
+                        window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
+                    },
+                    error: function(xhr, errmsg, err) {
+                        alert("An error occurred: " + errmsg);
+                    }
+                });
+            }
+        });
+
+        // Handle clearing the chat
+        $('#clear-chat').on('click', function() {
+            $.ajax({
+                url: "{% url 'clear_chat' %}",
+                type: "POST",
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    $('.chat-history').html('<h4>Chat History</h4><p>No chat history available.</p>');
+                    chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after clearing chat
+                    window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
+                },
+                error: function(xhr, errmsg, err) {
+                    alert("An error occurred while clearing the chat: " + errmsg);
+                }
+            });
+        });
+    });
+</script>
+
 {% endblock %}
-
-
