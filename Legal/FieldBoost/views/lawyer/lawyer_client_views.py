@@ -1,4 +1,5 @@
 # views.py
+import json
 import os
 import google.generativeai as genai
 from django.shortcuts import get_object_or_404, render, redirect
@@ -6,14 +7,15 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormVi
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+import requests
 from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence
 from django import forms
 from django.views.generic import ListView, DetailView, TemplateView
 from django.conf import settings
+from django.http import JsonResponse
 from django.core.mail import send_mail
 
-# Configure Gemini API
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+
 
 # Client Management Module
 class ClientOnboardingView(LoginRequiredMixin, CreateView):
@@ -462,54 +464,103 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
         context['cases'] = Case.objects.all()
         return context
 
+def debug_session(request):
+    return JsonResponse(request.session.get('chat_history', []), safe=False)
+
+import os
+import google.generativeai as genai
+from django.views import View
+
+import requests
+import json
+from django.contrib import messages
+from django.views.generic import TemplateView
+from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
-    login_url = reverse_lazy('login_home')
+    login_url = '/login/'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        # Load the chat history from the session or initialize it
+        chat_history = request.session.get('chat_history', [])
+        return render(request, self.template_name, {'chat_history': chat_history})
 
     def post(self, request, *args, **kwargs):
         user_query = request.POST.get('query')
         if user_query:
             try:
-                # Create the model with the specified generation configuration
-                generation_config = {
-                    "temperature": 1,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "max_output_tokens": 8192,
-                    "response_mime_type": "application/json",
+                # Load existing chat history from session
+                chat_history = request.session.get('chat_history', [])
+
+                # Append new user query to the chat history
+                chat_history.append({"role": "user", "text": user_query})
+
+                # Prepare the API request to Gemini
+                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace this with your API Key securely
+                model_name = "models/gemini-1.5-flash"
+                url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={API_KEY}"
+
+                payload = {
+                    "contents": [
+                        {
+                            "parts": [
+                                {
+                                    "text": f"{user_query}"
+                                }
+                            ]
+                        }
+                    ]
                 }
 
-                model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
-                    generation_config=generation_config,
-                )
+                headers = {
+                    'Content-Type': 'application/json'
+                }
 
-                # Start a chat session
-                chat_session = model.start_chat(
-                    history=[
-                        {
-                            "role": "user",
-                            "parts": [user_query],
-                        },
-                    ]
-                )
+                # Convert payload to JSON string
+                payload_json = json.dumps(payload)
 
-                # Send user input to the Gemini model
-                response = chat_session.send_message(user_query)
+                # Debugging - Print headers, payload, and URL to compare with Postman
+                print("URL:", url)
+                print("Headers:", headers)
+                print("Payload:", payload_json)
 
-                # Extract response text
-                response_text = response.text
+                # Make the POST request to the API
+                response = requests.post(url, headers=headers, data=payload_json)
 
-                return render(request, self.template_name, {'query': user_query, 'response': response_text})
+                # Debugging - Print the response
+                print("Response status code:", response.status_code)
+                print("Response content:", response.content)
+
+                # Handle and process the response
+                if response.status_code == 200:
+                    response_json = response.json()
+                    # Extract the response from the 'candidates' field correctly
+                    response_text = response_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "No response generated.")
+                    chat_history.append({"role": "model", "text": response_text})
+                else:
+                    response_text = f"Error: Unable to get a response from the model. Status Code: {response.status_code}"
+                    messages.error(request, response_text)
+
+                # Save updated chat history to the session
+                request.session['chat_history'] = chat_history
+                request.session.modified = True
+
+                # Render the updated chat history in the template
+                return render(request, self.template_name, {'chat_history': chat_history})
 
             except Exception as e:
                 messages.error(request, f"Failed to process your request: {str(e)}")
-                return redirect('legal_research')
-
+                # Render the template with the current chat history even if an error occurs
+                chat_history = request.session.get('chat_history', [])
+                return render(request, self.template_name, {'chat_history': chat_history})
         else:
             messages.error(request, "Please enter a legal query.")
-            return redirect('legal_research')
+            # Render the template again with existing chat history
+            chat_history = request.session.get('chat_history', [])
+            return render(request, self.template_name, {'chat_history': chat_history})
+
+
+
 
