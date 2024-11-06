@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'FieldBoost',
     'widget_tweaks',
+    'markdownify',
     'crispy_forms',
     'crispy_bootstrap5'
 ]

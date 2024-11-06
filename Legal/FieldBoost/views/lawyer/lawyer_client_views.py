@@ -469,6 +469,8 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
 def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
 
+import markdown
+
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
     login_url = '/login/'
@@ -501,7 +503,7 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 chat_history.append({"role": "user", "text": user_query})
 
                 # Prepare the API request to Gemini
-                API_KEY = "YOUR_API_KEY"
+                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace with your actual API key
                 model_name = "models/gemini-1.5-flash"
                 url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={API_KEY}"
 
@@ -531,7 +533,12 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 if response.status_code == 200:
                     response_json = response.json()
                     response_text = response_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "No response generated.")
-                    chat_history.append({"role": "model", "text": response_text})
+
+                    # Convert the response text from Markdown to HTML
+                    response_html = markdown.markdown(response_text, extensions=['extra', 'sane_lists', 'codehilite'])
+
+                    # Add the response to chat history
+                    chat_history.append({"role": "model", "text": response_html, "is_html": True})
                 else:
                     response_text = f"Error: Unable to get a response from the model. Status Code: {response.status_code}"
                     messages.error(request, response_text)
@@ -563,6 +570,7 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 'chat_history': chat_history,
                 'case': case  # Pass the entire case object to context
             })
+
 
 class ClearChatView(View):
     def post(self, request, case_id):

@@ -4,12 +4,10 @@
 {% block content %}
 
 <div class="container mt-5">
-
     <hr><hr>
-    
     <h3>Legal Research Assistant for Case: {{ case.title }}</h3>
     <p><strong>Description:</strong> {{ case.description }}</p>
-    <p><strong>Client:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
+    <p><strong>Client Name:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
     <p><strong>Email:</strong> {{ case.client.email }}</p>
     
     <hr>
@@ -24,11 +22,7 @@
                         <p>{{ message.text }}</p>
                     {% elif message.role == 'model' %}
                         <strong>Legal Assistant:</strong>
-                        {% if message.is_html %}
-                            <div>{{ message.text|safe }}</div>  <!-- Use safe filter to render HTML -->
-                        {% else %}
-                            <p>{{ message.text }}</p>
-                        {% endif %}
+                        <div>{{ message.text|safe }}</div> <!-- Use safe filter to render Markdown HTML -->
                     {% endif %}
                 </div>
             </div>
@@ -76,13 +70,13 @@
                         'csrfmiddlewaretoken': '{{ csrf_token }}'
                     },
                     success: function(response) {
-                        $('.chat-history').html($(response).find('.chat-history').html());
+                        $('#chat-history').html($(response).find('#chat-history').html());
                         $('#query').val('');
                         chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after updating chat
                         window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
                     },
                     error: function(xhr, errmsg, err) {
-                        alert("An error occurred: " + errmsg);
+                        console.error("An error occurred:", errmsg);
                     }
                 });
             }
@@ -98,12 +92,12 @@
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function(response) {
-                    $('.chat-history').html('<h4>Chat History for Case: {{ case.title }}</h4><p>No chat history available.</p>');
+                    $('#chat-history').html('<h4>Chat History for Case: {{ case.title }}</h4><p>No chat history available.</p>');
                     chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after clearing chat
                     window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
                 },
                 error: function(xhr, errmsg, err) {
-                    alert("An error occurred while clearing the chat: " + errmsg);
+                    console.error("An error occurred while clearing the chat:", errmsg);
                 }
             });
         });
