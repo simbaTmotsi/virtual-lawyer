@@ -8,14 +8,13 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 import requests
-from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence
+from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence, ChatMessage
 from django import forms
 from django.views.generic import ListView, DetailView, TemplateView
 from django.conf import settings
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 import markdown
 
 
@@ -474,23 +473,35 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
     login_url = '/login/'
 
-    def get(self, request, *args, **kwargs):
-        # Load the chat history from the session or initialize it
-        chat_history = request.session.get('chat_history', [])
-        return render(request, self.template_name, {'chat_history': chat_history})
+    def get(self, request, case_id, *args, **kwargs):
+        # Load the case object for detailed context
+        case = get_object_or_404(Case, id=case_id)
 
-    def post(self, request, *args, **kwargs):
+        # Load the chat history for the given case ID from the session or initialize it
+        chat_history_key = f'chat_history_{case_id}'
+        chat_history = request.session.get(chat_history_key, [])
+
+        return render(request, self.template_name, {
+            'chat_history': chat_history,
+            'case': case  # Pass the entire case object to context
+        })
+
+    def post(self, request, case_id, *args, **kwargs):
         user_query = request.POST.get('query')
         if user_query:
             try:
-                # Load existing chat history from session
-                chat_history = request.session.get('chat_history', [])
+                # Load the case object for detailed context
+                case = get_object_or_404(Case, id=case_id)
+
+                # Load existing chat history for the case ID from session
+                chat_history_key = f'chat_history_{case_id}'
+                chat_history = request.session.get(chat_history_key, [])
 
                 # Append new user query to the chat history
                 chat_history.append({"role": "user", "text": user_query})
 
                 # Prepare the API request to Gemini
-                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace with your actual API key
+                API_KEY = "YOUR_API_KEY"
                 model_name = "models/gemini-1.5-flash"
                 url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={API_KEY}"
 
@@ -519,44 +530,51 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 # Handle and process the response
                 if response.status_code == 200:
                     response_json = response.json()
-                    # Extract the response from the 'candidates' field
                     response_text = response_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "No response generated.")
-
-                    # Convert the response text from Markdown to HTML
-                    response_html = markdown.markdown(response_text)
-
-                    # Add the response to chat history
-                    chat_history.append({"role": "model", "text": response_html, "is_html": True})
+                    chat_history.append({"role": "model", "text": response_text})
                 else:
                     response_text = f"Error: Unable to get a response from the model. Status Code: {response.status_code}"
                     messages.error(request, response_text)
 
-                # Save updated chat history to the session
-                request.session['chat_history'] = chat_history
+                # Save updated chat history for the case ID to the session
+                request.session[chat_history_key] = chat_history
                 request.session.modified = True
 
                 # Render the updated chat history in the template
-                return render(request, self.template_name, {'chat_history': chat_history})
+                return render(request, self.template_name, {
+                    'chat_history': chat_history,
+                    'case': case  # Pass the entire case object to context
+                })
 
             except Exception as e:
                 messages.error(request, f"Failed to process your request: {str(e)}")
                 # Render the template with the current chat history even if an error occurs
-                chat_history = request.session.get('chat_history', [])
-                return render(request, self.template_name, {'chat_history': chat_history})
+                chat_history = request.session.get(chat_history_key, [])
+                return render(request, self.template_name, {
+                    'chat_history': chat_history,
+                    'case': case  # Pass the entire case object to context
+                })
         else:
             messages.error(request, "Please enter a legal query.")
             # Render the template again with existing chat history
-            chat_history = request.session.get('chat_history', [])
-            return render(request, self.template_name, {'chat_history': chat_history})
+            case = get_object_or_404(Case, id=case_id)
+            chat_history = request.session.get(chat_history_key, [])
+            return render(request, self.template_name, {
+                'chat_history': chat_history,
+                'case': case  # Pass the entire case object to context
+            })
 
-@csrf_exempt
-def clear_chat(request):
-    if request.method == 'POST':
+class ClearChatView(View):
+    def post(self, request, case_id):
         try:
-            # Clear the chat history from session
-            request.session['chat_history'] = []
-            request.session.modified = True
-            return JsonResponse({'message': 'Chat history cleared successfully.'})
+            # Clear chat history for the given case
+            chat_history_key = f'chat_history_{case_id}'
+            if chat_history_key in request.session:
+                del request.session[chat_history_key]
+                request.session.modified = True
+            messages.success(request, "Chat history cleared successfully.")
         except Exception as e:
-            return JsonResponse({'error': f"Failed to clear chat history: {str(e)}"}, status=400)
+            messages.error(request, f"Failed to clear chat history: {str(e)}")
 
+        # Redirect back to the legal research page for the same case
+        return redirect('legal_research', case_id=case_id)

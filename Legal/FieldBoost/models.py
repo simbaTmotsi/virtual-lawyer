@@ -173,3 +173,19 @@ class Evidence(models.Model):
     def __str__(self):
         return f"{self.title} (Case: {self.case.title})"
 
+class ChatMessage(models.Model):
+    ROLE_CHOICES = [
+        ('user', 'User'),
+        ('model', 'Model'),
+    ]
+
+    case = models.ForeignKey(Case, related_name='chat_messages', on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    text = models.TextField()
+    is_html = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.role} - {self.text[:50]}"
+

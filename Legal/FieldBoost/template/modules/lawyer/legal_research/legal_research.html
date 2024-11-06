@@ -4,11 +4,18 @@
 {% block content %}
 
 <div class="container mt-5">
+
+    <hr><hr>
+    
+    <h3>Legal Research Assistant for Case: {{ case.title }}</h3>
+    <p><strong>Description:</strong> {{ case.description }}</p>
+    <p><strong>Client:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
+    <p><strong>Email:</strong> {{ case.client.email }}</p>
     
     <hr>
 
     <div class="chat-history mt-5" id="chat-history">
-        <h4>Chat History</h4>
+        <h4>Chat History for Case: {{ case.title }}</h4>
         {% for message in chat_history %}
             <div class="card my-2">
                 <div class="card-body">
@@ -58,9 +65,11 @@
         $('#legal-research-form').on('submit', function(event) {
             event.preventDefault();
             const query = $('#query').val();
+            const caseId = "{{ case.id }}";  // Get case_id from context
+
             if (query.trim() !== "") {
                 $.ajax({
-                    url: "{% url 'legal_research' %}",
+                    url: `/lawyer/legal-research/${caseId}/`,
                     type: "POST",
                     data: {
                         'query': query,
@@ -81,14 +90,15 @@
 
         // Handle clearing the chat
         $('#clear-chat').on('click', function() {
+            const caseId = "{{ case.id }}";
             $.ajax({
-                url: "{% url 'clear_chat' %}",
+                url: `/lawyer/legal-research/clear-chat/${caseId}/`,
                 type: "POST",
                 data: {
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function(response) {
-                    $('.chat-history').html('<h4>Chat History</h4><p>No chat history available.</p>');
+                    $('.chat-history').html('<h4>Chat History for Case: {{ case.title }}</h4><p>No chat history available.</p>');
                     chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after clearing chat
                     window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
                 },

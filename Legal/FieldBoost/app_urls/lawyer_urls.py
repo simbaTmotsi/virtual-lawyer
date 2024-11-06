@@ -94,8 +94,9 @@ urlpatterns = [
     #---------------------------------------------------------------------------------------
 
     #---------------- # Legal research
-    path('legal-research/', lawyer_client_views.LegalResearchView.as_view(), name='legal_research'),
-    path('legal-research/clear-chat/', lawyer_client_views.clear_chat, name='clear_chat'),
+    #path('legal-research/', lawyer_client_views.LegalResearchView.as_view(), name='legal_research'),
+    path('legal-research/<int:case_id>/', lawyer_client_views.LegalResearchView.as_view(), name='legal_research'),
+    path('legal-research/clear-chat/<int:case_id>/', lawyer_client_views.ClearChatView.as_view(), name='clear_chat'),
     #---------------------------------------------------------------------------------------
     
 
