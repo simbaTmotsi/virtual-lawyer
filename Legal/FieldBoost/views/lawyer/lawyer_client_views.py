@@ -1,6 +1,7 @@
 # views.py
 import json
 import os
+from django.core.files.storage import default_storage
 import google.generativeai as genai
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
@@ -470,6 +471,8 @@ def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
 
 import markdown
+import time
+from django.core.files.storage import FileSystemStorage
 
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
@@ -586,3 +589,80 @@ class ClearChatView(View):
 
         # Redirect back to the legal research page for the same case
         return redirect('legal_research', case_id=case_id)
+    
+# Configure the Gemini API key
+API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg")
+genai.configure(api_key=API_KEY)
+
+class DocumentAnalysisView(TemplateView):
+    template_name = "modules/lawyer/document_analysis/document_analysis.html"
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # Get the uploaded file
+            uploaded_file = request.FILES.get('document')
+            if not uploaded_file:
+                messages.error(request, "Please upload a PDF document.")
+                return render(request, self.template_name)
+
+            # Save the uploaded file to a local directory
+            fs = FileSystemStorage()
+            filename = fs.save(uploaded_file.name, uploaded_file)
+            file_path = fs.path(filename)
+
+            # Upload the file to Gemini
+            file = self.upload_to_gemini(file_path, mime_type="application/pdf")
+            
+            # Wait for file processing to complete
+            self.wait_for_files_active([file])
+
+            # Prepare a request to generate content
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            chat_session = model.start_chat(
+                history=[
+                    {
+                        "role": "user",
+                        "parts": [
+                            file,
+                            "Can you give me a summary of this document?",
+                        ],
+                    }
+                ]
+            )
+            
+            # Send the message to the model
+            response = chat_session.send_message("Give me a summary of this document.")
+            summary = response.text
+
+            return render(request, self.template_name, {
+                'summary': summary
+            })
+
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+            return render(request, self.template_name)
+
+    def upload_to_gemini(self, path, mime_type=None):
+        """Uploads the given file to Gemini."""
+        file = genai.upload_file(path, mime_type=mime_type)
+        print(f"Uploaded file '{file.display_name}' as: {file.uri}")
+        return file
+
+    def wait_for_files_active(self, files):
+        """Waits for the given files to be active."""
+        print("Waiting for file processing...")
+        for name in (file.name for file in files):
+            file = genai.get_file(name)
+            while file.state.name == "PROCESSING":
+                print(".", end="", flush=True)
+                time.sleep(10)
+                file = genai.get_file(name)
+            if file.state.name != "ACTIVE":
+                raise Exception(f"File {file.name} failed to process")
+        print("...all files ready")
+
+
+

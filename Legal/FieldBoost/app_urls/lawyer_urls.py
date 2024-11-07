@@ -98,6 +98,6 @@ urlpatterns = [
     path('legal-research/<int:case_id>/', lawyer_client_views.LegalResearchView.as_view(), name='legal_research'),
     path('legal-research/clear-chat/<int:case_id>/', lawyer_client_views.ClearChatView.as_view(), name='clear_chat'),
     #---------------------------------------------------------------------------------------
-    
+    path('document-analysis/', lawyer_client_views.DocumentAnalysisView.as_view(), name='document_analysis'),
 
 ]+static(settings.MEDIA_URL, document_root=settings.EASYLAW_DOCS_ROOT)

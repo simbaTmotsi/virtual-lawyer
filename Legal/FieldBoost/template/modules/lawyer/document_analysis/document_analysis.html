@@ -1,0 +1,36 @@
+{% extends "lawyer_base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-5">
+    <hr><hr>
+    <h2>Document Analysis</h2>
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="document">Upload a PDF Document:</label>
+            <input type="file" id="document" name="document" accept=".pdf" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Analyze Document</button>
+    </form>
+
+    {% if summary %}
+    <hr>
+    <h4>Document Summary</h4>
+    <div class="card">
+        <div class="card-body">
+            <p>{{ summary }}</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
