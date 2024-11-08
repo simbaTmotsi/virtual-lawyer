@@ -9,6 +9,15 @@
     <p><strong>Description:</strong> {{ case.description }}</p>
     <p><strong>Client Name:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
     <p><strong>Email:</strong> {{ case.client.email }}</p>
+
+    <!-- Display any messages -->
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
     
     <hr>
 

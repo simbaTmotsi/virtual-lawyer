@@ -471,6 +471,7 @@ def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
 
 import markdown
+import PyPDF2
 import time
 from django.core.files.storage import FileSystemStorage
 
@@ -577,75 +578,79 @@ class ClearChatView(View):
 API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg")
 genai.configure(api_key=API_KEY)
 
-class DocumentAnalysisView(TemplateView):
+# Form for document upload
+class DocumentUploadForm(forms.Form):
+    file = forms.FileField(label="Upload PDF Document", required=True)
+
+# Form for document upload
+class DocumentUploadForm(forms.Form):
+    file1 = forms.FileField(label="Upload PDF Document 1", required=True)
+    file2 = forms.FileField(label="Upload PDF Document 2 (optional)", required=False)
+
+# Form for document upload
+class DocumentUploadForm(forms.Form):
+    file1 = forms.FileField(label="Upload PDF Document 1", required=True)
+    file2 = forms.FileField(label="Upload PDF Document 2 (optional)", required=False)
+
+class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_analysis/document_analysis.html"
+    login_url = '/login/'
+
+    def extract_text_from_pdf(self, pdf_file):
+        # Extract text from the PDF using PyPDF2
+        try:
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            extracted_text = ""
+            for page in pdf_reader.pages:
+                text = page.extract_text()
+                if text:
+                    extracted_text += text
+            return extracted_text
+        except Exception as e:
+            return str(e)
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        form = DocumentUploadForm()
+        return render(request, self.template_name, {'form': form, 'response_text': ''})
 
     def post(self, request, *args, **kwargs):
-        try:
-            # Get the uploaded file
-            uploaded_file = request.FILES.get('document')
-            if not uploaded_file:
-                messages.error(request, "Please upload a PDF document.")
-                return render(request, self.template_name)
+        form = DocumentUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Handle file uploads
+            uploaded_file1 = request.FILES['file1']
+            uploaded_file2 = request.FILES.get('file2')
 
-            # Save the uploaded file to a local directory
-            fs = FileSystemStorage()
-            filename = fs.save(uploaded_file.name, uploaded_file)
-            file_path = fs.path(filename)
+            try:
+                # Extract text from the uploaded files
+                text1 = self.extract_text_from_pdf(uploaded_file1)
+                text2 = None
+                if uploaded_file2:
+                    text2 = self.extract_text_from_pdf(uploaded_file2)
 
-            # Upload the file to Gemini
-            file = self.upload_to_gemini(file_path, mime_type="application/pdf")
-            
-            # Wait for file processing to complete
-            self.wait_for_files_active([file])
+                # Prepare the prompt for Gemini
+                prompt = "Provide a summary of the following document:" if not text2 else "Summarize the differences between the two documents."
+                inputs = [prompt, text1]
+                if text2:
+                    inputs.append(text2)
 
-            # Prepare a request to generate content
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            chat_session = model.start_chat(
-                history=[
-                    {
-                        "role": "user",
-                        "parts": [
-                            file,
-                            "Can you give me a summary of this document?",
-                        ],
-                    }
-                ]
-            )
-            
-            # Send the message to the model
-            response = chat_session.send_message("Give me a summary of this document.")
-            summary = response.text
+                # Generate content using Gemini
+                model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+                response = model.generate_content(inputs)
 
-            return render(request, self.template_name, {
-                'summary': summary
-            })
+                # Extract the response text and convert it to markdown
+                response_text = markdown.markdown(response.text)  # Convert response to Markdown
 
-        except Exception as e:
-            messages.error(request, f"An error occurred: {str(e)}")
-            return render(request, self.template_name)
+                # Provide feedback to the user
+                messages.success(request, "Document analysis successful.")
 
-    def upload_to_gemini(self, path, mime_type=None):
-        """Uploads the given file to Gemini."""
-        file = genai.upload_file(path, mime_type=mime_type)
-        print(f"Uploaded file '{file.display_name}' as: {file.uri}")
-        return file
+            except Exception as e:
+                response_text = f"An error occurred: {str(e)}"
+                messages.error(request, response_text)
 
-    def wait_for_files_active(self, files):
-        """Waits for the given files to be active."""
-        print("Waiting for file processing...")
-        for name in (file.name for file in files):
-            file = genai.get_file(name)
-            while file.state.name == "PROCESSING":
-                print(".", end="", flush=True)
-                time.sleep(10)
-                file = genai.get_file(name)
-            if file.state.name != "ACTIVE":
-                raise Exception(f"File {file.name} failed to process")
-        print("...all files ready")
+            # Render the page with the response
+            return render(request, self.template_name, {'form': form, 'response_text': response_text, 'is_markdown': True})
 
-
+        else:
+            messages.error(request, "Please upload valid PDF documents.")
+            return render(request, self.template_name, {'form': form, 'response_text': ''})
 
