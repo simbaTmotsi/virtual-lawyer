@@ -592,10 +592,6 @@ class DocumentUploadForm(forms.Form):
     file1 = forms.FileField(label="Upload PDF Document 1", required=True)
     file2 = forms.FileField(label="Upload PDF Document 2 (optional)", required=False)
 
-
-
-from django.http import JsonResponse
-
 class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_analysis/document_analysis.html"
     login_url = '/login/'
@@ -615,13 +611,10 @@ class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         form = DocumentUploadForm()
-        return render(request, self.template_name, {'form': form, 'response_text': '', 'document_titles': []})
+        return render(request, self.template_name, {'form': form, 'response_text': ''})
 
     def post(self, request, *args, **kwargs):
         form = DocumentUploadForm(request.POST, request.FILES)
-        document_titles = []
-        response_text = ""
-
         if form.is_valid():
             # Handle file uploads
             uploaded_file1 = request.FILES['file1']
@@ -630,11 +623,9 @@ class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
             try:
                 # Extract text from the uploaded files
                 text1 = self.extract_text_from_pdf(uploaded_file1)
-                document_titles.append(uploaded_file1.name)
                 text2 = None
                 if uploaded_file2:
                     text2 = self.extract_text_from_pdf(uploaded_file2)
-                    document_titles.append(uploaded_file2.name)
 
                 # Prepare the prompt for Gemini
                 prompt = "Provide a summary of the following document:" if not text2 else "Summarize the differences between the two documents."
@@ -656,14 +647,10 @@ class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
                 response_text = f"An error occurred: {str(e)}"
                 messages.error(request, response_text)
 
-            # Return JSON response for AJAX
-            return JsonResponse({
-                'document_titles': document_titles,
-                'response_text': response_text,
-            })
+            # Render the page with the response
+            return render(request, self.template_name, {'form': form, 'response_text': response_text, 'is_markdown': True})
 
         else:
             messages.error(request, "Please upload valid PDF documents.")
-            return JsonResponse({
-                'error': "Please upload valid PDF documents.",
-            }, status=400)
+            return render(request, self.template_name, {'form': form, 'response_text': ''})
+

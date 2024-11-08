@@ -1,199 +1,29 @@
 {% extends "lawyer_base.html" %}
 {% load static %}
-{% load crispy_forms_tags %}
+{% load markdownify %}
+
 {% block content %}
 
 <div class="container mt-5">
     <hr><hr>
+    <h3>Document Analysis</h3>
+    <p>Upload one or two PDF documents to get a summary or comparison using AI.</p>
 
-    <h3>Document Analysis Assistant</h3>
-    
-    <!-- Upload Form -->
-    <div class="document-upload" id="document-upload-section">
-        <form method="post" enctype="multipart/form-data" id="document-upload-form">
-            <p>Upload your documents below to perform an analysis and interact with the content.</p>
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="file1">Choose First Document:</label>
-                <input type="file" id="file1" name="file1" class="form-control mb-3">
-            </div>
-            <div class="form-group">
-                <label for="file2">Choose Second Document (Optional):</label>
-                <input type="file" id="file2" name="file2" class="form-control mb-3">
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Upload</button>
-        </form>
-    </div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary mt-3">Upload and Analyze</button>
+    </form>
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" style="display: none;" class="text-center mt-4">
-        <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-        <p>Please wait while your documents are being uploaded...</p>
-    </div>
-
-    <!-- Document Titles After Upload -->
-    <div class="document-titles mt-4" id="document-titles-section" style="display: none;">
-        <hr><hr>
-        <!-- Display any messages -->
-        {% if messages %}
-            <div class="alert-container mt-3">
-                {% for message in messages %}
-                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        <h4>Uploaded Document(s):</h4>
-        <ul id="document-title-list">
-            <!-- Document titles will be added here after successful upload -->
-        </ul>
-    </div>
-
-    <hr>
-
-    <!-- Chat Section -->
-    <div class="chat-section mt-5" id="chat-section" style="display: none;">
-        <div class="chat-history mt-4" id="chat-history">
-            <h4>Chat History</h4>
-            {% if chat_history %}
-                {% for message in chat_history %}
-                    <div class="card my-2">
-                        <div class="card-body">
-                            {% if message.role == 'user' %}
-                                <strong>User:</strong>
-                                <p>{{ message.text }}</p>
-                            {% elif message.role == 'model' %}
-                                <strong>Document Assistant:</strong>
-                                <div>{{ message.text|safe }}</div> <!-- Render HTML safely -->
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>No chat history available.</p>
-            {% endif %}
-        </div>
-
-        <!-- Clear Chat Button -->
-        <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
-
+    {% if response_text %}
         <hr>
-
-        <!-- Document Analysis Assistant Form -->
-        <h2>Document Analysis Assistant</h2>
-        <form id="document-analysis-form" method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="query">Enter your analysis question:</label>
-                <input type="text" id="query" name="query" class="form-control" placeholder="Ask me anything about the document(s)...">
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Submit</button>
-        </form>
-    </div>
+        <h4>Analysis Result</h4>
+        {% if is_markdown %}
+            <div>{{ response_text|safe }}</div>  <!-- Render as safe HTML if Markdown -->
+        {% else %}
+            <pre>{{ response_text }}</pre> <!-- Render plain text if not Markdown -->
+        {% endif %}
+    {% endif %}
 </div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Scroll to the bottom of the chat history on page load
-        const chatHistory = document.getElementById('chat-history');
-        if (chatHistory) {
-            chatHistory.scrollTop = chatHistory.scrollHeight;
-        }
-
-        // Handle the document upload form submission via AJAX
-        $('#document-upload-form').on('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            
-            // Show loading spinner
-            $('#loading-spinner').show();
-            $('#document-upload-section').hide(); // Hide the upload form during the upload
-
-            $.ajax({
-                url: "{% url 'document_analysis' %}",
-                type: "POST",
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function(response) {
-                    // Hide loading spinner and show the document titles and chat section
-                    $('#loading-spinner').hide();
-                    $('#chat-section').show();
-
-                    // Clear the previous document titles
-                    $('#document-title-list').empty();
-
-                    // Extract document titles from the response
-                    const documentTitles = response.document_titles;
-
-                    // Add document titles to the list
-                    if (documentTitles && documentTitles.length > 0) {
-                        documentTitles.forEach(function(title) {
-                            $('#document-title-list').append('<li>' + title + '</li>');
-                        });
-                    }
-
-                    $('#document-titles-section').show(); // Show document titles section
-                },
-                error: function(xhr, errmsg, err) {
-                    console.error("An error occurred while uploading the documents:", errmsg);
-                    $('#loading-spinner').hide(); // Hide loading spinner on error
-                    $('#document-upload-section').show(); // Show the upload form again on error
-                }
-            });
-        });
-
-        // Handle the chat form submission via AJAX
-        $('#document-analysis-form').on('submit', function(event) {
-            event.preventDefault();
-            const query = $('#query').val();
-            if (query.trim() !== "") {
-                $.ajax({
-                    url: "{% url 'document_analysis' %}",
-                    type: "POST",
-                    data: {
-                        'query': query,
-                        'csrfmiddlewaretoken': '{{ csrf_token }}'
-                    },
-                    success: function(response) {
-                        $('#chat-history').html($(response).find('#chat-history').html());
-                        $('#query').val('');
-                        if (chatHistory) {
-                            chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after updating chat
-                        }
-                    },
-                    error: function(xhr, errmsg, err) {
-                        console.error("An error occurred:", errmsg);
-                    }
-                });
-            }
-        });
-
-        // Handle clearing the chat
-        $('#clear-chat').on('click', function() {
-            $.ajax({
-                url: "{% url 'document_analysis_clear_chat' %}",
-                type: "POST",
-                data: {
-                    'csrfmiddlewaretoken': '{{ csrf_token }}'
-                },
-                success: function(response) {
-                    $('#chat-history').html('<h4>Chat History</h4><p>No chat history available.</p>');
-                    if (chatHistory) {
-                        chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after clearing chat
-                    }
-                },
-                error: function(xhr, errmsg, err) {
-                    console.error("An error occurred while clearing the chat:", errmsg);
-                }
-            });
-        });
-    });
-</script>
 
 {% endblock %}
