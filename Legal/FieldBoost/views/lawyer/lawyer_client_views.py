@@ -474,6 +474,9 @@ import markdown
 import time
 from django.core.files.storage import FileSystemStorage
 
+# Configure the Google Generative AI API
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
     login_url = '/login/'
@@ -505,46 +508,27 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 # Append new user query to the chat history
                 chat_history.append({"role": "user", "text": user_query})
 
-                # Prepare the API request to Gemini
-                API_KEY = "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg"  # Replace with your actual API key
-                model_name = "models/gemini-1.5-flash"
-                url = f"https://generativelanguage.googleapis.com/v1beta/{model_name}:generateContent?key={API_KEY}"
+                # Use the Generative Model to generate a response
+                model = genai.GenerativeModel("gemini-1.5-flash")
 
-                payload = {
-                    "contents": [
-                        {
-                            "parts": [
-                                {
-                                    "text": f"{user_query}"
-                                }
-                            ]
-                        }
-                    ]
-                }
+                # Start the chat session with the current chat history
+                model_history = [
+                    {"role": message["role"], "parts": [message["text"]]}
+                    for message in chat_history
+                ]
+                chat_session = model.start_chat(history=model_history)
 
-                headers = {
-                    'Content-Type': 'application/json'
-                }
+                # Send the user's question to the model
+                response = chat_session.send_message(user_query)
 
-                # Convert payload to JSON string
-                payload_json = json.dumps(payload)
+                # Get the text response from the model
+                response_text = response.text
 
-                # Make the POST request to the API
-                response = requests.post(url, headers=headers, data=payload_json)
+                # Convert the response text from Markdown to HTML
+                response_html = markdown.markdown(response_text)
 
-                # Handle and process the response
-                if response.status_code == 200:
-                    response_json = response.json()
-                    response_text = response_json.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "No response generated.")
-
-                    # Convert the response text from Markdown to HTML
-                    response_html = markdown.markdown(response_text, extensions=['extra', 'sane_lists', 'codehilite'])
-
-                    # Add the response to chat history
-                    chat_history.append({"role": "model", "text": response_html, "is_html": True})
-                else:
-                    response_text = f"Error: Unable to get a response from the model. Status Code: {response.status_code}"
-                    messages.error(request, response_text)
+                # Append the model's response to the chat history
+                chat_history.append({"role": "model", "text": response_html, "is_html": True})
 
                 # Save updated chat history for the case ID to the session
                 request.session[chat_history_key] = chat_history
@@ -573,7 +557,6 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 'chat_history': chat_history,
                 'case': case  # Pass the entire case object to context
             })
-
 
 class ClearChatView(View):
     def post(self, request, case_id):

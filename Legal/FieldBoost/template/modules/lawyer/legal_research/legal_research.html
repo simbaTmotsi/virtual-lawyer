@@ -22,11 +22,16 @@
                         <p>{{ message.text }}</p>
                     {% elif message.role == 'model' %}
                         <strong>Legal Assistant:</strong>
-                        <div>{{ message.text|safe }}</div> <!-- Use safe filter to render Markdown HTML -->
+                        {% if message.is_html %}
+                            <div>{{ message.text|safe }}</div>  <!-- Render HTML using the safe filter -->
+                        {% else %}
+                            <p>{{ message.text }}</p>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
         {% endfor %}
+
     </div>
 
     <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
