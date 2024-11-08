@@ -13,11 +13,11 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="file1">Choose First Document:</label>
-                <input type="file" id="file1" name="file1" class="form-control mb-3">
+                <input type="file" id="file1" name="file1" accept="application/pdf" class="form-control mb-3">
             </div>
             <div class="form-group">
                 <label for="file2">Choose Second Document (Optional):</label>
-                <input type="file" id="file2" name="file2" class="form-control mb-3">
+                <input type="file" id="file2" name="file2" accept="application/pdf" class="form-control mb-3">
             </div>
             <button type="submit" class="btn btn-primary mt-3">Upload</button>
         </form>
@@ -30,7 +30,14 @@
         </div>
         <p>Please wait while your documents are being uploaded...</p>
     </div>
+
     <hr>
+
+    <!-- Display Success or Error Messages -->
+    <div id="message-container" style="display: none;" class="alert-container mt-3">
+        <!-- Success or error messages will be dynamically added here -->
+    </div>
+
     <!-- Document Titles After Upload -->
     <div class="document-titles mt-4" id="document-titles-section" style="display: none;">
         <h4>Uploaded Document(s):</h4>
@@ -49,7 +56,7 @@
         </div>
 
         <!-- Clear Chat Button -->
-        <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
+        <button id="clear-chat" class="btn btn-danger mt-3" hidden>Clear Chat</button>
 
         <hr>
 
@@ -70,6 +77,7 @@
 <script>
     $(document).ready(function() {
         const chatContent = $("#chat-content");
+        const messageContainer = $("#message-container");
 
         // Handle the document upload form submission via AJAX
         $('#document-upload-form').on('submit', function(event) {
@@ -88,8 +96,16 @@
                 processData: false,
                 success: function(response) {
                     $('#loading-spinner').hide();
-                    $('#document-upload-section').hide();
                     $('#chat-section').show();
+
+                    // Display success message
+                    messageContainer.html(`
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            Document analysis successful.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `);
+                    messageContainer.show();
 
                     // Update document titles
                     $('#document-title-list').empty();
@@ -114,6 +130,15 @@
                     console.error("An error occurred:", errmsg);
                     $('#loading-spinner').hide();
                     $('#document-upload-section').show();
+
+                    // Display error message
+                    messageContainer.html(`
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            An error occurred while uploading the document: ${errmsg}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `);
+                    messageContainer.show();
                 }
             });
         });
@@ -143,7 +168,6 @@
         });
 
         // Handle clearing the chat
-        // Handle clearing the chat
         $('#clear-chat').on('click', function() {
             $.ajax({
                 url: "{% url 'document_analysis_clear_chat' %}",
@@ -152,14 +176,13 @@
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function() {
-                    $('#chat-history').html('<h4>Chat History</h4><p>No chat history available.</p>');
+                    chatContent.html('<p>No chat history available.</p>');
                 },
                 error: function(xhr, errmsg, err) {
                     console.error("An error occurred while clearing the chat:", errmsg);
                 }
             });
         });
-
     });
 </script>
 
