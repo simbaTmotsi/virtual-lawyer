@@ -11,13 +11,18 @@ from django.contrib import messages
 import requests
 from FieldBoost.models import CustomUser, ClientCommunication, Appointment, Document, Case, Evidence, ChatMessage
 from django import forms
-from django.views.generic import ListView, DetailView, TemplateView
+from django.views.generic import ListView, DetailView, TemplateView, View
 from django.conf import settings
 from django.http import JsonResponse
 from django.core.mail import send_mail
 from django.views import View
 import markdown
+# Configure the Gemini API key
+API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg")
+genai.configure(api_key=API_KEY)
 
+import PyPDF2
+import markdown
 
 
 # Client Management Module
@@ -469,13 +474,22 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
 
 def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
-
+from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
 import markdown
-import time
-from django.core.files.storage import FileSystemStorage
 
-# Configure the Google Generative AI API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.views.generic import TemplateView
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+import markdown
+
+
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
@@ -489,9 +503,17 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
         chat_history_key = f'chat_history_{case_id}'
         chat_history = request.session.get(chat_history_key, [])
 
+        # Store the initial case description as context for the model (not displayed to the user)
+        request.session['initial_context'] = (
+            f"You are a legal research assistant. Your task is to assist with this case, which has the following description: "
+            f"'{case.description}'. Your goal is to help achieve the best outcome for this case. Please ask as many questions as needed to gather "
+            f"all the necessary information and provide helpful insights."
+        )
+        request.session.modified = True
+
         return render(request, self.template_name, {
             'chat_history': chat_history,
-            'case': case  # Pass the entire case object to context
+            'case': case
         })
 
     def post(self, request, case_id, *args, **kwargs):
@@ -511,8 +533,8 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 # Use the Generative Model to generate a response
                 model = genai.GenerativeModel("gemini-1.5-flash")
 
-                # Start the chat session with the current chat history
-                model_history = [
+                # Start the chat session with the initial prompt plus the current chat history
+                model_history = [{"role": "user", "parts": [request.session.get('initial_context', '')]}] + [
                     {"role": message["role"], "parts": [message["text"]]}
                     for message in chat_history
                 ]
@@ -534,29 +556,22 @@ class LegalResearchView(LoginRequiredMixin, TemplateView):
                 request.session[chat_history_key] = chat_history
                 request.session.modified = True
 
-                # Render the updated chat history in the template
-                return render(request, self.template_name, {
-                    'chat_history': chat_history,
-                    'case': case  # Pass the entire case object to context
+                # Return updated chat history as JSON
+                return JsonResponse({
+                    'chat_html': render(request, self.template_name, {
+                        'chat_history': chat_history,
+                        'case': case
+                    }).content.decode('utf-8')
                 })
 
             except Exception as e:
-                messages.error(request, f"Failed to process your request: {str(e)}")
-                # Render the template with the current chat history even if an error occurs
-                chat_history = request.session.get(chat_history_key, [])
-                return render(request, self.template_name, {
-                    'chat_history': chat_history,
-                    'case': case  # Pass the entire case object to context
-                })
+                logger.error(f"Failed to process user query for case ID {case_id}: {e}")
+                return JsonResponse({'error': f"An error occurred: {str(e)}"}, status=500)
+
         else:
-            messages.error(request, "Please enter a legal query.")
-            # Render the template again with existing chat history
-            case = get_object_or_404(Case, id=case_id)
-            chat_history = request.session.get(chat_history_key, [])
-            return render(request, self.template_name, {
-                'chat_history': chat_history,
-                'case': case  # Pass the entire case object to context
-            })
+            return JsonResponse({'error': "Please enter a legal query."}, status=400)
+
+
 
 class ClearChatView(View):
     def post(self, request, case_id):
@@ -573,18 +588,6 @@ class ClearChatView(View):
         # Redirect back to the legal research page for the same case
         return redirect('legal_research', case_id=case_id)
     
-# Configure the Gemini API key
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg")
-genai.configure(api_key=API_KEY)
-
-from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import TemplateView, View
-from django.http import JsonResponse
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-import PyPDF2
-import markdown
-import google.generativeai as genai
 
 class DocumentAnalysisView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/document_analysis/document_analysis.html"

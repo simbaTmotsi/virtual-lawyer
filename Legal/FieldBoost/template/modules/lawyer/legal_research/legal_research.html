@@ -14,6 +14,9 @@
 
     <div class="chat-history mt-5" id="chat-history">
         <h4>Chat History for Case: {{ case.title }}</h4>
+        {% if not chat_history %}
+            <p>No chat history available. Please start asking questions to get assistance.</p>
+        {% endif %}
         {% for message in chat_history %}
             <div class="card my-2">
                 <div class="card-body">
@@ -31,7 +34,6 @@
                 </div>
             </div>
         {% endfor %}
-
     </div>
 
     <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
@@ -55,7 +57,9 @@
     $(document).ready(function() {
         // Scroll to the bottom of the chat history on page load
         const chatHistory = document.getElementById('chat-history');
-        chatHistory.scrollTop = chatHistory.scrollHeight;
+        if (chatHistory) {
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
 
         // Scroll to the bottom of the entire page on page load
         window.scrollTo(0, document.body.scrollHeight);
@@ -75,13 +79,18 @@
                         'csrfmiddlewaretoken': '{{ csrf_token }}'
                     },
                     success: function(response) {
-                        $('#chat-history').html($(response).find('#chat-history').html());
-                        $('#query').val('');
-                        chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after updating chat
-                        window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
+                        if (response.error) {
+                            alert(response.error);
+                        } else {
+                            $('#chat-history').html($(response.chat_html).find('#chat-history').html());
+                            $('#query').val('');
+                            chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom after updating chat
+                            window.scrollTo(0, document.body.scrollHeight); // Scroll to the bottom of the entire page
+                        }
                     },
                     error: function(xhr, errmsg, err) {
                         console.error("An error occurred:", errmsg);
+                        alert("An error occurred while processing your request. Please try again.");
                     }
                 });
             }
@@ -103,6 +112,7 @@
                 },
                 error: function(xhr, errmsg, err) {
                     console.error("An error occurred while clearing the chat:", errmsg);
+                    alert("An error occurred while clearing the chat.");
                 }
             });
         });
