@@ -70,7 +70,6 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 1209600  # Two weeks, by default
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-GOOGLE_GENAI_API_KEY = 'AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg'
 
 ROOT_URLCONF = 'FieldBoost.urls'
 
@@ -106,11 +105,11 @@ DATABASES = {
 }
 '''
 # db connection values
-username = 'postgres'
-password = 'root'
+username = f'{os.environ["postgres_username"]}'
+password = f'{os.environ["postgres_password"]}'
 database_name = 'easy_law'
-host = '127.0.0.1'
-port = '5432'
+host = f'{os.environ["postgres_host"]}'
+port = f'{os.environ["postgres_port"]}'
 
 create_db(username, password, database_name, host, port)
 
