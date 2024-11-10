@@ -15,14 +15,15 @@ from django.views.generic import ListView, DetailView, TemplateView, View
 from django.conf import settings
 from django.http import JsonResponse
 from django.core.mail import send_mail
-from django.views import View
 import markdown
-# Configure the Gemini API key
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBvR2lvFRruV3_7xa3E43ViZOJuaj3bANg")
-genai.configure(api_key=API_KEY)
-
 import PyPDF2
-import markdown
+import logging
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# Configure the Gemini API key
+genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
 # Client Management Module
@@ -474,22 +475,7 @@ class CasesWithEvidenceListView(LoginRequiredMixin, TemplateView):
 
 def debug_session(request):
     return JsonResponse(request.session.get('chat_history', []), safe=False)
-from django.shortcuts import get_object_or_404, redirect
-from django.http import JsonResponse
-import markdown
 
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from django.views.generic import TemplateView
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-import markdown
-
-
-import logging
-
-# Configure logger
-logger = logging.getLogger(__name__)
 
 class LegalResearchView(LoginRequiredMixin, TemplateView):
     template_name = "modules/lawyer/legal_research/legal_research.html"
