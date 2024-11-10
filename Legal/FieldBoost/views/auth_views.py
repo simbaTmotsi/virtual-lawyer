@@ -30,8 +30,11 @@ def login_home(request):
                 login(request, user)
                 if user.role == "lawyer":
                     return redirect("lawyer_home")
+                else:
+                    messages.error(request, "Only lawyer logins are permitted at this moment.")
+                    return render(request, 'main-login.html', {"form": form})
             else:
-                messages.error(request, "Wrong credentials/ Only lawyer logins are permitted at this moment.")
+                messages.error(request, "Wrong credentials")
         else:
             messages.error(request, form.errors)
     else:
