@@ -34,9 +34,9 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     class UserRole(models.TextChoices):
         LAWYER = "lawyer", "Lawyer"
-        PARALEGAL = "paralegal", "Paralegal"
+        #PARALEGAL = "paralegal", "Paralegal"
         CLIENT = "client", "Client"
-        ADMIN = "admin", "Admin"
+        #ADMIN = "admin", "Admin"
 
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=255, unique=False, blank=True)
