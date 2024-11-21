@@ -199,3 +199,6 @@ EMAIL_HOST_USER = 'notifications@solution42.xyz'  # Your email address
 EMAIL_HOST_PASSWORD = f'{os.environ["EMAIL_HOST_PASSWORD"]}' # The password for the email account
 
 DEFAULT_FROM_EMAIL = 'notifications@solution42.xyz'
+
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
