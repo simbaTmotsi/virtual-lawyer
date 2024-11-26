@@ -2,43 +2,50 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h3>Clients with Evidence</h3>
-    <p>Below is a list of clients and the evidence they have uploaded.</p>
 
-    {% if evidence_data %}
-        {% for item in evidence_data %}
-            <div class="card mt-4">
-                <div class="card-header pb-0 card-no-border">
-                    <h4>{{ item.client.first_name }} {{ item.client.surname }} ({{ item.client.email }})</h4>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="display" id="client-evidence-{{ item.client.id }}">
-                            <thead>
-                                <tr>
-                                    <th>Title</th>
-                                    <th>Description</th>
-                                    <th>Uploaded At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for evidence in item.evidence_items %}
-                                <tr>
-                                    <td>{{ evidence.title }}</td>
-                                    <td>{{ evidence.description }}</td>
-                                    <td>{{ evidence.created_at }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+<div class="page-body">
+    <div class="container-fluid">
+
+        <div class="container mt-5">
+            <h3>Clients with Evidence</h3>
+            <p>Below is a list of clients and the evidence they have uploaded.</p>
+
+            {% if evidence_data %}
+                {% for item in evidence_data %}
+                    <div class="card mt-4">
+                        <div class="card-header pb-0 card-no-border">
+                            <h4>{{ item.client.first_name }} {{ item.client.surname }} ({{ item.client.email }})</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="display" id="client-evidence-{{ item.client.id }}">
+                                    <thead>
+                                        <tr>
+                                            <th>Title</th>
+                                            <th>Description</th>
+                                            <th>Uploaded At</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for evidence in item.evidence_items %}
+                                        <tr>
+                                            <td>{{ evidence.title }}</td>
+                                            <td>{{ evidence.description }}</td>
+                                            <td>{{ evidence.created_at }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <p>No clients with evidence found.</p>
-    {% endif %}
+                {% endfor %}
+            {% else %}
+                <p>No clients with evidence found.</p>
+            {% endif %}
+        </div>
+
+    </div>
 </div>
 
 <!-- Include the necessary DataTable JS -->

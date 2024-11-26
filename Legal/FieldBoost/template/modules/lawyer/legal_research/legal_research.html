@@ -3,53 +3,59 @@
 {% load crispy_forms_tags %}
 {% block content %}
 
-<div class="container mt-5">
-    <hr><hr>
-    <h3>Legal Research Assistant for Case: {{ case.title }}</h3>
-    <p><strong>Description:</strong> {{ case.description }}</p>
-    <p><strong>Client Name:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
-    <p><strong>Email:</strong> {{ case.client.email }}</p>
-    
-    <hr>
+<div class="page-body">
+    <div class="container-fluid">
 
-    <div class="chat-history mt-5" id="chat-history">
-        <h4>Chat History for Case: {{ case.title }}</h4>
-        {% if not chat_history %}
-            <p>No chat history available. Please start asking questions to get assistance.</p>
-        {% endif %}
-        {% for message in chat_history %}
-            <div class="card my-2">
-                <div class="card-body">
-                    {% if message.role == 'user' %}
-                        <strong>User:</strong>
-                        <p>{{ message.text }}</p>
-                    {% elif message.role == 'model' %}
-                        <strong>Legal Assistant:</strong>
-                        {% if message.is_html %}
-                            <div>{{ message.text|safe }}</div>  <!-- Render HTML using the safe filter -->
-                        {% else %}
-                            <p>{{ message.text }}</p>
-                        {% endif %}
-                    {% endif %}
-                </div>
+        <div class="container mt-5">
+            <hr><hr>
+            <h3>Legal Research Assistant for Case: {{ case.title }}</h3>
+            <p><strong>Description:</strong> {{ case.description }}</p>
+            <p><strong>Client Name:</strong> {{ case.client.first_name }} {{ case.client.surname }}</p>
+            <p><strong>Email:</strong> {{ case.client.email }}</p>
+            
+            <hr>
+
+            <div class="chat-history mt-5" id="chat-history">
+                <h4>Chat History for Case: {{ case.title }}</h4>
+                {% if not chat_history %}
+                    <p>No chat history available. Please start asking questions to get assistance.</p>
+                {% endif %}
+                {% for message in chat_history %}
+                    <div class="card my-2">
+                        <div class="card-body">
+                            {% if message.role == 'user' %}
+                                <strong>User:</strong>
+                                <p>{{ message.text }}</p>
+                            {% elif message.role == 'model' %}
+                                <strong>Legal Assistant:</strong>
+                                {% if message.is_html %}
+                                    <div>{{ message.text|safe }}</div>  <!-- Render HTML using the safe filter -->
+                                {% else %}
+                                    <p>{{ message.text }}</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    </div>
 
-    <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
+            <button id="clear-chat" class="btn btn-danger mt-3">Clear Chat</button>
 
-    <hr>
+            <hr>
 
-    <h2>Legal Research Assistant</h2>
-    <form id="legal-research-form" method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="query">Enter your legal research question:</label>
-            <input type="text" id="query" name="query" class="form-control" placeholder="Ask me anything...">
+            <h2>Legal Research Assistant</h2>
+            <form id="legal-research-form" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="query">Enter your legal research question:</label>
+                    <input type="text" id="query" name="query" class="form-control" placeholder="Ask me anything...">
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            </form>
+            <hr>
         </div>
-        <button type="submit" class="btn btn-primary mt-3">Submit</button>
-    </form>
-    <hr>
+    
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
