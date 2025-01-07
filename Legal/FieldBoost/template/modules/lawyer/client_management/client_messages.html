@@ -1,23 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <h2>Messages</h2>
-        {% if messages %}
-            <ul class="list-group">
-                {% for message in messages %}
-                    <li class="list-group-item">
-                        <h5>{{ message.subject }}</h5>
-                        <p>{{ message.message }}</p>
-                        <small>From: {{ message.sender }} | Sent: {{ message.created_at }}</small>
-                        <br><br>
-                        <p>---<br>Sent using the Easy Law platform</p>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No messages found.</p>
-        {% endif %}
+
+<div class="page-body">
+    <div class="container-fluid">
+
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <h2>Messages</h2>
+                {% if messages %}
+                    <ul class="list-group">
+                        {% for message in messages %}
+                            <li class="list-group-item">
+                                <h5>{{ message.subject }}</h5>
+                                <p>{{ message.message }}</p>
+                                <small>From: {{ message.sender }} | Sent: {{ message.created_at }}</small>
+                                <br><br>
+                                <p>---<br>Sent using the Easy Law platform</p>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No messages found.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}

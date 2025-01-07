@@ -279,7 +279,7 @@ class CaseCreateView(LoginRequiredMixin, CreateView):
         form.fields['client'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
 
         # Limit assigned_to selection to users with LAWYER or PARALEGAL role
-        form.fields['assigned_to'].queryset = CustomUser.objects.filter(role__in=[CustomUser.UserRole.LAWYER, CustomUser.UserRole.PARALEGAL])
+        form.fields['assigned_to'].queryset = CustomUser.objects.filter(role__in=[CustomUser.UserRole.LAWYER])
         # Set the display format for assigned_to dropdown to include name and email
         form.fields['assigned_to'].label_from_instance = lambda obj: f"{obj.first_name} {obj.surname} ({obj.email})"
 

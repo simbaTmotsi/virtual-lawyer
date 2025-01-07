@@ -2,19 +2,26 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="card">
-        <div class="card-header pb-0 card-no-border">
-            <h3>Upload Evidence</h3>
-            <span>Upload new evidence for the case below.</span>
+
+<div class="page-body">
+    <div class="container-fluid">
+
+        <div class="container mt-5">
+            <div class="card">
+                <div class="card-header pb-0 card-no-border">
+                    <h3>Upload Evidence</h3>
+                    <span>Upload new evidence for the case below.</span>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary">Upload Evidence</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <button type="submit" class="btn btn-primary">Upload Evidence</button>
-            </form>
-        </div>
+
     </div>
 </div>
 {% endblock %}

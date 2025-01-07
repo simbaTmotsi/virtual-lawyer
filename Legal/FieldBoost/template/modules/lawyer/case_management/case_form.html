@@ -2,26 +2,32 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h2>Create New Case</h2>
-                </div>
-                <div class="card-body">
-                    <!-- Form rendering with crispy forms -->
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form|crispy }}
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-primary">Create Case</button>
-                            <a href="{% url 'case_list' %}" class="btn btn-secondary">Cancel</a>
+<div class="page-body">
+    <div class="container-fluid">
+
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Create New Case</h2>
                         </div>
-                    </form>
+                        <div class="card-body">
+                            <!-- Form rendering with crispy forms -->
+                            <form method="post">
+                                {% csrf_token %}
+                                {{ form|crispy }}
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">Create Case</button>
+                                    <a href="{% url 'case_list' %}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}

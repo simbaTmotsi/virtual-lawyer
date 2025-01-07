@@ -1,23 +1,30 @@
 {% extends "lawyer_base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="card">
-            <br/>
-            <div class="card-header">
-                <br/>
-                <br/>
-                <h2>Schedule an Appointment</h2>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary">Schedule Appointment</button>
-                </form>
+
+<div class="page-body">
+    <div class="container-fluid">
+
+        <div class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="card">
+                    <br/>
+                    <div class="card-header">
+                        <br/>
+                        <br/>
+                        <h2>Schedule an Appointment</h2>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ form|crispy }}
+                            <button type="submit" class="btn btn-primary">Schedule Appointment</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
+
     </div>
 </div>
 {% endblock %}
