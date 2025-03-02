@@ -20,7 +20,7 @@ TEMPLATE_DIR = os.path.join(CORE_DIR, "FieldBoost/template")  # ROOT dir for tem
 
 # Media files (Uploads)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(CORE_DIR, 'media')
 
 # Custom media files directories (ensure this is correctly set)
 EASYLAW_DOCS_ROOT = os.path.join(MEDIA_ROOT, 'easylaw_docs')  # Adjusted to be under media

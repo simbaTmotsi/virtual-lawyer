@@ -33,7 +33,8 @@ class DocumentForm(forms.ModelForm):
 class DocumentUploadView(CreateView):
     model = Document
     form_class = DocumentForm
-    template_name = 'modules/lawyer/document_management/document_form.html'
+    #template_name = 'modules/lawyer/document_management/document_form.html'
+    template_name = 'modules/lawyer/document_management/document_creation/create/create_document.html'
     success_url = reverse_lazy('document_list')  # Redirect after successful document upload
 
     def form_valid(self, form):
@@ -58,7 +59,7 @@ class DocumentDetailView(LoginRequiredMixin, DetailView):
 @method_decorator(lawyer_required, name='dispatch')
 class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Document
-    fields = ['title', 'content', 'file']
+    fields = ['title', 'file', 'assigned_to', 'tags']
     template_name = "modules/lawyer/document_management/document_form.html"
     success_message = "Document updated successfully."
     success_url = reverse_lazy('document_list')
@@ -75,15 +76,6 @@ class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):
         response = super().delete(request, *args, **kwargs)
         messages.success(self.request, self.success_message)
         return response
-
-@method_decorator(lawyer_required, name='dispatch')
-class DocumentUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
-    model = Document
-    fields = ['title', 'content', 'file']
-    template_name = "modules/lawyer/document_management/document_form.html"
-    success_message = "Document updated successfully."
-    success_url = reverse_lazy('document_list')
-    login_url = reverse_lazy('login_home')
 
 @method_decorator(lawyer_required, name='dispatch')
 class DocumentDeleteView(LoginRequiredMixin, SuccessMessageMixin, DeleteView):

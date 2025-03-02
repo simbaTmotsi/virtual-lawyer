@@ -1,3 +1,11 @@
+# Ignore all .pyc files
 *.pyc
+
+# Ignore __pycache__ directories
 __pycache__/
-/*.pyc
+
+# Ignore .pyc files in all directories (This line is redundant but kept for clarity)
+**/*.pyc
+
+# Ignore the media directory
+media/
