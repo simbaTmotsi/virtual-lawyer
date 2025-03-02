@@ -10,6 +10,7 @@ from django.views.generic import ListView, DetailView, DeleteView
 from django.views.generic.edit import UpdateView
 from django.views.generic import TemplateView
 from django.urls import reverse_lazy
+from django.core.mail import EmailMessage
 import mimetypes
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
