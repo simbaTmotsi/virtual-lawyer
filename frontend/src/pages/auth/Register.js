@@ -28,7 +28,7 @@ const Register = () => {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [step, setStep] = useState(1); // Multi-step form (1: account, 2: personal)
   
-  const { login } = useAuth();
+  const { register, login } = useAuth(); // Get register and login from context
   const navigate = useNavigate();
 
   // Animation effect on mount
@@ -125,20 +125,47 @@ const Register = () => {
     }
     
     setLoading(true);
-    
+    setError(''); // Clear previous errors
+
+    const userData = {
+      email,
+      password,
+      password2: confirmPassword, // Assuming backend expects password confirmation
+      first_name: firstName,
+      last_name: lastName,
+      role: role, // Ensure backend handles role assignment
+    };
+
     try {
-      // Placeholder for actual registration logic
-      console.log('Registering with:', { email, password, firstName, lastName, role });
-      
-      // Simulate API request delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Assuming registration is successful and returns user data
-      login({ email: email, role: role }); // Automatically log in
-      navigate('/');
+      await register(userData); // Use context register function
+
+      // After successful registration, attempt to log the user in
+      try {
+        await login(email, password);
+        navigate('/'); // Redirect to dashboard after successful login
+      } catch (loginErr) {
+        // Handle login failure after registration (e.g., account needs verification)
+        setError('Registration successful, but login failed. Please try logging in manually.');
+        console.error('Post-registration login error:', loginErr);
+        navigate('/login'); // Redirect to login page
+      }
+
     } catch (err) {
-      setError('Registration failed. Please try again.');
-      console.error('Registration error:', err);
+       // Handle specific errors from the backend
+       let errorMessage = 'Registration failed. Please try again.';
+       if (err.data) {
+         // Combine multiple errors if backend returns them in fields
+         const fieldErrors = Object.entries(err.data)
+           .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+           .join('; ');
+         if (fieldErrors) {
+           errorMessage = fieldErrors;
+         } else if (err.data.detail) {
+            errorMessage = err.data.detail;
+         }
+       }
+       setError(errorMessage);
+       console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }

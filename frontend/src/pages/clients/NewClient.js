@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CheckIcon, UserIcon, EnvelopeIcon, PhoneIcon, MapPinIcon } from '@heroicons/react/24/solid';
+import apiRequest from '../../utils/api'; // Import API utility
 
 const NewClient = () => {
   const navigate = useNavigate();
@@ -25,15 +26,34 @@ const NewClient = () => {
     }
 
     setLoading(true);
+    const clientData = {
+      first_name: firstName,
+      last_name: lastName,
+      email,
+      phone,
+      address,
+      // Add other fields expected by your backend API
+    };
+
     try {
-      // Simulate API call
-      console.log('Submitting new client:', { firstName, lastName, email, phone, address });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // On success:
-      navigate('/clients'); // Redirect to clients list
+      // Adjust endpoint as needed (e.g., '/clients/')
+      await apiRequest('/clients/', 'POST', clientData);
+      navigate('/clients'); // Redirect to clients list on success
     } catch (err) {
-      setError('Failed to create client. Please try again.');
-      console.error('Client creation error:', err);
+       // Handle specific errors from the backend
+       let errorMessage = 'Failed to create client. Please try again.';
+       if (err.data) {
+         const fieldErrors = Object.entries(err.data)
+           .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+           .join('; ');
+         if (fieldErrors) {
+           errorMessage = fieldErrors;
+         } else if (err.data.detail) {
+            errorMessage = err.data.detail;
+         }
+       }
+       setError(errorMessage);
+       console.error('Client creation error:', err);
     } finally {
       setLoading(false);
     }

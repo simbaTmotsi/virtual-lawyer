@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { LockClosedIcon, ArrowRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/solid';
 import { ScaleIcon } from '@heroicons/react/24/outline';
 
@@ -10,11 +10,20 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Animation states
   const [showForm, setShowForm] = useState(false);
+
+  useEffect(() => {
+    // Redirect if already authenticated
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location.state]);
 
   useEffect(() => {
     // Trigger animation after component mounts
@@ -33,17 +42,34 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Placeholder for actual login logic
-      console.log('Attempting login with:', email, password, 'Remember me:', rememberMe);
+      console.log('Submitting login form with email:', email);
+      // Change the login endpoint to match your backend API structure
+      await login(email, password);
+      console.log('Login successful, user authenticated');
       
-      // Simulate API request delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      login({ email: email, role: 'attorney' }); // Mock user data
-      navigate('/');
+      // Get redirect path or default to home
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
     } catch (err) {
-      setError('Invalid email or password. Please try again.');
-      console.error('Login error:', err);
+      console.error('Login error details:', err);
+      
+      // Better error message handling
+      let errorMessage = 'Invalid email or password. Please try again.';
+      
+      if (err.data) {
+        if (err.data.detail) {
+          errorMessage = err.data.detail;
+        } else if (err.data.non_field_errors) {
+          errorMessage = err.data.non_field_errors.join(' ');
+        } else if (typeof err.data === 'object') {
+          // Combine all error messages
+          errorMessage = Object.entries(err.data)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(' ') : value}`)
+            .join('; ');
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -168,7 +194,7 @@ const Login = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || isAuthenticated}
                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200 disabled:opacity-70"
               >
                 <span className="absolute left-0 inset-y-0 flex items-center pl-3">

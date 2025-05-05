@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeftIcon, PencilIcon, UserCircleIcon, CalendarIcon, DocumentTextIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PencilIcon, CalendarIcon, DocumentTextIcon, ClockIcon } from '@heroicons/react/24/outline';
 
 const CaseDetails = () => {
   const { id } = useParams();
