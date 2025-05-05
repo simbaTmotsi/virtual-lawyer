@@ -12,6 +12,10 @@ then
     echo "PostgreSQL started"
 fi
 
+# Run the database creation script
+echo "Checking database existence..."
+python create_database.py
+
 # Run migrations
 python manage.py migrate
 
