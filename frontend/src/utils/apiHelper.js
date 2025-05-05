@@ -3,8 +3,7 @@
  */
 
 export const apiRequest = async (endpoint, method = 'GET', data = null) => {
-  // Update to use FastAPI base URL
-  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const baseUrl = process.env.REACT_APP_API_URL || '';
   const url = `${baseUrl}${endpoint}`;
   
   const headers = {
@@ -34,24 +33,18 @@ export const apiRequest = async (endpoint, method = 'GET', data = null) => {
   
   // Check if the response is JSON
   const contentType = response.headers.get('content-type');
+  const isJson = contentType && contentType.includes('application/json');
   
-  // Process response based on status
+  // Parse response
+  const responseData = isJson ? await response.json() : await response.text();
+  
+  // If response is not ok, throw an error
   if (!response.ok) {
-    // If we get a JSON error response, parse it
-    if (contentType && contentType.includes('application/json')) {
-      const errorData = await response.json();
-      throw { status: response.status, data: errorData };
-    } else {
-      throw { status: response.status, data: { detail: 'An error occurred' } };
-    }
+    const error = new Error(response.statusText);
+    error.status = response.status;
+    error.data = responseData;
+    throw error;
   }
   
-  // Return JSON data if available
-  if (contentType && contentType.includes('application/json')) {
-    return await response.json();
-  }
-  
-  return await response.text();
+  return responseData;
 };
-
-export default apiRequest;

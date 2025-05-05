@@ -5,8 +5,8 @@
 export const checkAuthStatus = () => {
   console.group('🔐 Auth Debug Information');
   
-  // Check if token exists
-  const token = localStorage.getItem('authToken');
+  // Check if token exists - fixed to use the same key as AuthContext.js
+  const token = localStorage.getItem('token');
   console.log('Token exists:', !!token);
   if (token) {
     try {

@@ -33,20 +33,36 @@ class RegisterSerializer(serializers.ModelSerializer):
             'first_name': {'required': True},
             'last_name': {'required': True},
             'role': {'required': True},
+            'phone': {'required': False},  # Make phone optional
         }
 
     def validate(self, attrs):
+        # Password matching validation
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
-        # Add role validation if needed (e.g., prevent self-registration as admin)
-        allowed_roles = ['attorney', 'paralegal', 'client'] # Example: Allow these roles for self-registration
+        
+        # Role validation - prevent self-registration as admin
+        allowed_roles = ['attorney', 'paralegal', 'client']  # Roles allowed for self-registration
         if attrs.get('role') not in allowed_roles:
-             raise serializers.ValidationError({"role": f"Invalid role selected. Allowed roles: {', '.join(allowed_roles)}."})
+            raise serializers.ValidationError({
+                "role": f"Invalid role selected. Allowed roles: {', '.join(allowed_roles)}."
+            })
+        
+        # Email format validation
+        email = attrs.get('email', '').strip().lower()
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({"email": "A user with that email already exists."})
+            
         return attrs
 
     def create(self, validated_data):
+        # Remove password confirmation field
         validated_data.pop('password2')
+        
+        # Create the user
         user = User.objects.create_user(**validated_data)
-        # You might want to create a UserProfile here too, or handle it via signals
-        # UserProfile.objects.create(user=user)
+        
+        # Create user profile automatically
+        UserProfile.objects.create(user=user)
+        
         return user
