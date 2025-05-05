@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout components
@@ -39,45 +40,47 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Auth routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          
-          {/* Legal pages */}
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          
-          {/* Main app routes */}
-          <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-            <Route index element={<Dashboard />} />
+      <DarkModeProvider>
+        <Router>
+          <Routes>
+            {/* Auth routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             
-            {/* Client routes */}
-            <Route path="clients" element={<ClientsList />} />
-            <Route path="clients/new" element={<NewClient />} />
-            <Route path="clients/:id" element={<ClientDetails />} />
+            {/* Legal pages */}
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             
-            {/* Case routes */}
-            <Route path="cases" element={<CasesList />} />
-            <Route path="cases/new" element={<NewCase />} />
-            <Route path="cases/:id" element={<CaseDetails />} />
-          </Route>
-          
-          {/* Admin routes */}
-          <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<UsersManagement />} />
-            <Route path="llm-integration" element={<LlmIntegration />} />
-            <Route path="settings" element={<SystemSettings />} />
-            <Route path="analytics" element={<AnalyticsDashboard />} />
-          </Route>
-          
-          {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Main app routes */}
+            <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+              <Route index element={<Dashboard />} />
+              
+              {/* Client routes */}
+              <Route path="clients" element={<ClientsList />} />
+              <Route path="clients/new" element={<NewClient />} />
+              <Route path="clients/:id" element={<ClientDetails />} />
+              
+              {/* Case routes */}
+              <Route path="cases" element={<CasesList />} />
+              <Route path="cases/new" element={<NewCase />} />
+              <Route path="cases/:id" element={<CaseDetails />} />
+            </Route>
+            
+            {/* Admin routes */}
+            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="llm-integration" element={<LlmIntegration />} />
+              <Route path="settings" element={<SystemSettings />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
+            </Route>
+            
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </DarkModeProvider>
     </AuthProvider>
   );
 }
