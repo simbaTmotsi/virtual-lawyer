@@ -14,7 +14,7 @@ const ClientsList = () => {
       setError('');
       try {
         // Adjust endpoint based on your backend API structure (e.g., '/clients/')
-        const data = await apiRequest('/clients/');
+        const data = await apiRequest('/api/clients/'); // Updated path
         setClients(data || []); // Handle potential null response if API returns nothing for empty list
       } catch (err) {
         setError('Failed to fetch clients. Please try again.');

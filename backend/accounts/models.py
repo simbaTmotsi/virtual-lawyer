@@ -67,3 +67,13 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"Profile for {self.user.get_full_name()}"
+
+class ExternalToken(models.Model):
+    """Model to store external tokens from FastAPI"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='external_token')
+    access_token = models.TextField()
+    token_type = models.CharField(max_length=20, default='bearer')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Token for {self.user.email}"

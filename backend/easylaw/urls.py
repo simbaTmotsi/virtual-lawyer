@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/accounts/', include('accounts.urls')),
+    path('api/accounts/', include('accounts.urls')), # Keep for user/profile management
     path('api/admin/', include('admin_portal.urls')),
     path('api/clients/', include('clients.urls')),
     path('api/cases/', include('cases.urls')),
@@ -13,6 +13,8 @@ urlpatterns = [
     path('api/research/', include('research.urls')),
     path('api/billing/', include('billing.urls')),
     path('api/calendar/', include('calendar_app.urls')),
+    # Include authentication endpoints under /api/auth/
+    path('api/auth/', include('accounts.auth_urls')),
 ]
 
 if settings.DEBUG:

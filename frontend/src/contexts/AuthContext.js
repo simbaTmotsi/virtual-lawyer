@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiRequest } from '../utils/apiHelper';
+// Import AuthAPI from the correct file 'api.js'
+import { AuthAPI } from '../utils/api'; // Corrected import path
 
 const AuthContext = createContext(null);
 
@@ -21,8 +22,8 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Verify token with the backend
-      const userData = await apiRequest('/api/accounts/user/');
+      // Verify token with the backend using AuthAPI
+      const userData = await AuthAPI.getCurrentUser(); // Use AuthAPI method
       console.log('User data retrieved:', userData);
       setUser(userData);
       setIsAuthenticated(true);
@@ -30,6 +31,9 @@ export function AuthProvider({ children }) {
       console.error('Token validation failed:', error);
       // Invalid token, clear storage
       localStorage.removeItem('token');
+      // Ensure state reflects logged-out status
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -37,49 +41,71 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
-      // Update to use FastAPI endpoint
-      const response = await apiRequest('/auth/login', 'POST', {
-        email,
-        password,
-      });
-      
-      console.log('Login response:', response);
-      
-      // Save token after successful login
-      if (response.access_token) {
-        localStorage.setItem('token', response.access_token);
-        setUser(response.user);
-        setIsAuthenticated(true);
+      // Use AuthAPI.login
+      const response = await AuthAPI.login({ email, password });
+      // Store the JWT token (assuming response structure)
+      // Adjust based on your actual API response for login
+      if (response && response.access) {
+        localStorage.setItem('token', response.access);
+        // Optionally store refresh token if provided: localStorage.setItem('refreshToken', response.refresh);
+        
+        // Fetch user data after successful login
+        await checkAuthStatus(); // Re-use checkAuthStatus to fetch and set user
+        
+        // Return response for potential further handling in component
+        return response; 
       } else {
-        throw new Error('No token received from server');
+         // Handle cases where login response doesn't contain expected tokens
+         throw new Error('Login response did not contain expected tokens.');
       }
-      
-      return response;
+
     } catch (error) {
       console.error('Login error:', error);
+      // Clear any potentially stale token on login failure
+      localStorage.removeItem('token');
+      setUser(null);
+      setIsAuthenticated(false);
       throw error;
     }
   };
 
   const register = async (userData) => {
-    // Use the FastAPI endpoint instead of the Django one
-    const response = await apiRequest('/auth/register', 'POST', userData);
-    return response;
+    try {
+      // Use AuthAPI.register
+      const response = await AuthAPI.register(userData);
+      // Optionally handle response, e.g., auto-login or confirmation message
+      return response;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   };
 
   const logout = async () => {
     try {
-      // Optionally call logout endpoint
-      await apiRequest('/api/accounts/logout/', 'POST');
+      // Use AuthAPI.logout
+      // Pass refresh token if your backend requires it for logout
+      // const refreshToken = localStorage.getItem('refreshToken');
+      // await AuthAPI.logout({ refresh: refreshToken }); // Example if refresh token needed
+      await AuthAPI.logout();
     } catch (error) {
-      console.error('Logout error:', error);
+      // Log error but proceed with frontend logout regardless
+      console.error('Logout API call failed:', error);
     } finally {
-      // Clear regardless of backend response
+      // Clear tokens and user state on frontend
       localStorage.removeItem('token');
+      // localStorage.removeItem('refreshToken'); // If using refresh tokens
       setUser(null);
       setIsAuthenticated(false);
     }
   };
+  
+  // Function to fetch user profile manually if needed (e.g., for debugger)
+  const fetchUserProfile = async () => {
+     setLoading(true);
+     await checkAuthStatus();
+  };
+
 
   const value = {
     user,
@@ -88,6 +114,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    fetchUserProfile, // Expose fetchUserProfile if needed elsewhere
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

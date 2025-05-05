@@ -37,7 +37,7 @@ const NewClient = () => {
 
     try {
       // Adjust endpoint as needed (e.g., '/clients/')
-      await apiRequest('/clients/', 'POST', clientData);
+      await apiRequest('/api/clients/', 'POST', clientData); // Updated path
       navigate('/clients'); // Redirect to clients list on success
     } catch (err) {
        // Handle specific errors from the backend

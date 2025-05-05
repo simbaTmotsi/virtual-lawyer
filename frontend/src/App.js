@@ -1,5 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate
+} from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -37,49 +41,59 @@ import NewCase from './pages/cases/NewCase';
 import TermsOfService from './pages/legal/TermsOfService';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 
+// Define routes using createBrowserRouter
+const router = createBrowserRouter([
+  // Auth routes (outside main layouts)
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
+  { path: "/forgot-password", element: <ForgotPassword /> },
+  { path: "/terms", element: <TermsOfService /> },
+  { path: "/privacy", element: <PrivacyPolicy /> },
+
+  // Main application routes (protected)
+  {
+    path: "/",
+    element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: "clients", element: <ClientsList /> },
+      { path: "clients/new", element: <NewClient /> },
+      { path: "clients/:id", element: <ClientDetails /> },
+      { path: "cases", element: <CasesList /> },
+      { path: "cases/new", element: <NewCase /> },
+      { path: "cases/:id", element: <CaseDetails /> },
+    ],
+  },
+
+  // Admin routes (protected and admin only)
+  {
+    path: "/admin",
+    element: <ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>,
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: "users", element: <UsersManagement /> },
+      { path: "llm-integration", element: <LlmIntegration /> },
+      { path: "settings", element: <SystemSettings /> },
+      { path: "analytics", element: <AnalyticsDashboard /> },
+    ],
+  },
+
+  // Fallback route - Navigate to dashboard if logged in, otherwise handled by ProtectedRoute
+  { path: "*", element: <Navigate to="/" replace /> }
+], {
+  // Add future flags here
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true,
+  },
+});
+
+
 function App() {
   return (
     <AuthProvider>
       <DarkModeProvider>
-        <Router>
-          <Routes>
-            {/* Auth routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            
-            {/* Legal pages */}
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            
-            {/* Main app routes */}
-            <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
-              
-              {/* Client routes */}
-              <Route path="clients" element={<ClientsList />} />
-              <Route path="clients/new" element={<NewClient />} />
-              <Route path="clients/:id" element={<ClientDetails />} />
-              
-              {/* Case routes */}
-              <Route path="cases" element={<CasesList />} />
-              <Route path="cases/new" element={<NewCase />} />
-              <Route path="cases/:id" element={<CaseDetails />} />
-            </Route>
-            
-            {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UsersManagement />} />
-              <Route path="llm-integration" element={<LlmIntegration />} />
-              <Route path="settings" element={<SystemSettings />} />
-              <Route path="analytics" element={<AnalyticsDashboard />} />
-            </Route>
-            
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
+        <RouterProvider router={router} />
       </DarkModeProvider>
     </AuthProvider>
   );

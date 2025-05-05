@@ -16,15 +16,33 @@ USER_DATA_FILE = "user_data.json"
 
 def get_user_data():
     """Load user data from JSON file or initialize if it doesn't exist"""
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, 'r') as f:
+    try:
+        with open(USER_DATA_FILE, "r") as f:
             return json.load(f)
-    else:
-        return {"users": [], "next_id": 1}
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Initialize with default structure and demo user
+        data = {
+            "users": [
+                {
+                    "id": 1,
+                    "email": "demo@example.com",
+                    "password": hashlib.sha256("demo123".encode()).hexdigest(),
+                    "first_name": "Demo",
+                    "last_name": "User",
+                    "role": "attorney",
+                    "is_active": True,
+                    "date_joined": datetime.now().isoformat()
+                }
+            ],
+            "next_id": 2
+        }
+        save_user_data(data)
+        return data
 
 def save_user_data(data):
     """Save user data to JSON file"""
-    with open(USER_DATA_FILE, 'w') as f:
+    os.makedirs(os.path.dirname(USER_DATA_FILE), exist_ok=True)
+    with open(USER_DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
 @router.post("/login")
