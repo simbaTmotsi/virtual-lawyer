@@ -1,11 +1,51 @@
-# Ignore all .pyc files
-*.pyc
-
-# Ignore __pycache__ directories
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 
-# Ignore .pyc files in all directories (This line is redundant but kept for clarity)
-**/*.pyc
+# C extensions
+*.so
 
-# Ignore the media directory
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env
+.python-version
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Django stuff
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media and static files
 media/
+static/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Project specific
+*.env
+secrets.yaml
+config.local.yml

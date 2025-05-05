@@ -32,6 +32,10 @@ import CasesList from './pages/cases/CasesList';
 import CaseDetails from './pages/cases/CaseDetails';
 import NewCase from './pages/cases/NewCase';
 
+// Legal pages
+import TermsOfService from './pages/legal/TermsOfService';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+
 function App() {
   return (
     <AuthProvider>
@@ -41,6 +45,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          {/* Legal pages */}
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           
           {/* Main app routes */}
           <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
