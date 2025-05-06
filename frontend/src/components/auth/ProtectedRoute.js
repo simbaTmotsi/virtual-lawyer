@@ -15,6 +15,13 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
       // Add a debounce mechanism using localStorage to prevent multiple simultaneous checks
       const lastCheck = localStorage.getItem('auth_last_check');
       const now = Date.now();
+      const justLoggedOut = localStorage.getItem('just_logged_out');
+      
+      // Skip check if user just logged out
+      if (justLoggedOut) {
+        authCheckPerformedRef.current = true;
+        return;
+      }
       
       // Only check if more than 5 seconds have passed since last check
       if (!lastCheck || (now - parseInt(lastCheck)) > 5000) {
@@ -44,6 +51,8 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   if (!isAuthenticated) {
+    // Clear any potential logout flag before redirecting
+    localStorage.removeItem('just_logged_out');
     // If auth check is complete and user is not authenticated, redirect to login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

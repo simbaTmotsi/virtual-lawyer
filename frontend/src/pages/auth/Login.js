@@ -18,6 +18,9 @@ const Login = () => {
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    // Clear the "just_logged_out" flag when the login page loads
+    localStorage.removeItem('just_logged_out');
+    
     // Redirect if already authenticated
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || "/";

@@ -11,9 +11,20 @@ export function AuthProvider({ children }) {
   // Use a ref instead of state to avoid dependency issues
   const lastSuccessfulCheckRef = useRef(0);
 
-  // Memoize checkAuthStatus with useCallback and properly include user in dependencies
+  // Modify checkAuthStatus to respect the logout flag
   const checkAuthStatus = useCallback(async (force = false) => {
     try {
+      // Check for the logout flag
+      const justLoggedOut = localStorage.getItem('just_logged_out');
+      if (justLoggedOut) {
+        // Clear the flag and return without checking auth
+        localStorage.removeItem('just_logged_out');
+        setLoading(false);
+        setIsAuthenticated(false);
+        setUser(null);
+        return false;
+      }
+
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
@@ -116,7 +127,9 @@ export function AuthProvider({ children }) {
       // Log error but proceed with frontend logout regardless
       console.error('Logout error:', error);
     } finally {
-      // Always clear local storage and reset state
+      // Add a flag to prevent immediate auth checks after logout
+      localStorage.setItem('just_logged_out', 'true');
+      // Always clear local storage token and reset state
       localStorage.removeItem('token');
       setUser(null);
       setIsAuthenticated(false);
