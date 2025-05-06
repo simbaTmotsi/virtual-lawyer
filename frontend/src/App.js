@@ -81,7 +81,6 @@ const router = createBrowserRouter([
   // Fallback route - Navigate to dashboard if logged in, otherwise handled by ProtectedRoute
   { path: "*", element: <Navigate to="/" replace /> }
 ], {
-  // Add future flags here
   future: {
     v7_startTransition: true,
     v7_relativeSplatPath: true,

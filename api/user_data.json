@@ -1,0 +1,15 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "email": "simbamotsi1@gmail.com",
+            "password": "8430f81e63257a21b78575bea6eb7176978838f21b0986af30ebb41932375e60",
+            "first_name": "Simbarashe Timothy",
+            "last_name": "Motsi",
+            "role": "admin",
+            "is_active": true,
+            "date_joined": "2025-05-05T21:54:01.987014"
+        }
+    ],
+    "next_id": 2
+}

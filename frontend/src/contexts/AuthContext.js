@@ -43,29 +43,31 @@ export function AuthProvider({ children }) {
     try {
       // Use AuthAPI.login
       const response = await AuthAPI.login({ email, password });
-      // Store the JWT token (assuming response structure)
-      // Adjust based on your actual API response for login
-      if (response && response.access) {
-        localStorage.setItem('token', response.access);
-        // Optionally store refresh token if provided: localStorage.setItem('refreshToken', response.refresh);
+      
+      // Store the token
+      if (response.token) {
+        localStorage.setItem('token', response.token);
         
-        // Fetch user data after successful login
-        await checkAuthStatus(); // Re-use checkAuthStatus to fetch and set user
+        // If the response includes user data, set it directly
+        if (response.user) {
+          setUser(response.user);
+          setIsAuthenticated(true);
+          return response.user;
+        }
         
-        // Return response for potential further handling in component
-        return response; 
+        // Otherwise, fetch user data
+        return await checkAuthStatus();
       } else {
-         // Handle cases where login response doesn't contain expected tokens
-         throw new Error('Login response did not contain expected tokens.');
+        throw new Error('No token received from server');
       }
-
     } catch (error) {
       console.error('Login error:', error);
       // Clear any potentially stale token on login failure
       localStorage.removeItem('token');
       setUser(null);
       setIsAuthenticated(false);
-      throw error;
+      // Re-throw the error so the Login component can catch it
+      throw error; 
     }
   };
 
@@ -84,40 +86,45 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       // Use AuthAPI.logout
-      // Pass refresh token if your backend requires it for logout
-      // const refreshToken = localStorage.getItem('refreshToken');
-      // await AuthAPI.logout({ refresh: refreshToken }); // Example if refresh token needed
       await AuthAPI.logout();
     } catch (error) {
       // Log error but proceed with frontend logout regardless
-      console.error('Logout API call failed:', error);
+      console.error('Logout error:', error);
     } finally {
-      // Clear tokens and user state on frontend
+      // Always clear local storage and reset state
       localStorage.removeItem('token');
-      // localStorage.removeItem('refreshToken'); // If using refresh tokens
       setUser(null);
       setIsAuthenticated(false);
     }
   };
-  
-  // Function to fetch user profile manually if needed (e.g., for debugger)
+
   const fetchUserProfile = async () => {
-     setLoading(true);
-     await checkAuthStatus();
+    try {
+      const userData = await AuthAPI.getCurrentUser();
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
   };
 
-
+  // Provide auth context values
   const value = {
     user,
     isAuthenticated,
     loading,
     login,
-    register,
     logout,
-    fetchUserProfile, // Expose fetchUserProfile if needed elsewhere
+    register,
+    fetchUserProfile,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => {

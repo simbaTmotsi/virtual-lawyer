@@ -56,7 +56,9 @@ const Login = () => {
       // Better error message handling
       let errorMessage = 'Invalid email or password. Please try again.';
       
-      if (err.data) {
+      if (err.status === 500) {
+        errorMessage = 'Server error. Please try again later or contact support.';
+      } else if (err.data) {
         if (err.data.detail) {
           errorMessage = err.data.detail;
         } else if (err.data.non_field_errors) {

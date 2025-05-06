@@ -141,6 +141,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# External Authentication API URL
+EXTERNAL_AUTH_LOGIN_URL = 'http://localhost:8001/auth/login'
+
 # LLM API settings
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')

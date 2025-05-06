@@ -1,85 +1,129 @@
 /**
- * API utility functions for making HTTP requests
+ * API request utility for making authenticated requests
  */
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
-
-/**
- * Make an API request
- * @param {string} endpoint - API endpoint
- * @param {string} method - HTTP method (GET, POST, PUT, DELETE)
- * @param {Object} data - Request body for POST/PUT requests
- * @param {Object} options - Additional fetch options
- * @returns {Promise<Object>} Response data
- */
-export const apiRequest = async (endpoint, method = 'GET', data = null, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const fetchOptions = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-  
-  // Add auth token if available
-  const token = localStorage.getItem('token');
-  if (token) {
-    fetchOptions.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  // Add request body for POST/PUT requests
-  if (data && (method === 'POST' || method === 'PUT')) {
-    fetchOptions.body = JSON.stringify(data);
-  }
-  
+// Base API request function
+const apiRequest = async (endpoint, options = {}) => {
   try {
-    console.group(`API Request: ${method} ${endpoint}`);
-    console.log('Request options:', fetchOptions);
+    // Set default headers if not provided
+    if (!options.headers) {
+      options.headers = {
+        'Content-Type': 'application/json',
+      };
+    }
+
+    // Add auth token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    console.log('API Request:', options.method || 'GET', endpoint);
+    console.log('Request options:', options);
+
+    // Make the fetch request
+    const response = await fetch(endpoint.startsWith('http') ? endpoint : `${process.env.REACT_APP_API_URL || ''}${endpoint}`, options);
     
-    const response = await fetch(url, fetchOptions);
+    // Check if the response is JSON
     const contentType = response.headers.get('content-type');
     const isJson = contentType && contentType.includes('application/json');
     
-    // Parse response
-    const responseData = isJson ? await response.json() : await response.text();
-    
-    // If response is not ok, throw an error
+    // Parse response data based on content type
+    let data;
+    if (isJson) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
+    // Handle unsuccessful responses
     if (!response.ok) {
-      // Include status and data in the error object
-      const error = new Error(`API Error: ${response.status}`); // Keep a general message
-      error.status = response.status;
-      error.data = responseData; // Attach the parsed response data
-      console.error('API request failed:', error, 'Response data:', responseData); // Log data here too
-      console.groupEnd();
-      throw error; // Re-throw the enhanced error
+      console.log('API request failed:', response.status, response.statusText);
+      console.log('Response data:', data);
+      
+      // For 500 errors, we may need to add more specific handling
+      if (response.status === 500) {
+        console.log('Server error detected. Check server logs for more details.');
+      }
+      
+      throw {
+        status: response.status,
+        data,
+        message: `API Error: ${response.status}`
+      };
+    }
+
+    return data;
+  } catch (error) {
+    // Log the error for debugging
+    console.error('API request failed:', error);
+    
+    // If it's already our formatted error, just rethrow it
+    if (error && error.status) {
+      throw error;
     }
     
-    console.log('API request successful:', responseData);
-    console.groupEnd();
-    
-    return responseData;
-  } catch (error) {
-    console.error('API request failed:', error);
-    console.groupEnd();
-    throw error; // Re-throw the error to be handled by the component
+    // Otherwise, it's a network error or other issue
+    throw {
+      status: 0,
+      data: null,
+      message: `Network Error: ${error.message || 'Unable to connect to server'}`
+    };
   }
 };
 
-/**
- * Authentication-related API requests
- */
+// Auth API endpoints
 export const AuthAPI = {
-  register: (userData) => apiRequest('/api/auth/register/', 'POST', userData), // Corrected path prefix
-  login: (credentials) => apiRequest('/api/auth/login/', 'POST', credentials), // Corrected path prefix
-  logout: () => apiRequest('/api/auth/logout/', 'POST'), // Corrected path prefix
-  refreshToken: (refreshToken) => apiRequest('/api/auth/token/refresh/', 'POST', { refresh: refreshToken }), // Keep /api/ prefix
-  forgotPassword: (email) => apiRequest('/api/auth/password-reset/', 'POST', { email }), // Keep /api/ prefix
-  resetPassword: (token, password) => apiRequest('/api/auth/password-reset/confirm/', 'POST', { token, password }), // Keep /api/ prefix
-  // Assuming the backend endpoint for the current user is under accounts app
-  getCurrentUser: () => apiRequest('/api/accounts/users/me/', 'GET'), // Keep /api/accounts/ prefix
+  // Login
+  login: async (credentials) => {
+    try {
+      return await apiRequest('/api/accounts/proxy-login/', {
+        method: 'POST',
+        body: JSON.stringify(credentials)
+      });
+    } catch (error) {
+      console.error('Login API error:', error);
+      throw error;
+    }
+  },
+  
+  // Register
+  register: async (userData) => {
+    try {
+      return await apiRequest('/api/accounts/register/', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      });
+    } catch (error) {
+      console.error('Registration API error:', error);
+      throw error;
+    }
+  },
+  
+  // Get current user
+  getCurrentUser: async () => {
+    try {
+      return await apiRequest('/api/accounts/me/');
+    } catch (error) {
+      console.error('Get current user API error:', error);
+      throw error;
+    }
+  },
+  
+  // Logout
+  logout: async () => {
+    try {
+      return await apiRequest('/api/accounts/logout/', {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('Logout API error:', error);
+      // Still clear token even if logout API fails
+      localStorage.removeItem('token');
+      throw error;
+    }
+  }
 };
 
+// Export the base request function as default
 export default apiRequest;

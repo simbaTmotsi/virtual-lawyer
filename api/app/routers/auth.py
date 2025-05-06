@@ -7,6 +7,11 @@ import hashlib
 import json
 import os
 from datetime import datetime
+import logging  # Import logging
+
+# Setup basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -16,34 +21,41 @@ USER_DATA_FILE = "user_data.json"
 
 def get_user_data():
     """Load user data from JSON file or initialize if it doesn't exist"""
+    default_data = {"users": [], "next_id": 1}
+    if not os.path.exists(USER_DATA_FILE):
+        logger.warning(f"{USER_DATA_FILE} not found. Initializing with empty data.")
+        save_user_data(default_data)  # Create the file with default structure
+        return default_data
     try:
         with open(USER_DATA_FILE, "r") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # Initialize with default structure and demo user
-        data = {
-            "users": [
-                {
-                    "id": 1,
-                    "email": "demo@example.com",
-                    "password": hashlib.sha256("demo123".encode()).hexdigest(),
-                    "first_name": "Demo",
-                    "last_name": "User",
-                    "role": "attorney",
-                    "is_active": True,
-                    "date_joined": datetime.now().isoformat()
-                }
-            ],
-            "next_id": 2
-        }
-        save_user_data(data)
-        return data
+            try:
+                data = json.load(f)
+                # Ensure basic structure exists
+                if "users" not in data or "next_id" not in data:
+                    logger.warning(f"{USER_DATA_FILE} has invalid structure. Re-initializing.")
+                    save_user_data(default_data)
+                    return default_data
+                return data
+            except json.JSONDecodeError:
+                logger.error(f"Error decoding JSON from {USER_DATA_FILE}. Re-initializing.")
+                save_user_data(default_data)
+                return default_data
+    except IOError as e:
+        logger.error(f"Could not read {USER_DATA_FILE}: {e}. Using default data.")
+        return default_data
+    except Exception as e:  # Catch any other unexpected errors during loading
+        logger.error(f"Unexpected error loading {USER_DATA_FILE}: {e}. Using default data.")
+        return default_data
 
 def save_user_data(data):
     """Save user data to JSON file"""
-    os.makedirs(os.path.dirname(USER_DATA_FILE), exist_ok=True)
-    with open(USER_DATA_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    try:
+        with open(USER_DATA_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+    except IOError as e:
+        logger.error(f"Could not write to {USER_DATA_FILE}: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error saving {USER_DATA_FILE}: {e}")
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
