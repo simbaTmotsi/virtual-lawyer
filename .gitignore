@@ -55,3 +55,29 @@ config.local.yml
 
 # Ignore .old files
 *.old
+
+# ...existing code...
+
+# JSON files containing secrets or credentials
+*secrets.json
+*credentials.json
+*config.local.json
+*settings.local.json
+
+# Large JSON data files
+*.data.json
+data/*.json
+
+# Auto-generated JSON files
+dist/*.json
+build/*.json
+
+# User-specific JSON files
+.vscode/settings.json
+.idea/*.json
+
+# Keep essential configuration
+!package.json
+!tsconfig.json
+!package-lock.json
+!yarn.lock
