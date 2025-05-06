@@ -430,9 +430,11 @@ const Register = () => {
                     >
                       <option value="attorney">Attorney</option>
                       <option value="paralegal">Paralegal</option>
-                      <option value="admin">Administrator</option>
                       <option value="client">Client</option>
                     </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Administrator roles are assigned by existing administrators.
+                    </p>
                   </div>
                 </div>
 
@@ -500,6 +502,16 @@ const Register = () => {
                   </>
                 )}
               </button>
+            </div>
+            
+            {/* Sign In Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500 transition-colors duration-200">
+                  Sign in
+                </Link>
+              </p>
             </div>
           </form>
         </div>

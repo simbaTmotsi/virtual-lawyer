@@ -44,9 +44,10 @@ export function AuthProvider({ children }) {
       // Use AuthAPI.login
       const response = await AuthAPI.login({ email, password });
       
-      // Store the token
-      if (response.token) {
-        localStorage.setItem('token', response.token);
+      // Store the token - handle different response formats
+      if (response.access) {
+        // New format (JWT)
+        localStorage.setItem('token', response.access);
         
         // If the response includes user data, set it directly
         if (response.user) {
@@ -54,12 +55,21 @@ export function AuthProvider({ children }) {
           setIsAuthenticated(true);
           return response.user;
         }
+      } else if (response.token) {
+        // Old format
+        localStorage.setItem('token', response.token);
         
-        // Otherwise, fetch user data
-        return await checkAuthStatus();
+        if (response.user) {
+          setUser(response.user);
+          setIsAuthenticated(true);
+          return response.user;
+        }
       } else {
         throw new Error('No token received from server');
       }
+      
+      // Otherwise, fetch user data
+      return await checkAuthStatus();
     } catch (error) {
       console.error('Login error:', error);
       // Clear any potentially stale token on login failure

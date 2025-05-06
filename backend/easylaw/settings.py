@@ -143,6 +143,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # External Authentication API URL
 EXTERNAL_AUTH_LOGIN_URL = 'http://localhost:8001/auth/login'
+# Enable/disable external authentication (set to False to only use Django auth)
+USE_EXTERNAL_AUTH = True  
 
 # LLM API settings
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -65,7 +65,9 @@ class RegisterView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            print(f"Registration validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         # Connect to FastAPI for user registration
         auth_service = AuthService()
@@ -163,7 +165,7 @@ def logout_view(request):
     return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
-@permission_classes([AllowAny]) # Allow anyone to attempt login
+@permission_classes([AllowAny])  # Allow anyone to attempt login
 def proxy_login_view(request):
     """
     Proxies login requests to the external authentication API.
@@ -178,8 +180,43 @@ def proxy_login_view(request):
         if not email or not password:
             return Response({'detail': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # --- Call the External API ---
+        # --- First try Django authentication ---
+        print(f"Attempting Django authentication for {email}")
+        # Django's authenticate expects username field, but we're using email
+        django_user = authenticate(username=email, password=password)
+        
+        if django_user is not None and django_user.is_active:
+            print(f"Django authentication successful for {email}")
+            
+            # Generate Django JWT tokens
+            refresh = RefreshToken.for_user(django_user)
+            django_access_token = str(refresh.access_token)
+            django_refresh_token = str(refresh)
+
+            user_data = UserSerializer(django_user).data
+
+            frontend_response_data = {
+                'access': django_access_token,
+                'refresh': django_refresh_token,
+                'user': user_data,
+                'auth_type': 'django'  # For debugging
+            }
+
+            return Response(frontend_response_data, status=status.HTTP_200_OK)
+        else:
+            print(f"Django authentication failed for {email}, trying FastAPI")
+        
+        # --- If Django authentication fails, try External API ---
         external_api_url = settings.EXTERNAL_AUTH_LOGIN_URL
+        
+        # Check if external auth is enabled
+        try_external = getattr(settings, 'USE_EXTERNAL_AUTH', True)
+        if not try_external:
+            return Response(
+                {'detail': 'Invalid email or password. Please try again.'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
         payload = {
             'grant_type': '',
             'username': email,
@@ -196,6 +233,16 @@ def proxy_login_view(request):
         try:
             print(f"Proxying login for {email} to {external_api_url}")
             response = requests.post(external_api_url, data=payload, headers=headers, timeout=10)
+            
+            # Instead of raising an exception, check the status code to handle 401 more gracefully
+            if response.status_code == 401:
+                print(f"Authentication failed for {email}: Invalid credentials")
+                return Response(
+                    {'detail': 'Invalid email or password. Please try again.', 'error_type': 'invalid_credentials'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # For other errors, still use raise_for_status to maintain existing behavior
             response.raise_for_status()
 
             print(f"External API response status: {response.status_code}")
@@ -206,39 +253,35 @@ def proxy_login_view(request):
             user = None
             try:
                 print("Attempting to get or create Django user...")
-                user, created = User.objects.get_or_create(
-                    email=email,
-                    defaults={
-                        'first_name': external_user_info.get('first_name', ''),
-                        'last_name': external_user_info.get('last_name', ''),
-                        'role': external_user_info.get('role', 'client'),
-                        'password': None
-                    }
-                )
-                print(f"User {'created' if created else 'retrieved'}: {user.email}")
-
-                if created:
-                    print("Setting unusable password for new user...")
+                # First try to get the user
+                try:
+                    user = User.objects.get(email=email)
+                    created = False
+                except User.DoesNotExist:
+                    # Create user with a temporary password (will be made unusable)
+                    user = User.objects.create(
+                        email=email,
+                        first_name=external_user_info.get('first_name', ''),
+                        last_name=external_user_info.get('last_name', ''),
+                        role=external_user_info.get('role', 'client'),
+                        password='!'  # Temporary non-null value
+                    )
+                    created = True
+                    
                     user.set_unusable_password()
                     user.save()
-                    print("New user saved.")
-                    print("Attempting to get or create UserProfile...")
+
+                if created:
                     UserProfile.objects.get_or_create(user=user)
-                    print("UserProfile retrieved or created.")
 
                 if not user.is_active:
-                    print(f"User {user.email} is inactive.")
                     return Response({'detail': 'User account is inactive.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-                print(f"Attempting to generate tokens for user {user.email}...")
                 refresh = RefreshToken.for_user(user)
                 django_access_token = str(refresh.access_token)
                 django_refresh_token = str(refresh)
-                print("Tokens generated successfully.")
 
-                print(f"Attempting to serialize user {user.email}...")
                 user_data = UserSerializer(user).data
-                print("User serialized successfully.")
 
                 frontend_response_data = {
                     'access': django_access_token,
@@ -257,7 +300,6 @@ def proxy_login_view(request):
                 elif 'refresh' not in locals(): error_location = "generating RefreshToken"
                 elif 'user_data' not in locals(): error_location = "serializing User"
 
-                print(f"ERROR processing user account at '{error_location}': {db_error}")
                 traceback.print_exc()
                 return Response({'detail': f'Error processing user account ({error_location}). Check server logs.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -265,21 +307,41 @@ def proxy_login_view(request):
             print(f"Error calling external API: {e}")
             traceback.print_exc()
             error_detail = f"Could not connect to authentication service: {e}"
+            error_type = 'service_error'
+            
             if hasattr(e, 'response') and e.response is not None:
                 try:
                     error_data = e.response.json()
                     error_detail = error_data.get('detail', f"Authentication service error (Status: {e.response.status_code})")
+                    
+                    # Handle specific error cases
+                    if e.response.status_code == 401:
+                        error_detail = 'Invalid email or password. Please try again.'
+                        error_type = 'invalid_credentials'
                 except json.JSONDecodeError:
                     error_detail = f"Authentication service error (Status: {e.response.status_code}, non-JSON response)"
-                return Response({'detail': error_detail}, status=e.response.status_code)
+                
+                return Response({
+                    'detail': error_detail,
+                    'error_type': error_type
+                }, status=e.response.status_code)
 
-            return Response({'detail': error_detail}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({
+                'detail': error_detail,
+                'error_type': 'service_unavailable'
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     except json.JSONDecodeError:
         print(f"ERROR: Invalid JSON body received.")
         traceback.print_exc()
-        return Response({'detail': 'Invalid JSON body.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'detail': 'Invalid JSON body.', 
+            'error_type': 'invalid_request'
+        }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         print(f"ERROR: Unexpected error in proxy_login_view: {e}")
         traceback.print_exc()
-        return Response({'detail': 'An unexpected error occurred. Check server logs.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            'detail': 'An unexpected error occurred. Check server logs.',
+            'error_type': 'server_error'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
