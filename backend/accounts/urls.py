@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import UserViewSet, UserProfileViewSet, RegisterView, proxy_login_view, CurrentUserView
+from . import mock_views
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -11,4 +12,5 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('proxy-login/', proxy_login_view, name='proxy-login'),
     path('me/', CurrentUserView.as_view(), name='current-user'),
+    path('users/', mock_views.mock_users_list, name='mock-users-list'),
 ]

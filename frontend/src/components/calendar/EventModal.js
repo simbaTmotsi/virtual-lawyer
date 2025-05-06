@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Fragment } from 'react';
 
 const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) => {
   const [formData, setFormData] = useState({
@@ -359,7 +358,7 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                       </button>
                     )}
                     
-                    <div className="flex space-x-3">
+                    <div className={`flex space-x-3 ${formData.id ? '' : 'ml-auto'}`}>
                       <button
                         type="button"
                         onClick={onClose}

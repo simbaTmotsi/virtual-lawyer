@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeftIcon, PencilIcon, CalendarIcon, DocumentTextIcon, ClockIcon, UserIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { 
+  ArrowLeftIcon, 
+  PencilIcon, 
+  CalendarIcon, 
+  DocumentTextIcon, 
+  ClockIcon, 
+  PlusIcon 
+} from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api'; // Import API utility
 
 const CaseDetails = () => {

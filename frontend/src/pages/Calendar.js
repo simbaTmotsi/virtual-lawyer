@@ -1,10 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { apiRequest } from '../utils/api';
+import apiRequest from '../utils/api';
 import EventModal from '../components/calendar/EventModal';
 
 const Calendar = () => {
@@ -21,40 +17,40 @@ const Calendar = () => {
   });
   const [cases, setCases] = useState([]);
   const [staff, setStaff] = useState([]);
-  const calendarRef = useRef(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentView, setCurrentView] = useState('month');
   
   // Fetch events, cases, and staff data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [eventsData, casesData, staffData] = await Promise.all([
-          apiRequest('/api/calendar/events/'),
-          apiRequest('/api/cases/'),
-          apiRequest('/api/users/?role=attorney') // Fetch attorneys and other staff
-        ]);
+        let eventsData = [], casesData = [], staffData = [];
         
-        // Format events for FullCalendar
-        const formattedEvents = eventsData.map(event => ({
-          id: event.id,
-          title: event.title,
-          start: event.start_time,
-          end: event.end_time || event.start_time, // Use start_time as fallback
-          allDay: event.all_day,
-          extendedProps: {
-            description: event.description,
-            location: event.location,
-            eventType: event.event_type,
-            caseId: event.case,
-            attendees: event.attendees
-          },
-          backgroundColor: getEventColor(event.event_type),
-          borderColor: getEventColor(event.event_type)
-        }));
+        try {
+          eventsData = await apiRequest('/api/calendar/events/');
+        } catch (err) {
+          console.warn('Failed to fetch events:', err);
+          // Use empty array as fallback
+        }
         
-        setEvents(formattedEvents);
-        setCases(casesData);
-        setStaff(staffData);
+        try {
+          casesData = await apiRequest('/api/cases/');
+        } catch (err) {
+          console.warn('Failed to fetch cases:', err);
+          // Use empty array as fallback
+        }
+        
+        try {
+          staffData = await apiRequest('/api/users/?role=attorney');
+        } catch (err) {
+          console.warn('Failed to fetch staff:', err);
+          // Use empty array as fallback
+        }
+        
+        setEvents(eventsData || []);
+        setCases(casesData || []);
+        setStaff(staffData || []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch calendar data:', err);
@@ -70,66 +66,30 @@ const Calendar = () => {
   // Helper to assign colors based on event type
   const getEventColor = (eventType) => {
     switch(eventType) {
-      case 'meeting': return '#4F46E5'; // Indigo
-      case 'deadline': return '#EF4444'; // Red
-      case 'hearing': return '#F59E0B'; // Amber
-      case 'task': return '#10B981'; // Green
-      case 'reminder': return '#6366F1'; // Purple
-      default: return '#6B7280'; // Gray
+      case 'meeting': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200';
+      case 'deadline': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
+      case 'hearing': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200';
+      case 'task': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200';
+      case 'reminder': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
   
-  // Handle date navigation
-  const handlePrev = () => {
-    const calendarApi = calendarRef.current.getApi();
-    calendarApi.prev();
+  // Navigation functions
+  const handlePrevMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
   };
   
-  const handleNext = () => {
-    const calendarApi = calendarRef.current.getApi();
-    calendarApi.next();
+  const handleNextMonth = () => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
   };
   
   const handleToday = () => {
-    const calendarApi = calendarRef.current.getApi();
-    calendarApi.today();
-  };
-  
-  // Handle view changes
-  const handleViewChange = (viewType) => {
-    const calendarApi = calendarRef.current.getApi();
-    calendarApi.changeView(viewType);
-  };
-  
-  // Event handlers
-  const handleDateSelect = (selectInfo) => {
-    // Open create event modal with pre-filled date/time
-    setSelectedEvent({
-      start_time: selectInfo.startStr,
-      end_time: selectInfo.endStr,
-      all_day: selectInfo.allDay
-    });
-    setShowModal(true);
-  };
-  
-  const handleEventClick = (clickInfo) => {
-    // Open edit event modal with event data
-    const event = clickInfo.event;
-    const extendedProps = event.extendedProps;
-    
-    setSelectedEvent({
-      id: event.id,
-      title: event.title,
-      start_time: event.startStr,
-      end_time: event.endStr,
-      all_day: event.allDay,
-      description: extendedProps.description,
-      location: extendedProps.location,
-      event_type: extendedProps.eventType,
-      case: extendedProps.caseId,
-      attendees: extendedProps.attendees
-    });
-    setShowModal(true);
+    setCurrentDate(new Date());
   };
   
   // Save an event (create or update)
@@ -141,53 +101,21 @@ const Calendar = () => {
       if (eventData.id) {
         // Update existing event
         savedEvent = await apiRequest(`/api/calendar/events/${eventData.id}/`, 'PUT', eventData);
+        
+        // Update events list
+        setEvents(events.map(e => e.id === savedEvent.id ? savedEvent : e));
       } else {
         // Create new event
         savedEvent = await apiRequest('/api/calendar/events/', 'POST', eventData);
-      }
-      
-      // Update events list
-      if (eventData.id) {
-        setEvents(events.map(e => e.id === savedEvent.id ? {
-          id: savedEvent.id,
-          title: savedEvent.title,
-          start: savedEvent.start_time,
-          end: savedEvent.end_time,
-          allDay: savedEvent.all_day,
-          extendedProps: {
-            description: savedEvent.description,
-            location: savedEvent.location,
-            eventType: savedEvent.event_type,
-            caseId: savedEvent.case,
-            attendees: savedEvent.attendees
-          },
-          backgroundColor: getEventColor(savedEvent.event_type),
-          borderColor: getEventColor(savedEvent.event_type)
-        } : e));
-      } else {
-        setEvents([...events, {
-          id: savedEvent.id,
-          title: savedEvent.title,
-          start: savedEvent.start_time,
-          end: savedEvent.end_time,
-          allDay: savedEvent.all_day,
-          extendedProps: {
-            description: savedEvent.description,
-            location: savedEvent.location,
-            eventType: savedEvent.event_type,
-            caseId: savedEvent.case,
-            attendees: savedEvent.attendees
-          },
-          backgroundColor: getEventColor(savedEvent.event_type),
-          borderColor: getEventColor(savedEvent.event_type)
-        }]);
+        
+        // Add to events list
+        setEvents([...events, savedEvent]);
       }
       
       setShowModal(false);
       setSelectedEvent(null);
     } catch (err) {
       console.error('Failed to save event:', err);
-      // This could be improved with better error handling
       alert('Failed to save event. Please try again.');
     } finally {
       setLoading(false);
@@ -217,94 +145,108 @@ const Calendar = () => {
   };
   
   // Apply filters to events
-  const handleApplyFilters = () => {
-    // In a real implementation, this would likely be a server-side filter
-    // For this demo, we'll filter client-side
-    const fetchFilteredEvents = async () => {
-      try {
-        setLoading(true);
-        
-        // Build query params
-        const params = new URLSearchParams();
-        if (filters.eventType) params.append('event_type', filters.eventType);
-        if (filters.caseId) params.append('case', filters.caseId);
-        if (filters.assignedTo) params.append('attendee', filters.assignedTo);
-        
-        const eventsData = await apiRequest(`/api/calendar/events/?${params.toString()}`);
-        
-        // Format events for FullCalendar
-        const formattedEvents = eventsData.map(event => ({
-          id: event.id,
-          title: event.title,
-          start: event.start_time,
-          end: event.end_time || event.start_time,
-          allDay: event.all_day,
-          extendedProps: {
-            description: event.description,
-            location: event.location,
-            eventType: event.event_type,
-            caseId: event.case,
-            attendees: event.attendees
-          },
-          backgroundColor: getEventColor(event.event_type),
-          borderColor: getEventColor(event.event_type)
-        }));
-        
-        setEvents(formattedEvents);
-      } catch (err) {
-        console.error('Failed to fetch filtered events:', err);
-        setError('Failed to apply filters. Please try again.');
-      } finally {
-        setLoading(false);
-        setShowFilters(false);
-      }
-    };
-    
-    fetchFilteredEvents();
+  const handleApplyFilters = async () => {
+    try {
+      setLoading(true);
+      
+      // Build query params
+      const params = new URLSearchParams();
+      if (filters.eventType) params.append('event_type', filters.eventType);
+      if (filters.caseId) params.append('case', filters.caseId);
+      if (filters.assignedTo) params.append('attendee', filters.assignedTo);
+      
+      const eventsData = await apiRequest(`/api/calendar/events/?${params.toString()}`);
+      setEvents(eventsData || []);
+    } catch (err) {
+      console.error('Failed to apply filters:', err);
+      setError('Failed to apply filters. Please try again.');
+    } finally {
+      setLoading(false);
+      setShowFilters(false);
+    }
   };
   
   // Clear all filters
-  const handleResetFilters = () => {
+  const handleResetFilters = async () => {
     setFilters({
       eventType: '',
       caseId: '',
       assignedTo: ''
     });
     
-    // Fetch all events again
-    const fetchAllEvents = async () => {
-      try {
-        setLoading(true);
-        const eventsData = await apiRequest('/api/calendar/events/');
-        
-        // Format events for FullCalendar
-        const formattedEvents = eventsData.map(event => ({
-          id: event.id,
-          title: event.title,
-          start: event.start_time,
-          end: event.end_time || event.start_time,
-          allDay: event.all_day,
-          extendedProps: {
-            description: event.description,
-            location: event.location,
-            eventType: event.event_type,
-            caseId: event.case,
-            attendees: event.attendees
-          },
-          backgroundColor: getEventColor(event.event_type),
-          borderColor: getEventColor(event.event_type)
-        }));
-        
-        setEvents(formattedEvents);
-      } catch (err) {
-        console.error('Failed to reset filters:', err);
-        setError('Failed to reset filters. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    try {
+      setLoading(true);
+      const eventsData = await apiRequest('/api/calendar/events/');
+      setEvents(eventsData || []);
+    } catch (err) {
+      console.error('Failed to reset filters:', err);
+      setError('Failed to reset filters. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate days for the current month view
+  const getDaysInMonth = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
     
-    fetchAllEvents();
+    // First day of the month
+    const firstDay = new Date(year, month, 1);
+    // Last day of the month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Get the day of the week for the first day (0 = Sunday)
+    const firstDayOfWeek = firstDay.getDay();
+    
+    // Total days to display including padding from previous/next months
+    const totalDays = [];
+    
+    // Add days from previous month for padding
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      totalDays.push({
+        date: new Date(year, month - 1, prevMonthLastDay - i),
+        isCurrentMonth: false
+      });
+    }
+    
+    // Add days from current month
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      totalDays.push({
+        date: new Date(year, month, i),
+        isCurrentMonth: true
+      });
+    }
+    
+    // Add days from next month to complete the grid (always show 6 weeks)
+    const remainingDays = 42 - totalDays.length;
+    for (let i = 1; i <= remainingDays; i++) {
+      totalDays.push({
+        date: new Date(year, month + 1, i),
+        isCurrentMonth: false
+      });
+    }
+    
+    return totalDays;
+  };
+  
+  // Get events for a specific day
+  const getEventsForDay = (date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.start_time);
+      return eventDate.getDate() === date.getDate() && 
+             eventDate.getMonth() === date.getMonth() && 
+             eventDate.getFullYear() === date.getFullYear();
+    });
+  };
+
+  const renderEventWithBadge = (event) => {
+    return (
+      <div className={`px-2 py-1 text-xs rounded-md truncate cursor-pointer ${getEventColor(event.event_type)}`}>
+        {event.title}
+      </div>
+    );
   };
 
   if (loading && events.length === 0) {
@@ -323,6 +265,10 @@ const Calendar = () => {
       </div>
     );
   }
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const currentMonthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const calendarDays = getDaysInMonth();
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
@@ -355,45 +301,61 @@ const Calendar = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-4 sm:space-y-0">
         <div className="flex items-center space-x-2">
           <button
-            onClick={handlePrev}
+            onClick={handlePrevMonth}
             className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Previous"
           >
             <ChevronLeftIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           </button>
           
-          <button
-            onClick={handleToday}
-            className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            Today
-          </button>
+          <span className="text-lg font-medium text-gray-900 dark:text-white">
+            {currentMonthName}
+          </span>
           
           <button
-            onClick={handleNext}
+            onClick={handleNextMonth}
             className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Next"
           >
             <ChevronRightIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           </button>
+          
+          <button
+            onClick={handleToday}
+            className="ml-2 px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Today
+          </button>
         </div>
         
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => handleViewChange('dayGridMonth')}
-            className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            onClick={() => setCurrentView('month')}
+            className={`px-3 py-1 text-sm font-medium rounded-md border ${
+              currentView === 'month' 
+                ? 'bg-primary-100 text-primary-800 border-primary-300 dark:bg-primary-900/30 dark:text-primary-200 dark:border-primary-800' 
+                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
           >
             Month
           </button>
           <button
-            onClick={() => handleViewChange('timeGridWeek')}
-            className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            onClick={() => setCurrentView('week')}
+            className={`px-3 py-1 text-sm font-medium rounded-md border ${
+              currentView === 'week' 
+                ? 'bg-primary-100 text-primary-800 border-primary-300 dark:bg-primary-900/30 dark:text-primary-200 dark:border-primary-800' 
+                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
           >
             Week
           </button>
           <button
-            onClick={() => handleViewChange('timeGridDay')}
-            className="px-3 py-1 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+            onClick={() => setCurrentView('day')}
+            className={`px-3 py-1 text-sm font-medium rounded-md border ${
+              currentView === 'day' 
+                ? 'bg-primary-100 text-primary-800 border-primary-300 dark:bg-primary-900/30 dark:text-primary-200 dark:border-primary-800' 
+                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
           >
             Day
           </button>
@@ -486,22 +448,59 @@ const Calendar = () => {
         </div>
       )}
       
-      {/* Calendar */}
-      <div>
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          headerToolbar={false} // We're using our custom toolbar
-          events={events}
-          selectable={true}
-          selectMirror={true}
-          dayMaxEvents={true}
-          weekends={true}
-          select={handleDateSelect}
-          eventClick={handleEventClick}
-          height="auto"
-        />
+      {/* Simple Month View Calendar */}
+      <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+        {/* Days of Week Header */}
+        <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700">
+          {days.map(day => (
+            <div key={day} className="py-2 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
+              {day.slice(0, 3)}
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7 gap-px bg-gray-200 dark:bg-gray-700">
+          {calendarDays.map((dayObj, index) => {
+            const dayEvents = getEventsForDay(dayObj.date);
+            const isToday = dayObj.date.toDateString() === new Date().toDateString();
+            
+            return (
+              <div 
+                key={index} 
+                className={`min-h-[120px] p-2 ${
+                  dayObj.isCurrentMonth 
+                    ? 'bg-white dark:bg-gray-800' 
+                    : 'bg-gray-50 dark:bg-gray-900/50 text-gray-400 dark:text-gray-500'
+                } ${
+                  isToday 
+                    ? 'ring-2 ring-inset ring-primary-500 dark:ring-primary-400' 
+                    : ''
+                }`}
+                onClick={() => {
+                  setSelectedEvent({
+                    start_time: dayObj.date.toISOString(),
+                    end_time: new Date(dayObj.date.getTime() + 3600000).toISOString(),
+                    all_day: false
+                  });
+                  setShowModal(true);
+                }}
+              >
+                <div className="font-medium text-sm mb-1">
+                  {dayObj.date.getDate()}
+                </div>
+                <div className="space-y-1 overflow-y-auto max-h-24">
+                  {dayEvents.slice(0, 3).map(event => renderEventWithBadge(event))}
+                  {dayEvents.length > 3 && (
+                    <div className="text-xs text-gray-500 dark:text-gray-400 pl-2">
+                      + {dayEvents.length - 3} more
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
       
       {/* Event Modal */}
