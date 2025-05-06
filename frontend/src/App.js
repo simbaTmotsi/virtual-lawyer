@@ -41,6 +41,14 @@ import NewCase from './pages/cases/NewCase';
 import TermsOfService from './pages/legal/TermsOfService';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 
+// Document management
+import DocumentsList from './pages/documents/DocumentsList';
+import DocumentDetails from './pages/documents/DocumentDetails';
+import UploadDocument from './pages/documents/UploadDocument';
+
+// Calendar page
+import Calendar from './pages/Calendar';
+
 // Define routes using createBrowserRouter
 const router = createBrowserRouter([
   // Auth routes (outside main layouts)
@@ -62,6 +70,10 @@ const router = createBrowserRouter([
       { path: "cases", element: <CasesList /> },
       { path: "cases/new", element: <NewCase /> },
       { path: "cases/:id", element: <CaseDetails /> },
+      { path: "documents", element: <DocumentsList /> },
+      { path: "documents/upload", element: <UploadDocument /> },
+      { path: "documents/:id", element: <DocumentDetails /> },
+      { path: "calendar", element: <Calendar /> },
     ],
   },
 

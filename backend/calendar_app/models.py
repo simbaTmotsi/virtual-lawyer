@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from cases.models import Case # Assuming Case model exists
+from cases.models import Case
 
 class Event(models.Model):
     """Represents a calendar event, appointment, deadline, or task."""
@@ -28,10 +28,6 @@ class Event(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    # Add fields for reminders, recurrence, etc.
-    # reminder_minutes_before = models.PositiveIntegerField(null=True, blank=True, help_text="Send reminder X minutes before start time")
-    # recurrence_rule = models.CharField(max_length=100, blank=True, help_text="iCal RRULE string")
 
     def __str__(self):
         return f"{self.title} ({self.start_time.strftime('%Y-%m-%d %H:%M')})"

@@ -4,9 +4,10 @@ from django.conf import settings
 from cases.models import Case # Assuming Case model exists in 'cases' app
 
 def get_document_upload_path(instance, filename):
-    """ Returns the upload path for a document, organized by case ID if available. """
-    case_id = instance.case.id if instance.case else 'uncategorized'
-    return os.path.join('documents', str(case_id), filename)
+    """ Determines the upload path for the document. Organizes files based on case ID if available. """
+    if instance.case:
+        return f"documents/cases/{instance.case.id}/{filename}"
+    return f"documents/uncategorized/{filename}"
 
 class Document(models.Model):
     """Represents a document uploaded to the system."""
@@ -17,10 +18,17 @@ class Document(models.Model):
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='uploaded_documents')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    # Add fields for document type, versioning, analysis results etc.
-    # doc_type = models.CharField(max_length=50, blank=True)
-    # version = models.PositiveIntegerField(default=1)
-    # analysis_summary = models.TextField(blank=True, null=True)
+    
+    # Add document type field
+    DOCUMENT_TYPES = (
+        ('legal', 'Legal Document'),
+        ('contract', 'Contract'),
+        ('court', 'Court Filing'),
+        ('correspondence', 'Correspondence'),
+        ('evidence', 'Evidence'),
+        ('other', 'Other'),
+    )
+    doc_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES, blank=True)
 
     def __str__(self):
         return self.name

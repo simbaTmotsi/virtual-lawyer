@@ -3,16 +3,13 @@ from .models import Case
 from clients.models import Client
 
 class CaseSerializer(serializers.ModelSerializer):
-    """Serializer for the Case model"""
-    
-    # Uncomment and adjust the following if you have a client relationship
-    # client_details = serializers.SerializerMethodField(read_only=True)
-    
+    """Full serializer for Case model"""
     class Meta:
         model = Case
-        fields = '__all__'  # Replace with specific fields as needed
-        read_only_fields = ('id', 'created_at', 'updated_at')
-    
-    # def get_client_details(self, obj):
-    #     from clients.serializers import ClientSerializer
-    #     return ClientSerializer(obj.client).data
+        fields = '__all__'
+
+class SimpleCaseSerializer(serializers.ModelSerializer):
+    """Simplified serializer for Case model to use in related objects"""
+    class Meta:
+        model = Case
+        fields = ['id', 'title', 'case_number', 'status']

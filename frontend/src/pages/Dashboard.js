@@ -25,18 +25,17 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Fetch all data in parallel
         const [stats, deadlines, events, cases] = await Promise.all([
           apiRequest('/api/dashboard/stats/'),
           apiRequest('/api/dashboard/deadlines/'),
-          apiRequest('/api/dashboard/events/'),
+          apiRequest('/api/calendar/events/upcoming/'), // Use the new endpoint
           apiRequest('/api/dashboard/active-cases/')
         ]);
         
         setDashboardData({
           stats: stats || [],
           upcomingDeadlines: deadlines || [],
-          upcomingEvents: events || [],
+          upcomingEvents: events || [], // This now comes from the calendar API
           activeCases: cases || []
         });
         setError(null);
@@ -239,12 +238,16 @@ const Dashboard = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {event.client && <span>Client: {event.client}</span>}
+                          {event.case_details && <span>Case: {event.case_details.title}</span>}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{event.date}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{event.time}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {new Date(event.start_time).toLocaleDateString()}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {event.all_day ? 'All day' : new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{event.location}</p>
                       </div>
                     </div>

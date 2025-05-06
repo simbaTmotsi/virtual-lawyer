@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeftIcon, PencilIcon, CalendarIcon, DocumentTextIcon, ClockIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PencilIcon, CalendarIcon, DocumentTextIcon, ClockIcon, UserIcon, PlusIcon } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api'; // Import API utility
 
 const CaseDetails = () => {
@@ -164,8 +164,28 @@ const CaseDetails = () => {
               <DocumentTextIcon className="h-5 w-5 mr-2 text-primary-500" /> Documents
             </h3>
             <ul className="space-y-2">
-              {/* Mocked for now, replace with actual data (e.g., caseData.documents) */}
-              <li className="text-sm text-gray-500 dark:text-gray-400">Document list not yet available via API.</li>
+              {caseData.documents && caseData.documents.length > 0 ? (
+                caseData.documents.map(doc => (
+                  <li key={doc.id} className="flex items-center justify-between">
+                    <Link to={`/documents/${doc.id}`} className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                      {doc.name}
+                    </Link>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </span>
+                  </li>
+                ))
+              ) : (
+                <li className="text-sm text-gray-500 dark:text-gray-400">No documents attached to this case.</li>
+              )}
+              <li className="mt-2">
+                <Link 
+                  to={`/documents/upload?caseId=${caseData.id}`}
+                  className="inline-flex items-center text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  <PlusIcon className="h-4 w-4 mr-1" /> Add Document
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

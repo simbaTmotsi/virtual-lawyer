@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentIcon } from '@heroicons/react/24/outline';
 import Header from '../navigation/Header';
 import Sidebar from '../navigation/Sidebar';
 import { useDarkMode } from '../../contexts/DarkModeContext';
@@ -15,6 +15,14 @@ const MainLayout = () => {
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
+
+  const navigation = [
+    {
+      name: 'Documents',
+      href: '/documents',
+      icon: DocumentIcon,
+    },
+  ];
 
   return (
     <div className={`h-screen flex overflow-hidden ${darkMode ? 'dark' : ''}`}>
