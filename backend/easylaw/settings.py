@@ -34,9 +34,9 @@ INSTALLED_APPS = [
     
     # Project apps
     'accounts',
-    'clients',  # Make sure this is included
-    'admin_portal',
+    'clients',
     'cases',
+    'admin_portal',
     'documents',
     'research',
     'billing',
