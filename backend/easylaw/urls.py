@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/calendar/', include('calendar_app.urls')),
     # Include authentication endpoints under /api/auth/
     path('api/auth/', include('accounts.auth_urls')),
+    path('api/dashboard/', include('dashboard.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,42 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/solid';
+import apiRequest from '../../utils/api'; // Import API utility
 
 const NewCase = () => {
   const navigate = useNavigate();
   const [caseTitle, setCaseTitle] = useState('');
-  const [clientId, setClientId] = useState(''); // Assuming client selection
+  const [clientId, setClientId] = useState('');
   const [description, setDescription] = useState('');
   const [caseType, setCaseType] = useState('');
+  const [status, setStatus] = useState('open'); // Default status
+
+  const [clients, setClients] = useState([]);
+  const [assignedAttorneys, setAssignedAttorneys] = useState([]); // For attorney selection
+  const [selectedAttorneys, setSelectedAttorneys] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Mock clients for dropdown - replace with API call
-  const clients = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-  ];
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const clientsResponse = await apiRequest('/api/clients/');
+        setClients(clientsResponse || []);
+
+        // Assuming an endpoint to fetch users who are attorneys/paralegals
+        const usersResponse = await apiRequest('/api/users/?role=attorney&role=paralegal'); // Adjust endpoint and params
+        setAssignedAttorneys(usersResponse || []);
+
+        setError('');
+      } catch (err) {
+        console.error('Failed to fetch initial data:', err);
+        setError('Failed to load initial data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!caseTitle || !clientId || !caseType) {
-      setError('Please fill in all required fields.');
+    if (!caseTitle || !clientId || !caseType || !status) {
+      setError('Please fill in all required fields: Title, Client, Type, and Status.');
       return;
     }
     setLoading(true);
+    const caseData = {
+      title: caseTitle,
+      client: clientId, // Send client ID
+      description,
+      case_type: caseType,
+      status,
+      assigned_attorneys: selectedAttorneys, // Send array of attorney IDs
+      // Add other fields as required by your backend API
+    };
+
     try {
-      // Simulate API call
-      console.log('Submitting new case:', { caseTitle, clientId, description, caseType });
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // On success:
-      navigate('/cases'); // Redirect to cases list
+      await apiRequest('/api/cases/', 'POST', caseData);
+      navigate('/cases'); // Redirect to cases list on success
     } catch (err) {
-      setError('Failed to create case. Please try again.');
+      let errorMessage = 'Failed to create case. Please try again.';
+      if (err.data) {
+        const fieldErrors = Object.entries(err.data)
+          .map(([field, messages]) => `${field.replace(/_/g, ' ')}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
+          .join('; ');
+        if (fieldErrors) {
+          errorMessage = fieldErrors;
+        } else if (err.data.detail) {
+          errorMessage = err.data.detail;
+        }
+      }
+      setError(errorMessage);
       console.error('Case creation error:', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAttorneySelection = (e) => {
+    const selectedIds = Array.from(e.target.selectedOptions, option => option.value);
+    setSelectedAttorneys(selectedIds);
   };
 
   return (
@@ -78,7 +124,7 @@ const NewCase = () => {
           >
             <option value="">Select a client</option>
             {clients.map(client => (
-              <option key={client.id} value={client.id}>{client.name}</option>
+              <option key={client.id} value={client.id}>{client.first_name} {client.last_name} (ID: {client.id})</option>
             ))}
           </select>
         </div>
@@ -97,6 +143,46 @@ const NewCase = () => {
             placeholder="e.g., Personal Injury, Corporate Law"
             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
           />
+        </div>
+
+        {/* Status */}
+        <div>
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Status <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            required
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
+          >
+            {/* These should match choices in your backend Case model */}
+            <option value="open">Open</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="closed">Closed</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+
+        {/* Assigned Attorneys */}
+        <div>
+          <label htmlFor="assignedAttorneys" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Assigned Staff
+          </label>
+          <select
+            id="assignedAttorneys"
+            multiple
+            value={selectedAttorneys}
+            onChange={handleAttorneySelection}
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white h-32"
+          >
+            {assignedAttorneys.map(user => (
+              <option key={user.id} value={user.id}>{user.first_name} {user.last_name} ({user.role})</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Hold Ctrl (or Cmd on Mac) to select multiple staff members.</p>
         </div>
 
         {/* Description */}

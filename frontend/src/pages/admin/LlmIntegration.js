@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckIcon, KeyIcon } from '@heroicons/react/24/solid';
+import apiRequest from '../../utils/api';
 
 const LlmIntegration = () => {
-  // Mock state - replace with API integration
   const [apiKeys, setApiKeys] = useState({
     openai: '',
     gemini: '',
   });
-  const [selectedModel, setSelectedModel] = useState('openai'); // Default model
+  const [selectedModel, setSelectedModel] = useState('openai');
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchLlmSettings = async () => {
+      try {
+        setFetchLoading(true);
+        const settings = await apiRequest('/api/admin/llm-settings/');
+        
+        // Only set API key placeholders - don't show actual keys for security
+        setApiKeys({
+          openai: settings.openai_key ? '••••••••••••••••••••••••••' : '',
+          gemini: settings.gemini_key ? '••••••••••••••••••••••••••' : '',
+        });
+        
+        setSelectedModel(settings.preferred_model || 'openai');
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch LLM settings:', err);
+        setError('Failed to load LLM settings. Please try again.');
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    fetchLlmSettings();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,18 +53,45 @@ const LlmIntegration = () => {
     e.preventDefault();
     setLoading(true);
     setSuccess(false);
+    setError(null);
+    
     try {
-      // Simulate API call to save LLM settings
-      console.log('Saving LLM settings:', { apiKeys, selectedModel });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Only send non-placeholder values to update keys
+      const payload = {
+        preferred_model: selectedModel,
+      };
+      
+      if (apiKeys.openai && !apiKeys.openai.includes('•')) {
+        payload.openai_key = apiKeys.openai;
+      }
+      
+      if (apiKeys.gemini && !apiKeys.gemini.includes('•')) {
+        payload.gemini_key = apiKeys.gemini;
+      }
+      
+      await apiRequest('/api/admin/llm-settings/', 'PUT', payload);
       setSuccess(true);
-    } catch (error) {
-      console.error('Failed to save LLM settings:', error);
-      // Handle error display
+      
+      // Reset form to show placeholders
+      setApiKeys({
+        openai: payload.openai_key ? '••••••••••••••••••••••••••' : '',
+        gemini: payload.gemini_key ? '••••••••••••••••••••••••••' : '',
+      });
+    } catch (err) {
+      console.error('Failed to save LLM settings:', err);
+      setError('Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetchLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
@@ -45,6 +99,19 @@ const LlmIntegration = () => {
       <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
         Configure API keys for integrating Large Language Models (LLMs) like OpenAI and Google Gemini for features like legal research and document analysis.
       </p>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-md flex items-center">
+          <CheckIcon className="h-5 w-5 mr-2" />
+          Settings saved successfully!
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
         {/* OpenAI API Key */}
@@ -125,11 +192,8 @@ const LlmIntegration = () => {
             ) : (
               <CheckIcon className="h-5 w-5 mr-2" />
             )}
-            {loading ? 'Saving...' : 'Save Configuration'}
+            {loading ? 'Saving...' : 'Save Settings'}
           </button>
-          {success && (
-            <span className="text-sm text-green-600 dark:text-green-400">LLM settings saved successfully!</span>
-          )}
         </div>
       </form>
     </div>

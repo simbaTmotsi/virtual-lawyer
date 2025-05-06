@@ -19,6 +19,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').sp
 
 # Application definition
 INSTALLED_APPS = [
+    # Django built-ins
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -26,20 +27,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third party apps
+    # Third-party apps
     'rest_framework',
     'corsheaders',
     'rest_framework_simplejwt',
     
-    # Local apps
+    # Project apps
     'accounts',
+    'clients',  # Make sure this is included
     'admin_portal',
-    'clients',
     'cases',
     'documents',
     'research',
     'billing',
     'calendar_app',
+    'dashboard',
 ]
 
 MIDDLEWARE = [

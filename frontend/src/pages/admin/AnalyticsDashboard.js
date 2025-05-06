@@ -1,21 +1,91 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChartBarIcon, UsersIcon, DocumentDuplicateIcon, ClockIcon } from '@heroicons/react/24/outline';
+import apiRequest from '../../utils/api';
 
 // Placeholder for chart component (e.g., using Chart.js)
-const PlaceholderChart = ({ title }) => (
+const PlaceholderChart = ({ title, data }) => (
   <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-64 flex items-center justify-center">
     <p className="text-gray-500 dark:text-gray-400">{title} Chart Area</p>
   </div>
 );
 
 const AnalyticsDashboard = () => {
-  // Mock analytics data - replace with API calls
-  const stats = [
-    { name: 'Total Users', value: '152', icon: UsersIcon, color: 'bg-blue-500' },
-    { name: 'Active Users (24h)', value: '45', icon: UsersIcon, color: 'bg-green-500' },
-    { name: 'Documents Processed', value: '1,280', icon: DocumentDuplicateIcon, color: 'bg-indigo-500' },
-    { name: 'Avg. API Response Time', value: '120ms', icon: ClockIcon, color: 'bg-yellow-500' },
-  ];
+  const [analyticsData, setAnalyticsData] = useState({
+    stats: [],
+    userSignups: [],
+    apiUsage: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        // Fetch summary stats
+        const stats = await apiRequest('/api/analytics/summary/');
+        
+        // Fetch user signup data for chart
+        const userSignups = await apiRequest('/api/analytics/user-signups/');
+        
+        // Fetch API usage data for chart
+        const apiUsage = await apiRequest('/api/analytics/api-usage/');
+        
+        setAnalyticsData({
+          stats: stats || [],
+          userSignups: userSignups || [],
+          apiUsage: apiUsage || []
+        });
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch analytics data:', err);
+        setError('Failed to load analytics data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    );
+  }
+
+  // Map stats to their icons and colors
+  const statsWithIcons = analyticsData.stats.map(stat => {
+    const icons = {
+      'Total Users': UsersIcon,
+      'Active Users (24h)': UsersIcon,
+      'Documents Processed': DocumentDuplicateIcon,
+      'Avg. API Response Time': ClockIcon
+    };
+    
+    const colors = {
+      'Total Users': 'bg-blue-500',
+      'Active Users (24h)': 'bg-green-500',
+      'Documents Processed': 'bg-indigo-500',
+      'Avg. API Response Time': 'bg-yellow-500'
+    };
+    
+    return {
+      ...stat,
+      icon: icons[stat.name] || UsersIcon,
+      color: colors[stat.name] || 'bg-gray-500'
+    };
+  });
 
   return (
     <div className="space-y-8">
@@ -26,7 +96,7 @@ const AnalyticsDashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsWithIcons.map((stat) => (
           <div key={stat.name} className="bg-white dark:bg-gray-800 overflow-hidden shadow dark:shadow-gray-700/10 rounded-lg">
             <div className="p-5">
               <div className="flex items-center">
@@ -51,19 +121,16 @@ const AnalyticsDashboard = () => {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
             <ChartBarIcon className="h-5 w-5 mr-2 text-primary-500" /> User Signups Over Time
           </h3>
-          <PlaceholderChart title="User Signups" />
+          <PlaceholderChart title="User Signups" data={analyticsData.userSignups} />
         </div>
+
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
             <ChartBarIcon className="h-5 w-5 mr-2 text-primary-500" /> API Usage by Endpoint
           </h3>
-          <PlaceholderChart title="API Usage" />
+          <PlaceholderChart title="API Usage" data={analyticsData.apiUsage} />
         </div>
       </div>
-
-      {/* More detailed sections can be added here */}
-      {/* e.g., Recent Errors, Slowest API Calls, Resource Usage */}
-
     </div>
   );
 };

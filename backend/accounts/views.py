@@ -153,6 +153,17 @@ class CustomTokenRefreshView(APIView):
             "detail": "Token refresh not implemented"
         }, status=status.HTTP_501_NOT_IMPLEMENTED)
 
+class CurrentUserView(APIView):
+    """
+    API endpoint for retrieving the currently authenticated user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        """Returns details for the currently authenticated user."""
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_view(request):
