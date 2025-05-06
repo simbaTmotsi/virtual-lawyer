@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   BriefcaseIcon, 
@@ -20,35 +20,40 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dataFetched, setDataFetched] = useState(false);
+
+  const fetchDashboardData = useCallback(async () => {
+    // Prevent multiple fetches
+    if (dataFetched) return;
+    
+    try {
+      setLoading(true);
+      const [stats, deadlines, events, cases] = await Promise.all([
+        apiRequest('/api/dashboard/stats/'),
+        apiRequest('/api/dashboard/deadlines/'),
+        apiRequest('/api/calendar/events/upcoming/'), // Use the new endpoint
+        apiRequest('/api/dashboard/active-cases/')
+      ]);
+      
+      setDashboardData({
+        stats: stats || [],
+        upcomingDeadlines: deadlines || [],
+        upcomingEvents: events || [], // This now comes from the calendar API
+        activeCases: cases || []
+      });
+      setDataFetched(true);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError('Failed to load dashboard data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [dataFetched]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [stats, deadlines, events, cases] = await Promise.all([
-          apiRequest('/api/dashboard/stats/'),
-          apiRequest('/api/dashboard/deadlines/'),
-          apiRequest('/api/calendar/events/upcoming/'), // Use the new endpoint
-          apiRequest('/api/dashboard/active-cases/')
-        ]);
-        
-        setDashboardData({
-          stats: stats || [],
-          upcomingDeadlines: deadlines || [],
-          upcomingEvents: events || [], // This now comes from the calendar API
-          activeCases: cases || []
-        });
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
 
   if (loading) {
     return (

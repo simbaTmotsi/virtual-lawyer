@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-// Import AuthAPI from the correct file 'api.js'
-import { AuthAPI } from '../utils/api'; // Corrected import path
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import { AuthAPI } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -8,25 +7,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Use a ref instead of state to avoid dependency issues
+  const lastSuccessfulCheckRef = useRef(0);
 
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  // Memoize checkAuthStatus with useCallback and improved dependencies
+  const checkAuthStatus = useCallback(async (force = false) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
-        return;
+        setIsAuthenticated(false);
+        setUser(null);
+        return false;
+      }
+
+      // Check if we have a recent auth check (within last 60 seconds) and user data
+      // Skip the API call unless force=true
+      const now = Date.now();
+      if (!force && user && (now - lastSuccessfulCheckRef.current < 60000)) {
+        setIsAuthenticated(true);
+        setLoading(false);
+        return true;
       }
 
       // Verify token with the backend using AuthAPI
-      const userData = await AuthAPI.getCurrentUser(); // Use AuthAPI method
-      console.log('User data retrieved:', userData);
+      const userData = await AuthAPI.getCurrentUser();
       setUser(userData);
       setIsAuthenticated(true);
+      lastSuccessfulCheckRef.current = now;
+      return true;
     } catch (error) {
       console.error('Token validation failed:', error);
       // Invalid token, clear storage
@@ -34,10 +44,16 @@ export function AuthProvider({ children }) {
       // Ensure state reflects logged-out status
       setUser(null);
       setIsAuthenticated(false);
+      return false;
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Remove user from dependencies
+
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
 
   const login = async (email, password) => {
     try {
@@ -85,7 +101,6 @@ export function AuthProvider({ children }) {
     try {
       // Use AuthAPI.register
       const response = await AuthAPI.register(userData);
-      // Optionally handle response, e.g., auto-login or confirmation message
       return response;
     } catch (error) {
       console.error('Registration error:', error);
@@ -128,6 +143,7 @@ export function AuthProvider({ children }) {
     logout,
     register,
     fetchUserProfile,
+    checkAuthStatus,
   };
 
   return (

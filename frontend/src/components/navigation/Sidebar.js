@@ -23,7 +23,7 @@ const navigation = [
   { name: 'Calendar', href: '/calendar', icon: CalendarIcon },
   { name: 'Billing', href: '/billing', icon: CurrencyDollarIcon },
   { name: 'Research', href: '/research', icon: AcademicCapIcon },
-  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
+  { name: 'Analytics', href: '/analytics', icon: ChartBarIcon, id: 'main-analytics' },
 ];
 
 const adminNavigation = [
@@ -31,7 +31,7 @@ const adminNavigation = [
   { name: 'User Management', href: '/admin/users', icon: UserGroupIcon },
   { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },
   { name: 'LLM Integration', href: '/admin/llm-integration', icon: AcademicCapIcon },
-  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon, id: 'admin-analytics' },
 ];
 
 const Sidebar = ({ isMobile, setSidebarOpen }) => {
@@ -66,7 +66,7 @@ const Sidebar = ({ isMobile, setSidebarOpen }) => {
               <div key={`divider-${idx}`} className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
             ) : (
               <Link
-                key={item.name}
+                key={item.id || `${item.name}-${item.href}`} // Use unique id or generate one
                 to={item.href}
                 onClick={handleNavClick}
                 className={`

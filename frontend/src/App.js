@@ -2,10 +2,10 @@ import React from 'react';
 import {
   createBrowserRouter,
   RouterProvider,
-  Navigate
+  Navigate,
+  Outlet
 } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { DarkModeProvider } from './contexts/DarkModeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout components
@@ -49,63 +49,87 @@ import UploadDocument from './pages/documents/UploadDocument';
 // Calendar page
 import Calendar from './pages/Calendar';
 
-// Define routes using createBrowserRouter
-const router = createBrowserRouter([
-  // Auth routes (outside main layouts)
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
-  { path: "/forgot-password", element: <ForgotPassword /> },
-  { path: "/terms", element: <TermsOfService /> },
-  { path: "/privacy", element: <PrivacyPolicy /> },
-
-  // Main application routes (protected)
-  {
-    path: "/",
-    element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
-    children: [
-      { index: true, element: <Dashboard /> },
-      { path: "clients", element: <ClientsList /> },
-      { path: "clients/new", element: <NewClient /> },
-      { path: "clients/:id", element: <ClientDetails /> },
-      { path: "cases", element: <CasesList /> },
-      { path: "cases/new", element: <NewCase /> },
-      { path: "cases/:id", element: <CaseDetails /> },
-      { path: "documents", element: <DocumentsList /> },
-      { path: "documents/upload", element: <UploadDocument /> },
-      { path: "documents/:id", element: <DocumentDetails /> },
-      { path: "calendar", element: <Calendar /> },
-    ],
-  },
-
-  // Admin routes (protected and admin only)
-  {
-    path: "/admin",
-    element: <ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>,
-    children: [
-      { index: true, element: <AdminDashboard /> },
-      { path: "users", element: <UsersManagement /> },
-      { path: "llm-integration", element: <LlmIntegration /> },
-      { path: "settings", element: <SystemSettings /> },
-      { path: "analytics", element: <AnalyticsDashboard /> },
-    ],
-  },
-
-  // Fallback route - Navigate to dashboard if logged in, otherwise handled by ProtectedRoute
-  { path: "*", element: <Navigate to="/" replace /> }
-], {
-  future: {
-    v7_startTransition: true,
-    v7_relativeSplatPath: true,
-  },
-});
-
+// Global auth check wrapper - modified to not use navigate
+const AuthCheck = () => {
+  return <Outlet />;
+};
 
 function App() {
+  const router = createBrowserRouter([
+    // Public routes that don't require authentication
+    {
+      path: "/login",
+      element: <Login />
+    },
+    {
+      path: "/register",
+      element: <Register />
+    },
+    {
+      path: "/forgot-password",
+      element: <ForgotPassword />
+    },
+    {
+      path: "/terms",
+      element: <TermsOfService />
+    },
+    {
+      path: "/privacy",
+      element: <PrivacyPolicy />
+    },
+    
+    // Protected routes
+    {
+      element: <AuthProvider><AuthCheck /></AuthProvider>,
+      children: [
+        // Main application routes (protected)
+        {
+          path: "/",
+          element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
+          children: [
+            { index: true, element: <Dashboard /> },
+            { path: "clients", element: <ClientsList /> },
+            { path: "clients/new", element: <NewClient /> },
+            { path: "clients/:id", element: <ClientDetails /> },
+            { path: "cases", element: <CasesList /> },
+            { path: "cases/new", element: <NewCase /> },
+            { path: "cases/:id", element: <CaseDetails /> },
+            { path: "documents", element: <DocumentsList /> },
+            { path: "documents/upload", element: <UploadDocument /> },
+            { path: "documents/:id", element: <DocumentDetails /> },
+            { path: "calendar", element: <Calendar /> },
+          ],
+        },
+
+        // Admin routes (protected and admin only)
+        {
+          path: "/admin",
+          element: <ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>,
+          children: [
+            { index: true, element: <AdminDashboard /> },
+            { path: "users", element: <UsersManagement /> },
+            { path: "llm-integration", element: <LlmIntegration /> },
+            { path: "settings", element: <SystemSettings /> },
+            { path: "analytics", element: <AnalyticsDashboard /> },
+          ],
+        },
+      ]
+    },
+    // Fallback route - Navigate to login
+    { 
+      path: "*", 
+      element: <Navigate to="/login" replace /> 
+    }
+  ], {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    },
+  });
+
   return (
     <AuthProvider>
-      <DarkModeProvider>
-        <RouterProvider router={router} />
-      </DarkModeProvider>
+      <RouterProvider router={router} />
     </AuthProvider>
   );
 }

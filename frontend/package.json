@@ -27,7 +27,8 @@
   "scripts": {
     "start": "dotenv -e ../.env react-scripts start",
     "build": "dotenv -e ../.env react-scripts build",
-    "test": "react-scripts test",
+    "test": "dotenv -e .env.test react-scripts test --transformIgnorePatterns \"node_modules/(?!axios)/\" --env=jsdom",
+    "test:ci": "dotenv -e .env.test react-scripts test --transformIgnorePatterns \"node_modules/(?!axios)/\" --env=jsdom --watchAll=false --ci",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
