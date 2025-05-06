@@ -170,12 +170,12 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                   <div className="grid grid-cols-1 gap-4">
                     {/* Title */}
                     <div>
-                      <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Title <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="title"
+                        id="event-title"
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
@@ -190,11 +190,11 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     
                     {/* Description */}
                     <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Description
                       </label>
                       <textarea
-                        id="description"
+                        id="event-description"
                         name="description"
                         rows="3"
                         value={formData.description}
@@ -205,11 +205,11 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     
                     {/* Event Type */}
                     <div>
-                      <label htmlFor="event_type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Event Type
                       </label>
                       <select
-                        id="event_type"
+                        id="event-type"
                         name="event_type"
                         value={formData.event_type}
                         onChange={handleChange}
@@ -228,7 +228,7 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     <div className="flex items-start">
                       <div className="flex items-center h-5">
                         <input
-                          id="all_day"
+                          id="event-all-day"
                           name="all_day"
                           type="checkbox"
                           checked={formData.all_day}
@@ -237,7 +237,7 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                         />
                       </div>
                       <div className="ml-3 text-sm">
-                        <label htmlFor="all_day" className="font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="event-all-day" className="font-medium text-gray-700 dark:text-gray-300">
                           All Day Event
                         </label>
                       </div>
@@ -246,12 +246,12 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     {/* Date/Time */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="start_time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="event-start-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                           Start {formData.all_day ? 'Date' : 'Time'} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type={formData.all_day ? "date" : "datetime-local"}
-                          id="start_time"
+                          id="event-start-time"
                           name="start_time"
                           value={formData.all_day ? formData.start_time.split('T')[0] : formData.start_time}
                           onChange={handleChange}
@@ -266,12 +266,12 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                       
                       {!formData.all_day && (
                         <div>
-                          <label htmlFor="end_time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <label htmlFor="event-end-time" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             End Time <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="datetime-local"
-                            id="end_time"
+                            id="event-end-time"
                             name="end_time"
                             value={formData.end_time}
                             onChange={handleChange}
@@ -288,12 +288,12 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     
                     {/* Location */}
                     <div>
-                      <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Location
                       </label>
                       <input
                         type="text"
-                        id="location"
+                        id="event-location"
                         name="location"
                         value={formData.location}
                         onChange={handleChange}
@@ -304,11 +304,11 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     
                     {/* Associated Case */}
                     <div>
-                      <label htmlFor="case" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-case" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Associated Case
                       </label>
                       <select
-                        id="case"
+                        id="event-case"
                         name="case"
                         value={formData.case}
                         onChange={handleChange}
@@ -323,11 +323,11 @@ const EventModal = ({ isOpen, onClose, event, onSave, onDelete, cases, staff }) 
                     
                     {/* Attendees */}
                     <div>
-                      <label htmlFor="attendees" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <label htmlFor="event-attendees" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Attendees
                       </label>
                       <select
-                        id="attendees"
+                        id="event-attendees"
                         name="attendees"
                         multiple
                         value={formData.attendees}

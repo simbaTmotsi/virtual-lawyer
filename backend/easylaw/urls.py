@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from accounts import mock_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,6 +17,9 @@ urlpatterns = [
     # Include authentication endpoints under /api/auth/
     path('api/auth/', include('accounts.auth_urls')),
     path('api/dashboard/', include('dashboard.urls')),
+    
+    # Add direct access to users list
+    path('api/users/', mock_views.mock_users_list, name='users-list'),
 ]
 
 if settings.DEBUG:

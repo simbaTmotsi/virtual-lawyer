@@ -44,6 +44,83 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         user.save()
         return Response(UserSerializer(user).data)
 
+    @action(detail=True, methods=['post'])
+    def set_billing_status(self, request, pk=None):
+        """Enable or disable billing for a user."""
+        user = self.get_object()
+        billing_enabled = request.data.get('billing_enabled', None)
+        if billing_enabled is None:
+            return Response({"error": "'billing_enabled' (true/false) is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Assuming user profile has billing_enabled field, adjust as needed
+        if hasattr(user, 'profile'):
+            user.profile.billing_enabled = bool(billing_enabled)
+            user.profile.save()
+        else:
+            # If billing fields are on the user model directly
+            user.billing_enabled = bool(billing_enabled)
+            user.save()
+            
+        return Response(UserSerializer(user).data)
+    
+    @action(detail=True, methods=['post'])
+    def set_billing_rate(self, request, pk=None):
+        """Set hourly billing rate for a user."""
+        user = self.get_object()
+        billing_rate = request.data.get('billing_rate', None)
+        
+        try:
+            billing_rate = float(billing_rate)
+            if billing_rate < 0:
+                raise ValueError("Billing rate must be non-negative")
+        except (TypeError, ValueError):
+            return Response({"error": "'billing_rate' must be a valid non-negative number."}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update the billing rate on user profile or user model
+        if hasattr(user, 'profile'):
+            user.profile.billing_rate = billing_rate
+            user.profile.save()
+        else:
+            # If billing fields are on the user model directly
+            user.billing_rate = billing_rate
+            user.save()
+            
+        return Response(UserSerializer(user).data)
+        
+    @action(detail=True, methods=['post'])
+    def update_billing_settings(self, request, pk=None):
+        """Update all billing settings for a user in one call."""
+        user = self.get_object()
+        billing_enabled = request.data.get('billing_enabled')
+        billing_rate = request.data.get('billing_rate')
+        
+        # Validate billing_rate if provided
+        if billing_rate is not None:
+            try:
+                billing_rate = float(billing_rate)
+                if billing_rate < 0:
+                    raise ValueError("Billing rate must be non-negative")
+            except (TypeError, ValueError):
+                return Response({"error": "'billing_rate' must be a valid non-negative number."}, 
+                                status=status.HTTP_400_BAD_REQUEST)
+        
+        # Update fields based on which model contains the billing info
+        if hasattr(user, 'profile'):
+            if billing_enabled is not None:
+                user.profile.billing_enabled = bool(billing_enabled)
+            if billing_rate is not None:
+                user.profile.billing_rate = billing_rate
+            user.profile.save()
+        else:
+            # If billing fields are on the user model directly
+            if billing_enabled is not None:
+                user.billing_enabled = bool(billing_enabled)
+            if billing_rate is not None:
+                user.billing_rate = billing_rate
+            user.save()
+            
+        return Response(UserSerializer(user).data)
 
 class SystemSettingsView(generics.RetrieveUpdateAPIView):
     """

@@ -4,8 +4,13 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Invoice, TimeEntry
-from .serializers import InvoiceSerializer, TimeEntrySerializer
+from django.db.models import Sum, F, DecimalField
+from django.db.models.functions import Coalesce
+from .models import Invoice, TimeEntry, Expense
+from .serializers import InvoiceSerializer, TimeEntrySerializer, ExpenseSerializer
+from clients.models import Client
+from decimal import Decimal
+from .utils import generate_invoice_number
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     """
@@ -13,16 +18,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     """
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
-    permission_classes = [permissions.IsAuthenticated] # Add specific permissions
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         """Filter invoices based on user's organization or client relationship."""
-        user = self.request.user
-        # Filter by client if provided
+        queryset = super().get_queryset()
+        
+        # Add filters based on query parameters
         client_id = self.request.query_params.get('client_id')
         status = self.request.query_params.get('status')
-        
-        queryset = Invoice.objects.all()
         
         if client_id:
             queryset = queryset.filter(client_id=client_id)
@@ -34,12 +38,12 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Set invoice number if not provided"""
-        instance = serializer.save()
-        if not instance.invoice_number:
-            # Generate invoice number: INV-YEAR-MONTH-ID
-            today = timezone.now()
-            instance.invoice_number = f"INV-{today.year}-{today.month:02d}-{instance.id:04d}"
-            instance.save()
+        if 'invoice_number' not in serializer.validated_data:
+            client_id = serializer.validated_data.get('client').id
+            invoice_number = generate_invoice_number(client_id)
+            serializer.save(invoice_number=invoice_number)
+        else:
+            serializer.save()
 
     @action(detail=True, methods=['post'])
     def mark_as_paid(self, request, pk=None):
@@ -64,8 +68,14 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def recalculate_total(self, request, pk=None):
+        """Recalculate the invoice total based on time entries and expenses."""
         invoice = self.get_object()
-        invoice.calculate_total()
+        time_total = sum(entry.amount for entry in invoice.time_entries.filter(is_billable=True))
+        expense_total = sum(expense.amount for expense in invoice.expenses.filter(is_billable=True))
+        
+        invoice.total_amount = time_total + expense_total
+        invoice.save()
+        
         return Response(InvoiceSerializer(invoice).data)
     
     @action(detail=True, methods=['post'])
@@ -83,6 +93,23 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         
         invoice.calculate_total()
         return Response(InvoiceSerializer(invoice).data)
+    
+    @action(detail=True, methods=['post'])
+    def add_expenses(self, request, pk=None):
+        """Add expenses to an invoice."""
+        invoice = self.get_object()
+        expense_ids = request.data.get('expense_ids', [])
+        
+        if not expense_ids:
+            return Response({"error": "No expenses provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        expenses = Expense.objects.filter(id__in=expense_ids, invoice__isnull=True)
+        for expense in expenses:
+            expense.invoice = invoice
+            expense.save()
+        
+        invoice.calculate_total()
+        return Response(InvoiceSerializer(invoice).data)
 
 
 class TimeEntryViewSet(viewsets.ModelViewSet):
@@ -94,47 +121,132 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        """Filter time entries based on query parameters."""
-        user = self.request.user
+        """Filter time entries based on query parameters"""
+        queryset = super().get_queryset()
+        
+        # Filter by case
         case_id = self.request.query_params.get('case_id')
-        user_id = self.request.query_params.get('user_id')
-        billable = self.request.query_params.get('billable')
-        unbilled = self.request.query_params.get('unbilled')
-        date_from = self.request.query_params.get('date_from')
-        date_to = self.request.query_params.get('date_to')
-        
-        queryset = TimeEntry.objects.all()
-        
         if case_id:
             queryset = queryset.filter(case_id=case_id)
         
+        # Filter by user
+        user_id = self.request.query_params.get('user_id')
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         
-        if billable == 'true':
-            queryset = queryset.filter(is_billable=True)
-        elif billable == 'false':
-            queryset = queryset.filter(is_billable=False)
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
         
-        if unbilled == 'true':
-            queryset = queryset.filter(invoice__isnull=True)
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
         
-        if date_from:
-            try:
-                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-                queryset = queryset.filter(date__gte=date_from)
-            except ValueError:
-                pass
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
         
-        if date_to:
-            try:
-                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-                queryset = queryset.filter(date__lte=date_to)
-            except ValueError:
-                pass
+        # Filter by billable status
+        billable = self.request.query_params.get('billable')
+        if billable is not None:
+            is_billable = billable.lower() == 'true'
+            queryset = queryset.filter(is_billable=is_billable)
         
+        # Filter by invoice status
+        invoiced = self.request.query_params.get('invoiced')
+        if invoiced is not None:
+            if invoiced.lower() == 'true':
+                queryset = queryset.filter(invoice__isnull=False)
+            else:
+                queryset = queryset.filter(invoice__isnull=True)
+                
         return queryset
     
+    @action(detail=False, methods=['get'], url_path='client-summary')
+    def client_billing_summary(self, request):
+        """Get billing summary for all clients."""
+        clients = Client.objects.all()
+        result = []
+        
+        for client in clients:
+            # Calculate unbilled hours and amount
+            unbilled_entries = TimeEntry.objects.filter(
+                case__client=client,
+                invoice__isnull=True,
+                is_billable=True
+            )
+            
+            unbilled_hours = unbilled_entries.aggregate(
+                total=Coalesce(Sum('hours'), Decimal('0.00'))
+            )['total']
+            
+            unbilled_amount = sum(entry.amount for entry in unbilled_entries)
+            
+            # Calculate outstanding invoices amount
+            outstanding_amount = Invoice.objects.filter(
+                client=client,
+                status__in=['sent', 'overdue']
+            ).aggregate(
+                total=Coalesce(Sum('total_amount'), Decimal('0.00'))
+            )['total']
+            
+            result.append({
+                'id': client.id,
+                'name': client.full_name,
+                'unbilled_hours': float(unbilled_hours),
+                'unbilled_amount': float(unbilled_amount),
+                'outstanding_invoices': float(outstanding_amount)
+            })
+        
+        return Response(result)
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows expenses to be viewed or edited.
+    """
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filter expenses based on query parameters"""
+        queryset = super().get_queryset()
+        
+        # Filter by case
+        case_id = self.request.query_params.get('case_id')
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+        
+        # Filter by user
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Filter by date range
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+        
+        # Filter by billable status
+        billable = self.request.query_params.get('billable')
+        if billable is not None:
+            is_billable = billable.lower() == 'true'
+            queryset = queryset.filter(is_billable=is_billable)
+        
+        # Filter by invoice status
+        invoiced = self.request.query_params.get('invoiced')
+        if invoiced is not None:
+            if invoiced.lower() == 'true':
+                queryset = queryset.filter(invoice__isnull=False)
+            else:
+                queryset = queryset.filter(invoice__isnull=True)
+                
+        return queryset
+
     def perform_create(self, serializer):
         """Set the user to the current user if not specified."""
         if 'user' not in serializer.validated_data:
@@ -144,28 +256,10 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def unbilled(self, request):
-        """Get all unbilled time entries."""
-        queryset = self.get_queryset().filter(invoice__isnull=True, is_billable=True)
-        serializer = self.get_serializer(queryset, many=True)
+        """Get all unbilled expenses."""
+        expenses = Expense.objects.filter(
+            invoice__isnull=True,
+            is_billable=True
+        )
+        serializer = self.get_serializer(expenses, many=True)
         return Response(serializer.data)
-    
-    @action(detail=False, methods=['get'])
-    def summary(self, request):
-        """Get summary of time entries."""
-        queryset = self.get_queryset()
-        
-        # Calculate total hours
-        total_hours = sum(entry.hours for entry in queryset)
-        
-        # Calculate billable hours
-        billable_hours = sum(entry.hours for entry in queryset if entry.is_billable)
-        
-        # Calculate total billable amount
-        billable_amount = sum(entry.amount for entry in queryset if entry.is_billable)
-        
-        return Response({
-            'total_entries': queryset.count(),
-            'total_hours': total_hours,
-            'billable_hours': billable_hours,
-            'billable_amount': billable_amount,
-        })

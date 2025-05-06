@@ -55,6 +55,9 @@ import TimeEntries from './pages/billing/TimeEntries';
 import Invoices from './pages/billing/Invoices';
 import CreateInvoice from './pages/billing/CreateInvoice';
 import InvoiceDetail from './pages/billing/InvoiceDetail';
+import BillingDashboard from './pages/billing/BillingDashboard';
+import BillingReports from './pages/billing/BillingReports';
+import ExpensesList from './pages/billing/ExpensesList'; // Import ExpensesList
 
 // Global auth check wrapper - modified to not use navigate
 const AuthCheck = () => {
@@ -105,18 +108,14 @@ function App() {
             { path: "documents/upload", element: <UploadDocument /> },
             { path: "documents/:id", element: <DocumentDetails /> },
             { path: "calendar", element: <Calendar /> },
-          ],
-        },
-        
-        // Billing routes with DashboardLayout
-        {
-          path: "/billing",
-          element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,
-          children: [
-            { path: "time-entries", element: <TimeEntries /> },
-            { path: "invoices", element: <Invoices /> },
-            { path: "invoices/new", element: <CreateInvoice /> },
-            { path: "invoices/:id", element: <InvoiceDetail /> },
+            
+            { path: "billing", element: <BillingDashboard /> },
+            { path: "billing/time-entries", element: <TimeEntries /> },
+            { path: "billing/expenses", element: <ExpensesList /> },  // Add this route
+            { path: "billing/invoices", element: <Invoices /> },
+            { path: "billing/invoices/new", element: <CreateInvoice /> },
+            { path: "billing/invoices/:id", element: <InvoiceDetail /> },
+            { path: "billing/reports", element: <BillingReports /> },
           ],
         },
 

@@ -1,11 +1,12 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Cog6ToothIcon, UsersIcon, AcademicCapIcon, ChartBarIcon, ArrowLeftOnRectangleIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, UsersIcon, AcademicCapIcon, ChartBarIcon, ArrowLeftOnRectangleIcon, HomeIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext'; // Adjust path if needed
 
 const adminNav = [
-  { name: 'Admin Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Dashboard', href: '/admin', icon: HomeIcon },
   { name: 'User Management', href: '/admin/users', icon: UsersIcon },
+  { name: 'User Billing', href: '/admin/users?tab=billing', icon: CurrencyDollarIcon },
   { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },
   { name: 'LLM Integration', href: '/admin/llm-integration', icon: AcademicCapIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },

@@ -243,7 +243,7 @@ const Calendar = () => {
 
   const renderEventWithBadge = (event) => {
     return (
-      <div className={`px-2 py-1 text-xs rounded-md truncate cursor-pointer ${getEventColor(event.event_type)}`}>
+      <div key={event.id} className={`px-2 py-1 text-xs rounded-md truncate cursor-pointer ${getEventColor(event.event_type)}`}>
         {event.title}
       </div>
     );
@@ -377,11 +377,11 @@ const Calendar = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="eventType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="filter-event-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Event Type
               </label>
               <select
-                id="eventType"
+                id="filter-event-type"
                 value={filters.eventType}
                 onChange={(e) => setFilters({...filters, eventType: e.target.value})}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
@@ -397,11 +397,11 @@ const Calendar = () => {
             </div>
             
             <div>
-              <label htmlFor="caseId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="filter-case-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Associated Case
               </label>
               <select
-                id="caseId"
+                id="filter-case-id"
                 value={filters.caseId}
                 onChange={(e) => setFilters({...filters, caseId: e.target.value})}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
@@ -414,11 +414,11 @@ const Calendar = () => {
             </div>
             
             <div>
-              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="filter-assigned-to" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Assigned To
               </label>
               <select
-                id="assignedTo"
+                id="filter-assigned-to"
                 value={filters.assignedTo}
                 onChange={(e) => setFilters({...filters, assignedTo: e.target.value})}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
@@ -467,7 +467,7 @@ const Calendar = () => {
             
             return (
               <div 
-                key={index} 
+                key={`day-${dayObj.date.toISOString()}`} 
                 className={`min-h-[120px] p-2 ${
                   dayObj.isCurrentMonth 
                     ? 'bg-white dark:bg-gray-800' 

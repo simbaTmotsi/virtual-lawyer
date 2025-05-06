@@ -241,12 +241,12 @@ const UploadDocument = () => {
 
         {/* Document details */}
         <div>
-          <label htmlFor="documentName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="upload-document-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Document Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            id="documentName"
+            id="upload-document-name"
             value={documentName}
             onChange={(e) => setDocumentName(e.target.value)}
             required
@@ -255,11 +255,11 @@ const UploadDocument = () => {
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="upload-document-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Description
           </label>
           <textarea
-            id="description"
+            id="upload-document-description"
             rows={4}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -268,11 +268,11 @@ const UploadDocument = () => {
         </div>
 
         <div>
-          <label htmlFor="caseId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="upload-document-case-id" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Associate with Case
           </label>
           <select
-            id="caseId"
+            id="upload-document-case-id"
             value={caseId}
             onChange={(e) => setCaseId(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
@@ -285,11 +285,11 @@ const UploadDocument = () => {
         </div>
 
         <div>
-          <label htmlFor="docType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="upload-document-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Document Type
           </label>
           <select
-            id="docType"
+            id="upload-document-type"
             value={docType}
             onChange={(e) => setDocType(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:text-white"
