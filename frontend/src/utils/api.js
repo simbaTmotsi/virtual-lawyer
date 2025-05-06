@@ -46,11 +46,11 @@ const apiRequest = async (endpoint, options = {}) => {
         console.log('Server error detected. Check server logs for more details.');
       }
       
-      throw {
-        status: response.status,
-        data,
-        message: `API Error: ${response.status}`
-      };
+      // Fix: Create a proper Error object instead of throwing a plain object
+      const apiError = new Error(`API Error: ${response.status}`);
+      apiError.status = response.status;
+      apiError.data = data;
+      throw apiError;
     }
 
     return data;
@@ -63,12 +63,11 @@ const apiRequest = async (endpoint, options = {}) => {
       throw error;
     }
     
-    // Otherwise, it's a network error or other issue
-    throw {
-      status: 0,
-      data: null,
-      message: `Network Error: ${error.message || 'Unable to connect to server'}`
-    };
+    // Fix: Create a proper Error object instead of throwing a plain object
+    const networkError = new Error(`Network Error: ${error.message || 'Unable to connect to server'}`);
+    networkError.status = 0;
+    networkError.data = null;
+    throw networkError;
   }
 };
 

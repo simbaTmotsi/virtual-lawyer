@@ -35,12 +35,12 @@ class Settings(BaseSettings):
     
     # File storage settings
     upload_dir: str = os.getenv("UPLOAD_DIR", "uploads")
-    max_upload_size: int = int(os.getenv("MAX_UPLOAD_SIZE", "10485760"))  # 10MB default
+    # Fix: Strip any comments (text after #) from the MAX_UPLOAD_SIZE value
+    max_upload_size: int = int(os.getenv("MAX_UPLOAD_SIZE", "10485760").split('#')[0].strip())
     
     class Config:
         env_file = ".env"
         case_sensitive = True
-
 
 @lru_cache()
 def get_settings() -> Settings:
