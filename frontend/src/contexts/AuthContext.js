@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   // Use a ref instead of state to avoid dependency issues
   const lastSuccessfulCheckRef = useRef(0);
 
-  // Memoize checkAuthStatus with useCallback and improved dependencies
+  // Memoize checkAuthStatus with useCallback and properly include user in dependencies
   const checkAuthStatus = useCallback(async (force = false) => {
     try {
       const token = localStorage.getItem('token');
@@ -48,7 +48,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []); // Remove user from dependencies
+  }, [user]); // Include user in the dependency array
 
   // Check if user is already logged in on mount
   useEffect(() => {

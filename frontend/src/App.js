@@ -11,6 +11,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Layout components
 import MainLayout from './components/layouts/MainLayout';
 import AdminLayout from './components/layouts/AdminLayout';
+import DashboardLayout from './components/layouts/DashboardLayout';
 
 // Auth pages
 import Login from './pages/auth/Login';
@@ -48,6 +49,12 @@ import UploadDocument from './pages/documents/UploadDocument';
 
 // Calendar page
 import Calendar from './pages/Calendar';
+
+// Billing pages
+import TimeEntries from './pages/billing/TimeEntries';
+import Invoices from './pages/billing/Invoices';
+import CreateInvoice from './pages/billing/CreateInvoice';
+import InvoiceDetail from './pages/billing/InvoiceDetail';
 
 // Global auth check wrapper - modified to not use navigate
 const AuthCheck = () => {
@@ -98,6 +105,18 @@ function App() {
             { path: "documents/upload", element: <UploadDocument /> },
             { path: "documents/:id", element: <DocumentDetails /> },
             { path: "calendar", element: <Calendar /> },
+          ],
+        },
+        
+        // Billing routes with DashboardLayout
+        {
+          path: "/billing",
+          element: <ProtectedRoute><DashboardLayout /></ProtectedRoute>,
+          children: [
+            { path: "time-entries", element: <TimeEntries /> },
+            { path: "invoices", element: <Invoices /> },
+            { path: "invoices/new", element: <CreateInvoice /> },
+            { path: "invoices/:id", element: <InvoiceDetail /> },
           ],
         },
 

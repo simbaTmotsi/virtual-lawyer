@@ -10,8 +10,8 @@ export const apiRequest = async (endpoint, method = 'GET', data = null) => {
     'Content-Type': 'application/json',
   };
   
-  // Add auth token to headers if it exists
-  const token = localStorage.getItem('token');
+  // Token key is already correct here, but adding a comment for clarity
+  const token = localStorage.getItem('token'); // Using 'token' as the storage key
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }

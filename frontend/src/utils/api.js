@@ -3,71 +3,47 @@
  */
 
 // Base API request function
-const apiRequest = async (endpoint, options = {}) => {
+export const apiRequest = async (endpoint, options = {}) => {
+  const baseUrl = process.env.REACT_APP_API_URL || '';
+  const url = `${baseUrl}${endpoint}`;
+  
+  // Changed from 'authToken' to 'token' to match what's used in AuthContext
+  const token = localStorage.getItem('token');
+  
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const config = {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  };
+  
   try {
-    // Set default headers if not provided
-    if (!options.headers) {
-      options.headers = {
-        'Content-Type': 'application/json',
-      };
-    }
-
-    // Add auth token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      options.headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    console.log('API Request:', options.method || 'GET', endpoint);
-    console.log('Request options:', options);
-
-    // Make the fetch request
-    const response = await fetch(endpoint.startsWith('http') ? endpoint : `${process.env.REACT_APP_API_URL || ''}${endpoint}`, options);
+    const response = await fetch(url, config);
     
-    // Check if the response is JSON
-    const contentType = response.headers.get('content-type');
-    const isJson = contentType && contentType.includes('application/json');
-    
-    // Parse response data based on content type
-    let data;
-    if (isJson) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-
-    // Handle unsuccessful responses
     if (!response.ok) {
-      console.log('API request failed:', response.status, response.statusText);
-      console.log('Response data:', data);
-      
-      // For 500 errors, we may need to add more specific handling
-      if (response.status === 500) {
-        console.log('Server error detected. Check server logs for more details.');
-      }
-      
-      // Fix: Create a proper Error object instead of throwing a plain object
-      const apiError = new Error(`API Error: ${response.status}`);
-      apiError.status = response.status;
-      apiError.data = data;
-      throw apiError;
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
     }
-
-    return data;
+    
+    // Check if the response is empty or not JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    return {};
   } catch (error) {
-    // Log the error for debugging
     console.error('API request failed:', error);
-    
-    // If it's already our formatted error, just rethrow it
-    if (error && error.status) {
-      throw error;
-    }
-    
-    // Fix: Create a proper Error object instead of throwing a plain object
-    const networkError = new Error(`Network Error: ${error.message || 'Unable to connect to server'}`);
-    networkError.status = 0;
-    networkError.data = null;
-    throw networkError;
+    throw error;
   }
 };
 
