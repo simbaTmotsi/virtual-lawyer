@@ -59,6 +59,9 @@ import BillingDashboard from './pages/billing/BillingDashboard';
 import BillingReports from './pages/billing/BillingReports';
 import ExpensesList from './pages/billing/ExpensesList'; // Import ExpensesList
 
+// Research pages
+import ResearchDashboard from './pages/research/ResearchDashboard';
+
 // Global auth check wrapper - modified to not use navigate
 const AuthCheck = () => {
   return <Outlet />;
@@ -111,11 +114,17 @@ function App() {
             
             { path: "billing", element: <BillingDashboard /> },
             { path: "billing/time-entries", element: <TimeEntries /> },
-            { path: "billing/expenses", element: <ExpensesList /> },  // Add this route
+            { path: "billing/expenses", element: <ExpensesList /> },
             { path: "billing/invoices", element: <Invoices /> },
             { path: "billing/invoices/new", element: <CreateInvoice /> },
             { path: "billing/invoices/:id", element: <InvoiceDetail /> },
             { path: "billing/reports", element: <BillingReports /> },
+            
+            // Add research routes
+            { path: "research", element: <ResearchDashboard /> },
+
+            // Add analytics route
+            { path: "analytics", element: <AnalyticsDashboard /> },
           ],
         },
 
@@ -130,6 +139,15 @@ function App() {
             { path: "settings", element: <SystemSettings /> },
             { path: "analytics", element: <AnalyticsDashboard /> },
           ],
+        },
+
+        // Analytics route
+        {
+          path: "/analytics",
+          element: <MainLayout />,
+          children: [
+            { index: true, element: <AnalyticsDashboard /> },
+          ]
         },
       ]
     },

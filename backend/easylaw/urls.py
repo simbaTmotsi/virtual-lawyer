@@ -20,6 +20,9 @@ urlpatterns = [
     
     # Add direct access to users list
     path('api/users/', mock_views.mock_users_list, name='users-list'),
+    
+    # Add analytics app URLs
+    path('api/analytics/', include('analytics.urls')),
 ]
 
 if settings.DEBUG:
