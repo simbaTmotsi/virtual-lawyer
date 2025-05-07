@@ -1,32 +1,83 @@
-import React from 'react';
-import { ChartBarIcon, ChartPieIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
+import React, { useRef, useEffect } from 'react';
+import { Chart as ChartJS, registerables } from 'chart.js';
+import { Line, Bar, Pie, Radar } from 'react-chartjs-2';
 
-// Placeholder chart component - in a real app, you'd use a library like Chart.js or Recharts
-const ChartComponent = ({ title, type = 'bar', data }) => {
-  const ChartIcon = type === 'pie' ? ChartPieIcon : 
-                    type === 'line' ? ArrowTrendingUpIcon : 
-                    ChartBarIcon;
+// Register all the Chart.js components we need
+ChartJS.register(...registerables);
 
-  return (
-    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 h-64 flex flex-col items-center justify-center">
-      <ChartIcon className="h-16 w-16 text-gray-400 dark:text-gray-500 mb-3" />
-      <p className="text-gray-500 dark:text-gray-400 text-center">
-        {title ? `${title} Chart` : 'Chart'} Visualization
-      </p>
-      <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-        {data ? `${data.labels?.length || 0} data points available` : 'No data available'}
-      </p>
-      {data && data.labels && (
-        <div className="mt-4 text-xs text-gray-500 w-full max-w-md">
-          <p className="text-center font-semibold mb-1">Data Preview:</p>
-          <div className="grid grid-cols-2 gap-1">
-            <div className="text-left">Labels:</div>
-            <div className="text-right">{data.labels.slice(0, 3).join(', ')}{data.labels.length > 3 ? '...' : ''}</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+const ChartComponent = ({ type = 'bar', data, options = {} }) => {
+  const chartRef = useRef(null);
+
+  // Cleanup chart instance on unmount or when chart type/data changes
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, [type, data]);
+
+  // Set default options based on dark/light mode
+  const defaultOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280'
+        }
+      },
+      tooltip: {
+        backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
+        titleColor: document.documentElement.classList.contains('dark') ? '#f9fafb' : '#111827',
+        bodyColor: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151',
+        borderColor: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb',
+        borderWidth: 1
+      }
+    },
+    scales: type !== 'pie' && type !== 'radar' ? {
+      x: {
+        ticks: {
+          color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280'
+        },
+        grid: {
+          color: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
+        }
+      },
+      y: {
+        ticks: {
+          color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280'
+        },
+        grid: {
+          color: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
+        }
+      }
+    } : {}
+  };
+
+  // Merge default options with passed options
+  const mergedOptions = { ...defaultOptions, ...options };
+
+  // Ensure we have valid data to prevent errors
+  if (!data || !data.datasets || !data.labels) {
+    return <div className="flex items-center justify-center h-64 bg-gray-100 dark:bg-gray-700 rounded-lg">
+      <p className="text-gray-500 dark:text-gray-400">No data available</p>
+    </div>;
+  }
+
+  // Render appropriate chart based on type
+  switch (type) {
+    case 'line':
+      return <Line ref={chartRef} data={data} options={mergedOptions} redraw={true} />;
+    case 'bar':
+      return <Bar ref={chartRef} data={data} options={mergedOptions} redraw={true} />;
+    case 'pie':
+      return <Pie ref={chartRef} data={data} options={mergedOptions} redraw={true} />;
+    case 'radar':
+      return <Radar ref={chartRef} data={data} options={mergedOptions} redraw={true} />;
+    default:
+      return <Bar ref={chartRef} data={data} options={mergedOptions} redraw={true} />;
+  }
 };
 
 export default ChartComponent;
