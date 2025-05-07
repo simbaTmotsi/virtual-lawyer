@@ -53,19 +53,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
     - name: Install dependencies
       run: |
         cd frontend
         npm ci
+    
+    - name: Check Node modules
+      run: |
+        cd frontend
+        ls -la node_modules
+        npm list --depth=0
+    
     - name: Run frontend tests
       run: |
         cd frontend
-        npm test -- --watchAll=false --passWithNoTests
-        npm run lint
+        CI=true npm test -- --watchAll=false --passWithNoTests --verbose
+    
+    - name: Run linting
+      run: |
+        cd frontend
+        npm run lint -- --max-warnings=0
 
   build-and-push:
     needs: [test-backend, test-frontend]
