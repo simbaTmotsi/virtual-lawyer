@@ -132,6 +132,23 @@ jobs:
           echo "::warning::Docker credentials not available. Images will be built but not pushed."
         fi
     
+    - name: Check for Dockerfiles
+      id: check-dockerfiles
+      run: |
+        if [ -f "backend/Dockerfile" ]; then
+          echo "backend_dockerfile_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "backend_dockerfile_exists=false" >> $GITHUB_OUTPUT
+          echo "::warning::Dockerfile not found in backend directory."
+        fi
+        
+        if [ -f "frontend/Dockerfile" ]; then
+          echo "frontend_dockerfile_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "frontend_dockerfile_exists=false" >> $GITHUB_OUTPUT
+          echo "::warning::Dockerfile not found in frontend directory."
+        fi
+
     - name: Login to DockerHub
       if: steps.docker-credentials.outputs.has_credentials == 'true'
       uses: docker/login-action@v2
@@ -140,6 +157,7 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     
     - name: Build backend image
+      if: steps.check-dockerfiles.outputs.backend_dockerfile_exists == 'true'
       uses: docker/build-push-action@v4
       with:
         context: ./backend
@@ -148,6 +166,7 @@ jobs:
         load: ${{ steps.docker-credentials.outputs.has_credentials != 'true' }}
     
     - name: Build frontend image
+      if: steps.check-dockerfiles.outputs.frontend_dockerfile_exists == 'true'
       uses: docker/build-push-action@v4
       with:
         context: ./frontend
@@ -155,8 +174,39 @@ jobs:
         tags: yourusername/easylaw-frontend:latest
         load: ${{ steps.docker-credentials.outputs.has_credentials != 'true' }}
     
+    - name: Provide Dockerfile creation instructions
+      if: steps.check-dockerfiles.outputs.backend_dockerfile_exists == 'false' || steps.check-dockerfiles.outputs.frontend_dockerfile_exists == 'false'
+      run: |
+        echo "One or more Dockerfiles are missing. Please create them in the respective directories:"
+        
+        if [ "${{ steps.check-dockerfiles.outputs.backend_dockerfile_exists }}" == "false" ]; then
+          echo "- Create backend/Dockerfile for your Django application"
+          echo "  Example: FROM python:3.11-slim as base"
+          echo "           WORKDIR /app"
+          echo "           COPY requirements.txt ."
+          echo "           RUN pip install --no-cache-dir -r requirements.txt"
+          echo "           COPY . ."
+          echo "           CMD [\"gunicorn\", \"config.wsgi:application\", \"--bind\", \"0.0.0.0:8000\"]"
+        fi
+        
+        if [ "${{ steps.check-dockerfiles.outputs.frontend_dockerfile_exists }}" == "false" ]; then
+          echo "- Create frontend/Dockerfile for your React application"
+          echo "  Example: FROM node:18-alpine as build"
+          echo "           WORKDIR /app"
+          echo "           COPY package*.json ./"
+          echo "           RUN npm ci"
+          echo "           COPY . ."
+          echo "           RUN npm run build"
+          echo "           FROM nginx:alpine"
+          echo "           COPY --from=build /app/build /usr/share/nginx/html"
+          echo "           EXPOSE 80"
+          echo "           CMD [\"nginx\", \"-g\", \"daemon off;\"]"
+        fi
+        
+        echo "Images were not built due to missing Dockerfiles."
+    
     - name: Placeholder for image deployment
-      if: steps.docker-credentials.outputs.has_credentials != 'true'
+      if: steps.docker-credentials.outputs.has_credentials != 'true' && (steps.check-dockerfiles.outputs.backend_dockerfile_exists == 'true' || steps.check-dockerfiles.outputs.frontend_dockerfile_exists == 'true')
       run: |
         echo "Images built successfully but not pushed to registry."
         echo "To push images, add DOCKER_USERNAME and DOCKER_PASSWORD secrets to your repository."
