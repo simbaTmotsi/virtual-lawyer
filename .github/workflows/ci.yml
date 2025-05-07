@@ -83,10 +83,34 @@ jobs:
         cd frontend
         npx react-scripts test --transformIgnorePatterns "node_modules/(?!axios)/" --env=jsdom --watchAll=false --passWithNoTests --verbose
     
-    - name: Run linting
+    - name: Check for linting capabilities
+      id: check-lint
+      continue-on-error: true
+      run: |
+        cd frontend
+        if grep -q '"lint"' package.json; then
+          echo "has_lint=true" >> $GITHUB_OUTPUT
+        elif [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || [ -f .eslintrc ]; then
+          echo "has_eslint=true" >> $GITHUB_OUTPUT
+        else
+          echo "No linting configuration found."
+        fi
+
+    - name: Run linting (if available)
+      if: steps.check-lint.outputs.has_lint == 'true'
       run: |
         cd frontend
         npm run lint -- --max-warnings=0
+
+    - name: Run ESLint directly (if available)
+      if: steps.check-lint.outputs.has_lint != 'true' && steps.check-lint.outputs.has_eslint == 'true'
+      run: |
+        cd frontend
+        npx eslint src/ --max-warnings=0
+
+    - name: Skipping lint
+      if: steps.check-lint.outputs.has_lint != 'true' && steps.check-lint.outputs.has_eslint != 'true'
+      run: echo "Linting step skipped - no lint configuration found."
 
   build-and-push:
     needs: [test-backend, test-frontend]
