@@ -216,33 +216,6 @@ const Login = () => {
             </div>
           </form>
 
-          <div className="mt-4">
-            <button 
-              type="button"
-              onClick={() => {
-                // Add debugging info
-                const token = localStorage.getItem('token');
-                console.log('Current token:', token ? 'exists' : 'none');
-                if (token) {
-                  try {
-                    const parts = token.split('.');
-                    if (parts.length === 3) {
-                      const payload = JSON.parse(atob(parts[1]));
-                      console.log('Token payload:', payload);
-                      const expiry = new Date(payload.exp * 1000);
-                      console.log('Token expires:', expiry.toLocaleString());
-                    }
-                  } catch (e) {
-                    console.error('Error parsing token:', e);
-                  }
-                }
-              }}
-              className="text-xs text-gray-500 underline"
-            >
-              Debug Auth
-            </button>
-          </div>
-          
           <div className="mt-10 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{' '}
