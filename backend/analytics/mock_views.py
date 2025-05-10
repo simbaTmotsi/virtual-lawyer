@@ -73,7 +73,7 @@ def mock_api_usage(request):
     # Generate data for different API endpoints
     endpoints = [
         'user management', 'document processing', 
-        'billing', 'cases', 'calendar', 'research'
+        'billing', 'cases', 'diary', 'research'
     ]
     
     usage_data = [random.randint(50, 500) for _ in range(len(endpoints))]
@@ -168,7 +168,7 @@ def mock_api_usage(request):
     # Generate data for different API endpoints
     endpoints = [
         'user management', 'document processing', 
-        'billing', 'cases', 'calendar', 'research'
+        'billing', 'cases', 'diary', 'research'
     ]
     
     usage_data = [random.randint(50, 500) for _ in range(len(endpoints))]

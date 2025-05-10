@@ -71,7 +71,7 @@ All components are containerized using Docker to ensure consistent development a
   - Invoice generation
   - Payment processing
   
-- **Calendar & Scheduling**:
+- **Diary & Notes**:
   - Appointment management
   - Court date tracking
   - Deadline notifications

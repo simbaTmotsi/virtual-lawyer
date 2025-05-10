@@ -11,7 +11,6 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 // Layout components
 import MainLayout from './components/layouts/MainLayout';
 import AdminLayout from './components/layouts/AdminLayout';
-import DashboardLayout from './components/layouts/DashboardLayout';
 
 // Auth pages
 import Login from './pages/auth/Login';
@@ -47,8 +46,8 @@ import DocumentsList from './pages/documents/DocumentsList';
 import DocumentDetails from './pages/documents/DocumentDetails';
 import UploadDocument from './pages/documents/UploadDocument';
 
-// Calendar page
-import Calendar from './pages/Calendar';
+// Diary page (replacing Calendar)
+import Diary from './pages/Diary';
 
 // Billing pages
 import TimeEntries from './pages/billing/TimeEntries';
@@ -57,7 +56,7 @@ import CreateInvoice from './pages/billing/CreateInvoice';
 import InvoiceDetail from './pages/billing/InvoiceDetail';
 import BillingDashboard from './pages/billing/BillingDashboard';
 import BillingReports from './pages/billing/BillingReports';
-import ExpensesList from './pages/billing/ExpensesList'; // Import ExpensesList
+import ExpensesList from './pages/billing/ExpensesList';
 
 // Research pages
 import ResearchDashboard from './pages/research/ResearchDashboard';
@@ -110,7 +109,7 @@ function App() {
             { path: "documents", element: <DocumentsList /> },
             { path: "documents/upload", element: <UploadDocument /> },
             { path: "documents/:id", element: <DocumentDetails /> },
-            { path: "calendar", element: <Calendar /> },
+            { path: "diary", element: <Diary /> }, // Replaced calendar with diary
             
             { path: "billing", element: <BillingDashboard /> },
             { path: "billing/time-entries", element: <TimeEntries /> },

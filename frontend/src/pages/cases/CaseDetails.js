@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { 
   ArrowLeftIcon, 
   PencilIcon, 
-  CalendarIcon, 
+  BookOpenIcon, 
   DocumentTextIcon, 
   ClockIcon, 
   PlusIcon 
@@ -158,7 +158,7 @@ const CaseDetails = () => {
         <div className="md:col-span-1 space-y-6">
           <div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2 flex items-center">
-              <CalendarIcon className="h-5 w-5 mr-2 text-primary-500" /> Key Dates
+              <BookOpenIcon className="h-5 w-5 mr-2 text-primary-500" /> Key Dates
             </h3>
             <ul className="space-y-2">
               {/* Mocked for now, replace with actual data (e.g., caseData.key_dates) */}

@@ -5,7 +5,6 @@ import {
   DocumentDuplicateIcon, 
   ClockIcon,
   ArrowPathIcon,
-  CalendarIcon,
   BriefcaseIcon
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api';
@@ -75,7 +74,7 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, fetchAnalyticsData]);
 
   // Handle date range selection
   const handleRangeChange = (start, end) => {

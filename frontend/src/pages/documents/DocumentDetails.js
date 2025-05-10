@@ -6,7 +6,7 @@ import {
   TrashIcon, 
   ArrowDownTrayIcon,
   PencilIcon,
-  CalendarIcon,
+  BookOpenIcon,
   UserIcon,
   FolderIcon
 } from '@heroicons/react/24/outline';
@@ -176,7 +176,7 @@ const DocumentDetails = () => {
               </div>
               
               <div className="flex items-center">
-                <CalendarIcon className="h-5 w-5 mr-2 text-gray-400" />
+                <BookOpenIcon className="h-5 w-5 mr-2 text-gray-400" />
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Uploaded</dt>
                   <dd className="text-sm text-gray-900 dark:text-white">{formatDate(document.uploaded_at)}</dd>
@@ -184,7 +184,7 @@ const DocumentDetails = () => {
               </div>
               
               <div className="flex items-center">
-                <CalendarIcon className="h-5 w-5 mr-2 text-gray-400" />
+                <BookOpenIcon className="h-5 w-5 mr-2 text-gray-400" />
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Modified</dt>
                   <dd className="text-sm text-gray-900 dark:text-white">{formatDate(document.updated_at)}</dd>
