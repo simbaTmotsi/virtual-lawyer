@@ -61,6 +61,9 @@ import ExpensesList from './pages/billing/ExpensesList';
 // Research pages
 import ResearchDashboard from './pages/research/ResearchDashboard';
 
+// Tasks page
+import Tasks from './pages/Tasks';
+
 // Global auth check wrapper - modified to not use navigate
 const AuthCheck = () => {
   return <Outlet />;
@@ -124,6 +127,9 @@ function App() {
 
             // Add analytics route
             { path: "analytics", element: <AnalyticsDashboard /> },
+
+            // Add tasks route
+            { path: "tasks", element: <Tasks /> },
           ],
         },
 

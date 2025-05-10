@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ChartBarIcon, 
   UsersIcon, 
@@ -32,7 +32,7 @@ const AnalyticsDashboard = () => {
     new Date().toISOString().split('T')[0]
   );
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setRefreshing(true);
       
@@ -70,11 +70,11 @@ const AnalyticsDashboard = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [startDate, endDate]);
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [startDate, endDate, fetchAnalyticsData]);
+  }, [fetchAnalyticsData]);
 
   // Handle date range selection
   const handleRangeChange = (start, end) => {

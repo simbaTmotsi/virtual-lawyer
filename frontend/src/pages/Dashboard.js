@@ -7,7 +7,7 @@ import {
   UsersIcon,
   ArrowTrendingUpIcon,
   ClipboardDocumentCheckIcon,
-  CalendarIcon
+  BookOpenIcon
 } from '@heroicons/react/24/solid';
 import apiRequest from '../utils/api';
 
@@ -141,19 +141,19 @@ const Dashboard = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-700/10 overflow-hidden">
           <div className="p-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white">
             <div className="flex items-center">
-              <CalendarIcon className="h-8 w-8 mr-4" />
-              <h3 className="text-xl font-semibold">Upcoming Events</h3>
+              <BookOpenIcon className="h-8 w-8 mr-4" />
+              <h3 className="text-xl font-semibold">My Diary</h3>
             </div>
             <div className="mt-1 flex items-baseline justify-center">
               <span className="text-2xl font-semibold text-white">
                 {dashboardData.upcomingEvents.length}
               </span>
-              <span className="ml-2 text-sm text-amber-100">within 7 days</span>
+              <span className="ml-2 text-sm text-amber-100">recent entries</span>
             </div>
           </div>
           <div className="p-5">
-            <Link to="/calendar" className="text-amber-600 dark:text-amber-400 hover:underline text-sm font-medium flex items-center justify-center">
-              View Calendar
+            <Link to="/diary" className="text-amber-600 dark:text-amber-400 hover:underline text-sm font-medium flex items-center justify-center">
+              View Diary
             </Link>
           </div>
         </div>
@@ -179,11 +179,9 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="bg-gray-50 dark:bg-gray-700 px-5 py-2">
-              <div className="flex items-center">
-                <div className="text-sm text-green-600 dark:text-green-400 flex items-center">
-                  <ArrowTrendingUpIcon className="h-4 w-4 mr-1 flex-shrink-0" aria-hidden="true" />
-                  {stat.change} from last month
-                </div>
+              <div className="text-sm text-green-600 dark:text-green-400 flex items-center">
+                <ArrowTrendingUpIcon className="h-4 w-4 mr-1 flex-shrink-0" aria-hidden="true" />
+                {stat.change} from last month
               </div>
             </div>
           </div>
