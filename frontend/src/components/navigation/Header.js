@@ -1,5 +1,5 @@
-import React, { Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import React, { Fragment, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { 
   BellIcon, 
@@ -10,26 +10,41 @@ import {
   UserIcon,
   ArrowRightOnRectangleIcon,
   UserCircleIcon,
-  CogIcon
+  CogIcon,
+  QuestionMarkCircleIcon,
+  CommandLineIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDarkMode } from '../../contexts/DarkModeContext';
+import Tooltip from '../ui/Tooltip';
+import KeyboardShortcutsModal from '../ui/KeyboardShortcutsModal';
+import { useKeyboardShortcuts } from '../../utils/keyboardShortcuts';
 
 const Header = ({ setSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const navigate = useNavigate();
+  const [notificationsCount, setNotificationsCount] = useState(3); // Mock notification count
+  
+  // Register keyboard shortcuts
+  const { shortcutsModalOpen, setShortcutsModalOpen } = useKeyboardShortcuts(navigate, {
+    TOGGLE_DARK_MODE: toggleDarkMode
+  });
 
   return (
     <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-700/20">
       {/* Mobile menu button */}
-      <button
-        type="button"
-        className="border-r border-gray-200 dark:border-gray-700 px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
-        onClick={() => setSidebarOpen(true)}
-      >
-        <span className="sr-only">Open sidebar</span>
-        <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-      </button>
+      <Tooltip content="Toggle sidebar" position="bottom">
+        <button
+          type="button"
+          className="border-r border-gray-200 dark:border-gray-700 px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="Open sidebar"
+        >
+          <span className="sr-only">Open sidebar</span>
+          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+        </button>
+      </Tooltip>
       
       <div className="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
         {/* Search */}
@@ -44,7 +59,7 @@ const Header = ({ setSidebarOpen }) => {
                 id="search"
                 name="search"
                 className="block w-full rounded-md border-0 bg-gray-50 dark:bg-gray-700 py-1.5 pl-10 pr-3 text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
-                placeholder="Search..."
+                placeholder="Search... (Press '/' to focus)"
                 type="search"
               />
             </div>
@@ -53,39 +68,75 @@ const Header = ({ setSidebarOpen }) => {
         
         {/* Actions */}
         <div className="ml-4 flex items-center md:ml-6 space-x-3">
+          {/* Keyboard shortcuts */}
+          <Tooltip content="Keyboard shortcuts (Press ?)" position="bottom">
+            <button
+              type="button"
+              className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              onClick={() => setShortcutsModalOpen(true)}
+              aria-label="Keyboard shortcuts"
+            >
+              <CommandLineIcon className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </Tooltip>
+          
+          {/* Help */}
+          <Tooltip content="Get help" position="bottom">
+            <button
+              type="button"
+              className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              aria-label="Help"
+            >
+              <QuestionMarkCircleIcon className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </Tooltip>
+          
           {/* Dark mode toggle */}
-          <button
-            type="button"
-            className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            onClick={toggleDarkMode}
+          <Tooltip 
+            content={darkMode ? "Switch to light mode (Shift+D)" : "Switch to dark mode (Shift+D)"} 
+            position="bottom"
           >
-            <span className="sr-only">Toggle dark mode</span>
-            {darkMode ? (
-              <SunIcon className="h-6 w-6" aria-hidden="true" />
-            ) : (
-              <MoonIcon className="h-6 w-6" aria-hidden="true" />
-            )}
-          </button>
+            <button
+              type="button"
+              className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              onClick={toggleDarkMode}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? (
+                <SunIcon className="h-6 w-6" aria-hidden="true" />
+              ) : (
+                <MoonIcon className="h-6 w-6" aria-hidden="true" />
+              )}
+            </button>
+          </Tooltip>
           
           {/* Notifications */}
-          <button
-            type="button"
-            className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          >
-            <span className="sr-only">View notifications</span>
-            <BellIcon className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <Tooltip content="View notifications" position="bottom">
+            <button
+              type="button"
+              className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 relative"
+              aria-label="View notifications"
+            >
+              <span className="sr-only">View notifications</span>
+              <BellIcon className="h-6 w-6" aria-hidden="true" />
+              {notificationsCount > 0 && (
+                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center transform translate-x-1/4 -translate-y-1/4">
+                  {notificationsCount}
+                </span>
+              )}
+            </button>
+          </Tooltip>
 
           {/* Profile dropdown */}
           <Menu as="div" className="relative ml-3">
-            <div>
+            <Tooltip content="Your account" position="bottom">
               <Menu.Button className="flex max-w-xs items-center rounded-full bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                 <span className="sr-only">Open user menu</span>
                 <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-300">
                   <UserIcon className="h-5 w-5" />
                 </div>
               </Menu.Button>
-            </div>
+            </Tooltip>
             <Transition
               as={Fragment}
               enter="transition ease-out duration-100"
@@ -147,6 +198,12 @@ const Header = ({ setSidebarOpen }) => {
           </Menu>
         </div>
       </div>
+      
+      {/* Keyboard shortcuts modal */}
+      <KeyboardShortcutsModal 
+        isOpen={shortcutsModalOpen} 
+        onClose={() => setShortcutsModalOpen(false)} 
+      />
     </header>
   );
 };

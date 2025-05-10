@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api';
 import { toast } from '../../utils/notification';
+import Tooltip from '../../components/ui/Tooltip';
 
 const TimeEntries = () => {
   const [timeEntries, setTimeEntries] = useState([]);
@@ -197,37 +198,46 @@ const TimeEntries = () => {
       <div className="mb-6 flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Time Entries</h2>
         <div className="flex space-x-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-          >
-            <FunnelIcon className="h-4 w-4 mr-1" />
-            Filter
-          </button>
-          <button
-            onClick={() => {
-              setEditingEntry(null);
-              setFormData({
-                case: '',
-                date: new Date().toISOString().split('T')[0],
-                hours: '',
-                description: '',
-                is_billable: true,
-                rate: ''
-              });
-              setShowNewEntryForm(!showNewEntryForm);
-            }}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
-          >
-            <PlusIcon className="h-4 w-4 mr-1" />
-            New Time Entry
-          </button>
+          <Tooltip content="Filter time entries" position="bottom">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              aria-expanded={showFilters}
+              aria-controls="filter-panel"
+            >
+              <FunnelIcon className="h-4 w-4 mr-1" />
+              Filter
+            </button>
+          </Tooltip>
+          
+          <Tooltip content="Create new time entry (n t)" position="bottom">
+            <button
+              onClick={() => {
+                setEditingEntry(null);
+                setFormData({
+                  case: '',
+                  date: new Date().toISOString().split('T')[0],
+                  hours: '',
+                  description: '',
+                  is_billable: true,
+                  rate: ''
+                });
+                setShowNewEntryForm(!showNewEntryForm);
+              }}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700"
+              aria-expanded={showNewEntryForm}
+              aria-controls="new-time-entry-form"
+            >
+              <PlusIcon className="h-4 w-4 mr-1" />
+              New Time Entry
+            </button>
+          </Tooltip>
         </div>
       </div>
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
+        <div id="filter-panel" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Filter Time Entries</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -332,7 +342,7 @@ const TimeEntries = () => {
 
       {/* New/Edit Time Entry Form */}
       {showNewEntryForm && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6">
+        <div id="new-time-entry-form" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow mb-6 animate-fadeIn">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
             {editingEntry ? 'Edit Time Entry' : 'New Time Entry'}
           </h3>
@@ -563,27 +573,36 @@ const TimeEntries = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {!entry.invoice && (
                         <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => handleEdit(entry)}
-                            className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(entry.id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
+                          <Tooltip content="Edit time entry" position="top">
+                            <button
+                              onClick={() => handleEdit(entry)}
+                              className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                              aria-label={`Edit time entry: ${entry.description}`}
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Delete time entry" position="top">
+                            <button
+                              onClick={() => handleDelete(entry.id)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
+                              aria-label={`Delete time entry: ${entry.description}`}
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </Tooltip>
                         </div>
                       )}
                       {entry.invoice && (
-                        <Link
-                          to={`/billing/invoices/${entry.invoice}`}
-                          className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                        >
-                          View Invoice
-                        </Link>
+                        <Tooltip content={`View invoice #${entry.invoice}`} position="top">
+                          <Link
+                            to={`/billing/invoices/${entry.invoice}`}
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                            aria-label={`View invoice #${entry.invoice}`}
+                          >
+                            View Invoice
+                          </Link>
+                        </Tooltip>
                       )}
                     </td>
                   </tr>

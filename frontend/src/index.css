@@ -15,3 +15,69 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Accessibility - better focus visibility */
+:focus {
+  outline: 2px solid theme('colors.primary.500');
+  outline-offset: 2px;
+}
+
+/* Only show focus outlines when using keyboard */
+.js-focus-visible :focus:not(.focus-visible) {
+  outline: none;
+}
+
+.js-focus-visible .focus-visible {
+  outline: 2px solid theme('colors.primary.500');
+  outline-offset: 2px;
+}
+
+/* Skip to main content link - accessibility */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  z-index: 100;
+}
+
+.skip-to-content:focus {
+  left: 10px;
+  top: 10px;
+  padding: 10px;
+  background: theme('colors.white');
+  color: theme('colors.primary.600');
+  border: 1px solid theme('colors.primary.500');
+  border-radius: 4px;
+}
+
+/* Tooltip animations */
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+[role="tooltip"] {
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+/* Loading states */
+.skeleton-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Better form field focus states */
+input:focus, 
+textarea:focus, 
+select:focus {
+  @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800;
+  outline: none;
+}

@@ -9,6 +9,7 @@ import {
   ChartBarIcon,
   DocumentPlusIcon
 } from '@heroicons/react/24/outline';
+import Tooltip from '../../components/ui/Tooltip';
 import apiRequest from '../../utils/api';
 
 const BillingDashboard = () => {
@@ -130,27 +131,33 @@ const BillingDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {billingData.stats.map(stat => (
-          <div key={stat.name} className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg overflow-hidden">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className={`flex-shrink-0 rounded-md p-3 ${stat.color}`}>
-                  <stat.icon className="h-6 w-6 text-white" />
+          <Tooltip 
+            key={stat.name} 
+            content={`${stat.name}: ${stat.change} change from previous period`}
+            position="top"
+          >
+            <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg overflow-hidden cursor-help">
+              <div className="p-5">
+                <div className="flex items-center">
+                  <div className={`flex-shrink-0 rounded-md p-3 ${stat.color}`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{stat.name}</dt>
+                    <dd className="text-2xl font-semibold text-gray-900 dark:text-white">{stat.value}</dd>
+                  </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{stat.name}</dt>
-                  <dd className="text-2xl font-semibold text-gray-900 dark:text-white">{stat.value}</dd>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-5 py-2">
+                <div className="flex items-center">
+                  <div className="text-sm text-green-600 dark:text-green-400 flex items-center">
+                    <ArrowTrendingUpIcon className="h-4 w-4 mr-1 flex-shrink-0" aria-hidden="true" />
+                    {stat.change} from last month
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-700 px-5 py-2">
-              <div className="flex items-center">
-                <div className="text-sm text-green-600 dark:text-green-400 flex items-center">
-                  <ArrowTrendingUpIcon className="h-4 w-4 mr-1 flex-shrink-0" aria-hidden="true" />
-                  {stat.change} from last month
-                </div>
-              </div>
-            </div>
-          </div>
+          </Tooltip>
         ))}
       </div>
 
@@ -199,12 +206,15 @@ const BillingDashboard = () => {
                       ${client.outstanding_invoices.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 text-center">
-                      <Link 
-                        to={`/billing/invoices/new?client=${client.id}`}
-                        className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium"
-                      >
-                        Create Invoice
-                      </Link>
+                      <Tooltip content={`Create invoice for ${client.name}`} position="left">
+                        <Link 
+                          to={`/billing/invoices/new?client=${client.id}`}
+                          className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium"
+                          aria-label={`Create invoice for ${client.name}`}
+                        >
+                          Create Invoice
+                        </Link>
+                      </Tooltip>
                     </td>
                   </tr>
                 ))

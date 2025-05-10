@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import apiRequest from '../utils/api';
 import EventModal from '../components/calendar/EventModal';
+import Tooltip from '../components/Tooltip';
 
 const Calendar = () => {
   const [events, setEvents] = useState([]);
@@ -243,9 +244,18 @@ const Calendar = () => {
 
   const renderEventWithBadge = (event) => {
     return (
-      <div key={event.id} className={`px-2 py-1 text-xs rounded-md truncate cursor-pointer ${getEventColor(event.event_type)}`}>
-        {event.title}
-      </div>
+      <Tooltip 
+        key={event.id} 
+        content={`${event.title} - ${new Date(event.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`}
+        position="top"
+      >
+        <div 
+          className={`px-2 py-1 text-xs rounded-md truncate cursor-pointer ${getEventColor(event.event_type)}`}
+          onClick={() => handleEventClick(event)}
+        >
+          {event.title}
+        </div>
+      </Tooltip>
     );
   };
 
