@@ -1,23 +1,29 @@
 import axios from 'axios';
 
-// Create axios instance with base configuration
+// Create axios instance with base URL
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor to add auth token to requests
+// Add a request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
+    // Get token from localStorage
     const token = localStorage.getItem('accessToken');
+    
+    // If token exists, add to headers
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor to handle token refresh on 401 errors
@@ -34,7 +40,7 @@ api.interceptors.response.use(
           throw new Error('No refresh token available');
         }
         
-        const response = await axios.post('/api/auth/refresh/', { refresh: refreshToken });
+        const response = await axios.post('/auth/refresh/', { refresh: refreshToken });
         const { access } = response.data;
         
         localStorage.setItem('accessToken', access);
@@ -53,28 +59,23 @@ api.interceptors.response.use(
   }
 );
 
-// AuthAPI methods for authentication operations
+// Auth API endpoints
 export const AuthAPI = {
-  login: async (credentials) => {
-    const response = await api.post('/api/auth/login/', credentials);
-    return response.data;
+  login: (credentials) => api.post('/auth/login/', credentials),
+  register: (userData) => {
+    // Ensure password2 is included for FastAPI validation
+    if (!userData.password2 && userData.password) {
+      userData = { ...userData, password2: userData.password };
+    }
+    return api.post('/auth/register/', userData);
   },
-  
-  register: async (userData) => {
-    const response = await api.post('/api/auth/register/', userData);
-    return response.data;
-  },
-  
-  getCurrentUser: async () => {
-    const response = await api.get('/api/accounts/me/');
-    return response.data;
-  },
-  
+  refreshToken: (refreshToken) => api.post('/auth/refresh/', { refresh: refreshToken }),
+  getCurrentUser: () => api.get('/accounts/me/'),
   logout: async () => {
-    await api.post('/api/auth/logout/');
+    await api.post('/auth/logout/');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-  }
+  },
 };
 
 // General API request function
@@ -106,3 +107,4 @@ const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = fa
 };
 
 export default apiRequest;
+export { api };

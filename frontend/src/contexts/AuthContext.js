@@ -87,6 +87,22 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  // Registration function
+  const register = async (userData) => {
+    try {
+      // Ensure userData has password2 for the API
+      if (!userData.password2 && userData.password) {
+        userData = { ...userData, password2: userData.password };
+      }
+      
+      const response = await AuthAPI.register(userData);
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  };
+
   const isAdmin = user && user.role === 'admin';
 
   const value = {
@@ -96,6 +112,7 @@ export const AuthProvider = ({ children }) => {
     accessToken,
     login,
     logout,
+    register,
     isAdmin
   };
 
