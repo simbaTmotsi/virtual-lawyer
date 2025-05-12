@@ -81,3 +81,5 @@ build/*.json
 !tsconfig.json
 !package-lock.json
 !yarn.lock
+
+.eslintcache
