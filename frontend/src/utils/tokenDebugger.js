@@ -5,8 +5,8 @@
 export const debugAuthIssues = () => {
   console.group('🔐 Auth Token Debug Info');
   
-  // Check all stored tokens
-  const tokenKeys = ['token', 'authToken', 'access_token', 'accessToken'];
+  // Check all stored tokens - focus on the 'token' key which is what we're standardizing on
+  const tokenKeys = ['token', 'authToken', 'access_token', 'accessToken', 'access'];
   const foundTokens = [];
   
   tokenKeys.forEach(key => {
