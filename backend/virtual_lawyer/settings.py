@@ -137,26 +137,5 @@ CORS_ALLOWED_ORIGINS = [
     # Add your frontend production URL when deployed
 ]
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
-
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
-
 # FastAPI Integration
 FASTAPI_URL = os.environ.get('FASTAPI_URL', 'http://localhost:8000')
