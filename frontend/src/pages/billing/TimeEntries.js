@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   PlusIcon, 
@@ -38,12 +38,7 @@ const TimeEntries = () => {
   });
   const [editingEntry, setEditingEntry] = useState(null);
 
-  useEffect(() => {
-    fetchTimeEntries();
-    fetchCasesAndUsers();
-  }, []);
-
-  const fetchTimeEntries = async () => {
+  const fetchTimeEntries = useCallback(async () => {
     try {
       setLoading(true);
       let url = '/api/billing/time-entries/';
@@ -70,7 +65,11 @@ const TimeEntries = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    fetchTimeEntries();
+  }, [filters, fetchTimeEntries]); // Add dependencies
 
   const fetchCasesAndUsers = async () => {
     try {

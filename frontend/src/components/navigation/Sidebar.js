@@ -34,7 +34,7 @@ const adminNavigation = [
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon, id: 'admin-analytics' },
 ];
 
-const Sidebar = ({ isMobile, setSidebarOpen }) => {
+const Sidebar = ({ isMobile, setSidebarOpen, showAdminLink = false }) => {
   const { user } = useAuth();
   const location = useLocation();
   const [helpOpen, setHelpOpen] = useState(false);
@@ -88,6 +88,29 @@ const Sidebar = ({ isMobile, setSidebarOpen }) => {
                 {item.name}
               </Link>
             )
+          )}
+
+          {/* Admin Link - Only visible to admin users */}
+          {showAdminLink && (
+            <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+              <Link
+                to="/admin"
+                className={`${
+                  location.pathname.startsWith('/admin')
+                    ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+              >
+                <Cog6ToothIcon
+                  className={`${
+                    location.pathname.startsWith('/admin')
+                      ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-gray-400 dark:text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
+                  } mr-3 flex-shrink-0 h-6 w-6`}
+                />
+                Admin Dashboard
+              </Link>
+            </div>
           )}
         </nav>
       </div>

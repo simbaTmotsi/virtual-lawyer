@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeftIcon, 
@@ -19,11 +19,7 @@ const InvoiceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchInvoiceDetails();
-  }, [id]);
-
-  const fetchInvoiceDetails = async () => {
+  const fetchInvoiceDetails = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiRequest(`/api/billing/invoices/${id}/`);
@@ -35,7 +31,11 @@ const InvoiceDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchInvoiceDetails();
+  }, [id, fetchInvoiceDetails]);
 
   const handleStatusChange = async (newStatus) => {
     try {

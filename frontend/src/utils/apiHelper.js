@@ -2,49 +2,77 @@
  * Helper utility for making authenticated API requests
  */
 
-export const apiRequest = async (endpoint, method = 'GET', data = null) => {
-  const baseUrl = process.env.REACT_APP_API_URL || '';
-  const url = `${baseUrl}${endpoint}`;
+export const apiRequest = async (endpoint, method = 'GET', data = null, customConfig = {}) => {
+  const API_BASE_URL = '';  // Base URL is empty for relative URLs
+  const url = `${API_BASE_URL}${endpoint}`;
   
+  // Default headers
   const headers = {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json'
   };
   
-  // Token key is already correct here, but adding a comment for clarity
-  const token = localStorage.getItem('token'); // Using 'token' as the storage key
+  // Add Authorization header if token exists
+  const token = localStorage.getItem('accessToken');
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const options = {
+  // Prepare the config
+  const config = {
     method,
-    headers,
-    credentials: 'include', // For cookies if your backend uses them
+    headers: {
+      ...headers,
+      ...customConfig.headers
+    },
+    ...customConfig
   };
   
   // Add request body for POST, PUT, PATCH
   if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
-    options.body = JSON.stringify(data);
+    if (data instanceof FormData) {
+      // If FormData is passed, don't stringify it and remove Content-Type to let browser set it
+      config.body = data;
+      delete config.headers['Content-Type'];
+    } else {
+      config.body = JSON.stringify(data);
+    }
   }
   
-  console.log(`Making ${method} request to ${url}`);
-  
-  const response = await fetch(url, options);
-  
-  // Check if the response is JSON
-  const contentType = response.headers.get('content-type');
-  const isJson = contentType && contentType.includes('application/json');
-  
-  // Parse response
-  const responseData = isJson ? await response.json() : await response.text();
-  
-  // If response is not ok, throw an error
-  if (!response.ok) {
-    const error = new Error(response.statusText);
-    error.status = response.status;
-    error.data = responseData;
+  try {
+    const response = await fetch(url, config);
+    
+    // Handle no content responses
+    if (response.status === 204) {
+      return null;
+    }
+    
+    // Try to parse as JSON, but handle non-JSON responses as well
+    const responseData = await response.text();
+    const data = responseData ? JSON.parse(responseData) : {};
+    
+    // Handle error responses
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        statusText: response.statusText,
+        response: data
+      };
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('API request failed:', error);
     throw error;
   }
-  
-  return responseData;
 };
+
+// Create convenience methods for common HTTP verbs
+const api = {
+  get: (endpoint, customConfig = {}) => apiRequest(endpoint, 'GET', null, customConfig),
+  post: (endpoint, data, customConfig = {}) => apiRequest(endpoint, 'POST', data, customConfig),
+  put: (endpoint, data, customConfig = {}) => apiRequest(endpoint, 'PUT', data, customConfig),
+  patch: (endpoint, data, customConfig = {}) => apiRequest(endpoint, 'PATCH', data, customConfig),
+  delete: (endpoint, customConfig = {}) => apiRequest(endpoint, 'DELETE', null, customConfig)
+};
+
+export default api;

@@ -1,104 +1,108 @@
-/**
- * API request utility for making authenticated requests
- */
+import axios from 'axios';
 
-// Base API request function
-export const apiRequest = async (endpoint, options = {}) => {
-  const baseUrl = process.env.REACT_APP_API_URL || '';
-  const url = `${baseUrl}${endpoint}`;
-  
-  // Changed from 'authToken' to 'token' to match what's used in AuthContext
-  const token = localStorage.getItem('token');
-  
-  const defaultHeaders = {
+// Create axios instance with base configuration
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || '',
+  headers: {
     'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  },
+});
+
+// Add request interceptor to add auth token to requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor to handle token refresh on 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        // Attempt to refresh token
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+        
+        const response = await axios.post('/api/auth/refresh/', { refresh: refreshToken });
+        const { access } = response.data;
+        
+        localStorage.setItem('accessToken', access);
+        originalRequest.headers.Authorization = `Bearer ${access}`;
+        
+        return api(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, logout
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
   }
+);
+
+// AuthAPI methods for authentication operations
+export const AuthAPI = {
+  login: async (credentials) => {
+    const response = await api.post('/api/auth/login/', credentials);
+    return response.data;
+  },
   
-  const config = {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-  };
+  register: async (userData) => {
+    const response = await api.post('/api/auth/register/', userData);
+    return response.data;
+  },
   
+  getCurrentUser: async () => {
+    const response = await api.get('/api/accounts/me/');
+    return response.data;
+  },
+  
+  logout: async () => {
+    await api.post('/api/auth/logout/');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  }
+};
+
+// General API request function
+const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = false) => {
   try {
-    const response = await fetch(url, config);
+    const config = {
+      method: method,
+      url: endpoint,
+    };
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+    if (data) {
+      if (isFormData) {
+        config.data = data;
+        config.headers = {
+          ...config.headers,
+          'Content-Type': 'multipart/form-data',
+        };
+      } else {
+        config.data = data;
+      }
     }
     
-    // Check if the response is empty or not JSON
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return {};
+    const response = await api(config);
+    return response.data;
   } catch (error) {
-    console.error('API request failed:', error);
+    console.error(`API request failed: ${endpoint}`, error);
     throw error;
   }
 };
 
-// Auth API endpoints
-export const AuthAPI = {
-  // Login
-  login: async (credentials) => {
-    try {
-      return await apiRequest('/api/accounts/proxy-login/', {
-        method: 'POST',
-        body: JSON.stringify(credentials)
-      });
-    } catch (error) {
-      console.error('Login API error:', error);
-      throw error;
-    }
-  },
-  
-  // Register
-  register: async (userData) => {
-    try {
-      return await apiRequest('/api/accounts/register/', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-      });
-    } catch (error) {
-      console.error('Registration API error:', error);
-      throw error;
-    }
-  },
-  
-  // Get current user
-  getCurrentUser: async () => {
-    try {
-      return await apiRequest('/api/accounts/me/');
-    } catch (error) {
-      console.error('Get current user API error:', error);
-      throw error;
-    }
-  },
-  
-  // Logout
-  logout: async () => {
-    try {
-      return await apiRequest('/api/accounts/logout/', {
-        method: 'POST'
-      });
-    } catch (error) {
-      console.error('Logout API error:', error);
-      // Still clear token even if logout API fails
-      localStorage.removeItem('token');
-      throw error;
-    }
-  }
-};
-
-// Export the base request function as default
 export default apiRequest;

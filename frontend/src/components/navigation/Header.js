@@ -24,7 +24,7 @@ const Header = ({ setSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
-  const [notificationsCount, setNotificationsCount] = useState(3); // Mock notification count
+  const [notificationsCount] = useState(3); // Mock notification count
   
   // Register keyboard shortcuts
   const { shortcutsModalOpen, setShortcutsModalOpen } = useKeyboardShortcuts(navigate, {

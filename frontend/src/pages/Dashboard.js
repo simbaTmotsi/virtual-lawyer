@@ -7,11 +7,16 @@ import {
   UsersIcon,
   ArrowTrendingUpIcon,
   ClipboardDocumentCheckIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/solid';
+import { useAuth } from '../contexts/AuthContext';
 import apiRequest from '../utils/api';
 
 const Dashboard = () => {
+  const { user } = useAuth();
+  const isAdmin = user && user.role === 'admin';
+
   const [dashboardData, setDashboardData] = useState({
     stats: [],
     upcomingDeadlines: [],
@@ -96,6 +101,35 @@ const Dashboard = () => {
 
   return (
     <div>
+      {/* Admin Quick Link - Only visible to admin users */}
+      {isAdmin && (
+        <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Cog6ToothIcon className="h-5 w-5 text-amber-500" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                Admin Access Detected
+              </h3>
+              <div className="mt-2 text-sm text-amber-700 dark:text-amber-200">
+                <p>
+                  You have administrator privileges. Access the Admin Dashboard to manage users, system settings, and view analytics.
+                </p>
+              </div>
+              <div className="mt-3">
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-800 px-3 py-2 text-sm font-medium text-amber-800 dark:text-amber-100 shadow-sm ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100 dark:hover:bg-amber-700"
+                >
+                  Go to Admin Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick action cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-700/10 overflow-hidden">

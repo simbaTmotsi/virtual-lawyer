@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  PlusIcon, 
   FunnelIcon, 
   ArrowPathIcon,
+  ReceiptRefundIcon,
+  PlusIcon,
   PencilIcon,
-  TrashIcon,
-  ReceiptRefundIcon
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api';
 import { toast } from '../../utils/notification';
@@ -37,12 +37,7 @@ const ExpensesList = () => {
   const [editingExpense, setEditingExpense] = useState(null);
   const [fileUpload, setFileUpload] = useState(null);
 
-  useEffect(() => {
-    fetchExpenses();
-    fetchCasesAndUsers();
-  }, []);
-
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       setLoading(true);
       let url = '/api/billing/expenses/';
@@ -69,9 +64,9 @@ const ExpensesList = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const fetchCasesAndUsers = async () => {
+  const fetchCasesAndUsers = useCallback(async () => {
     try {
       const casesData = await apiRequest('/api/cases/');
       setCases(casesData || []);
@@ -81,7 +76,12 @@ const ExpensesList = () => {
     } catch (err) {
       console.error('Failed to fetch cases or users:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchExpenses();
+    fetchCasesAndUsers();
+  }, [fetchExpenses, fetchCasesAndUsers]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

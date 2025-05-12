@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeftIcon, 
-  DocumentTextIcon, 
-  PlusIcon,
-  XMarkIcon,
+  DocumentTextIcon 
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api';
 import { toast } from '../../utils/notification';
@@ -34,7 +32,7 @@ const CreateInvoice = () => {
     if (initialClientId) {
       fetchUnbilledItems(initialClientId);
     }
-  }, [initialClientId]);
+  }, [initialClientId, fetchUnbilledItems]);
 
   const fetchClients = async () => {
     try {
@@ -46,7 +44,7 @@ const CreateInvoice = () => {
     }
   };
 
-  const fetchUnbilledItems = async (clientId) => {
+  const fetchUnbilledItems = useCallback(async (clientId) => {
     if (!clientId) return;
     
     try {
@@ -68,7 +66,7 @@ const CreateInvoice = () => {
       console.error('Failed to fetch unbilled items:', err);
       setError('Failed to load unbilled items. Please try again.');
     }
-  };
+  }, []);
 
   const calculateTotal = (timeEntries = [], expenses = []) => {
     const timeTotal = timeEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);

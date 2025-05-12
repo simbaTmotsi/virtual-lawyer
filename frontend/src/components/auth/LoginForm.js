@@ -39,7 +39,12 @@ const LoginForm = () => {
       navigate(from, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Invalid email or password. Please try again.');
+      // Handle different error formats that might come from the backend
+      if (err.response && err.response.data) {
+        setError(err.response.data.detail || err.response.data.message || 'Invalid email or password. Please try again.');
+      } else {
+        setError(err.message || 'Invalid email or password. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -5,7 +5,7 @@ import {
   Navigate,
   Outlet
 } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout components
@@ -64,8 +64,15 @@ import ResearchDashboard from './pages/research/ResearchDashboard';
 // Tasks page
 import Tasks from './pages/Tasks';
 
-// Global auth check wrapper - modified to not use navigate
+// Global auth check wrapper - modified to redirect based on user role
 const AuthCheck = () => {
+  const { user } = useAuth();
+  
+  // If the user is logged in and is an admin, redirect to admin dashboard
+  if (user && user.role === 'admin' && window.location.pathname === '/') {
+    return <Navigate to="/admin" replace />;
+  }
+  
   return <Outlet />;
 };
 

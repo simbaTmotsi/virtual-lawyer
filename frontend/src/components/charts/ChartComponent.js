@@ -10,9 +10,12 @@ const ChartComponent = ({ type = 'bar', data, options = {} }) => {
 
   // Cleanup chart instance on unmount or when chart type/data changes
   useEffect(() => {
+    // Create a ref to the current chart for cleanup
+    const currentChartRef = chartRef.current;
+    
     return () => {
-      if (chartRef.current) {
-        chartRef.current.destroy();
+      if (currentChartRef) {
+        currentChartRef.destroy();
       }
     };
   }, [type, data]);

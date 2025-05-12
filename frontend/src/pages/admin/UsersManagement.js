@@ -172,6 +172,13 @@ const UsersManagement = () => {
                       <PencilSquareIcon className="h-5 w-5" />
                     </button>
                     <button 
+                      className={`${user.is_active ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'} hover:text-opacity-80`}
+                      onClick={() => handleToggleActive(user.id, user.is_active)}
+                      title={user.is_active ? 'Deactivate user' : 'Activate user'}
+                    >
+                      {user.is_active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button 
                       className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200"
                       onClick={() => handleDeleteUser(user.id)}
                     >
