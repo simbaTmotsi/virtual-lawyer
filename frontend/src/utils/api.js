@@ -11,8 +11,8 @@ const apiRequest = async (endpoint, method = 'GET', data = null, config = {}) =>
       ...config.headers
     };
 
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
+    // Add auth token if available - FIX: use consistent token name 'token'
+    const token = localStorage.getItem('token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

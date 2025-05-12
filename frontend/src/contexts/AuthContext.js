@@ -1,162 +1,109 @@
-import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthAPI } from '../utils/api';
+import { debugAuthIssues } from '../utils/tokenDebugger';
 
-const AuthContext = createContext(null);
+// Create Auth Context
+const AuthContext = createContext();
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  // Use a ref instead of state to avoid dependency issues
-  const lastSuccessfulCheckRef = useRef(0);
+  const [error, setError] = useState(null);
 
-  // Modify checkAuthStatus to respect the logout flag
-  const checkAuthStatus = useCallback(async (force = false) => {
-    try {
-      // Check for the logout flag
-      const justLoggedOut = localStorage.getItem('just_logged_out');
-      if (justLoggedOut) {
-        // Clear the flag and return without checking auth
-        localStorage.removeItem('just_logged_out');
-        setLoading(false);
-        setIsAuthenticated(false);
-        setUser(null);
-        return false;
-      }
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        setIsAuthenticated(false);
-        setUser(null);
-        return false;
-      }
-
-      // Check if we have a recent auth check (within last 60 seconds) and user data
-      // Skip the API call unless force=true
-      const now = Date.now();
-      if (!force && user && (now - lastSuccessfulCheckRef.current < 60000)) {
-        setIsAuthenticated(true);
-        setLoading(false);
-        return true;
-      }
-
-      // Verify token with the backend using AuthAPI
-      const userData = await AuthAPI.getCurrentUser();
-      setUser(userData);
-      setIsAuthenticated(true);
-      lastSuccessfulCheckRef.current = now;
-      return true;
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      // Invalid token, clear storage
-      localStorage.removeItem('token');
-      // Ensure state reflects logged-out status
-      setUser(null);
-      setIsAuthenticated(false);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [user]); // Include user in the dependency array
-
-  // Check if user is already logged in on mount
+  // Check if the user is logged in on initial load
   useEffect(() => {
     checkAuthStatus();
-  }, [checkAuthStatus]);
+  }, []);
 
-  const login = async (email, password) => {
-    try {
-      // Use AuthAPI.login
-      const response = await AuthAPI.login({ email, password });
-      
-      // Store the token - handle different response formats
-      if (response.access) {
-        // New format (JWT)
-        localStorage.setItem('token', response.access);
-        
-        // If the response includes user data, set it directly
-        if (response.user) {
-          setUser(response.user);
-          setIsAuthenticated(true);
-          return response.user;
-        }
-      } else if (response.token) {
-        // Old format
-        localStorage.setItem('token', response.token);
-        
-        if (response.user) {
-          setUser(response.user);
-          setIsAuthenticated(true);
-          return response.user;
-        }
-      } else {
-        throw new Error('No token received from server');
-      }
-      
-      // Otherwise, fetch user data
-      return await checkAuthStatus();
-    } catch (error) {
-      console.error('Login error:', error);
-      // Clear any potentially stale token on login failure
-      localStorage.removeItem('token');
-      setUser(null);
+  // Function to verify token and get current user
+  const checkAuthStatus = async () => {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
       setIsAuthenticated(false);
-      // Re-throw the error so the Login component can catch it
-      throw error; 
+      setCurrentUser(null);
+      setLoading(false);
+      return false;
+    }
+
+    try {
+      // Get current user with the stored token
+      const userData = await AuthAPI.getCurrentUser();
+      setCurrentUser(userData);
+      setIsAuthenticated(true);
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error('Auth status check failed:', error);
+      localStorage.removeItem('token'); // Clear invalid token
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+      return false;
     }
   };
 
-  const register = async (userData) => {
+  // Login function
+  const login = async (credentials) => {
     try {
-      // Use AuthAPI.register
-      const response = await AuthAPI.register(userData);
+      setError(null);
+      const response = await AuthAPI.login(credentials);
+      
+      // Store token and user data
+      localStorage.setItem('token', response.access); // Store as 'token' consistently
+      setCurrentUser(response.user);
+      setIsAuthenticated(true);
+      
+      // For debugging
+      console.log('Login successful, token stored');
+      
       return response;
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Login error:', error);
+      setError(error.message || 'Login failed');
       throw error;
     }
   };
 
+  // Logout function
   const logout = async () => {
     try {
-      // Use AuthAPI.logout
       await AuthAPI.logout();
     } catch (error) {
-      // Log error but proceed with frontend logout regardless
-      console.error('Logout error:', error);
-    } finally {
-      // Add a flag to prevent immediate auth checks after logout
-      localStorage.setItem('just_logged_out', 'true');
-      // Always clear local storage token and reset state
-      localStorage.removeItem('token');
-      setUser(null);
-      setIsAuthenticated(false);
+      console.error('Logout API error:', error);
+      // Continue with local logout regardless of API success
     }
+    
+    localStorage.removeItem('token');
+    localStorage.setItem('just_logged_out', 'true'); // Flag to prevent immediate auth check
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    
+    // Clear flag after a short delay
+    setTimeout(() => {
+      localStorage.removeItem('just_logged_out');
+    }, 3000);
   };
 
-  const fetchUserProfile = async () => {
-    try {
-      const userData = await AuthAPI.getCurrentUser();
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
-    }
+  // Debug authentication issues
+  const debugAuth = () => {
+    return debugAuthIssues();
   };
 
-  // Provide auth context values
   const value = {
-    user,
+    currentUser,
     isAuthenticated,
     loading,
+    error,
     login,
     logout,
-    register,
-    fetchUserProfile,
     checkAuthStatus,
+    debugAuth
   };
 
   return (
@@ -165,7 +112,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
