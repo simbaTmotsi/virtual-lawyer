@@ -35,20 +35,24 @@ const AdminDashboard = () => {
   const fetchSystemStatus = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would be an API call
-      const data = await apiRequest('/api/admin/system-status/').catch(() => ({
-        // Fallback mock data if API isn't implemented yet
-        users: 152,
-        organizations: 23,
-        pendingApprovals: 3,
-        apiStatus: 'Operational',
-        dbStatus: 'Connected',
-        storageUsage: 68,
-        recentErrors: 1,
-        systemUptime: '32d 14h 22m',
-      }));
-      
-      setSystemStatus(data);
+      // Try to fetch data from API, but use fallback data if it fails
+      try {
+        const data = await apiRequest('/api/admin/system-status/');
+        setSystemStatus(data);
+      } catch (apiError) {
+        console.log('Using fallback system status data');
+        // Fallback mock data
+        setSystemStatus({
+          users: 152,
+          organizations: 23,
+          pendingApprovals: 3,
+          apiStatus: 'Operational',
+          dbStatus: 'Connected',
+          storageUsage: 68,
+          recentErrors: 1,
+          systemUptime: '32d 14h 22m',
+        });
+      }
     } catch (error) {
       console.error('Error fetching system status:', error);
       toast.error('Failed to load system status');

@@ -25,12 +25,9 @@ const LegalSearch = () => {
       setLoading(true);
       setError(null);
       
-      const response = await apiRequest('/api/research/perform-search/', {
-        method: 'POST',
-        body: JSON.stringify({
-          query: query.trim(),
-          jurisdiction: jurisdiction || null
-        })
+      const response = await apiRequest('/api/research/perform-search/', 'POST', {
+        query: query.trim(),
+        jurisdiction: jurisdiction || null
       });
 
       setResults(response || []);

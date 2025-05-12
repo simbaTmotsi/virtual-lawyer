@@ -143,10 +143,24 @@ All components are containerized using Docker to ensure consistent development a
 1. Environment variables:
    - Create a `.env` file in both the `backend/` and `api/` directories based on the provided templates
    - Set your API keys for OpenAI and Google Gemini
+   - Required variables for backend:
+     ```
+     DATABASE_URL=postgresql://postgres:postgres@db:5432/easylaw
+     SECRET_KEY=your_secret_key_here
+     EXTERNAL_AUTH_LOGIN_URL=http://api:8001/auth/login
+     USE_EXTERNAL_AUTH=True
+     ```
+   - Required variables for API:
+     ```
+     API_SECRET_KEY=your_api_secret_key_here
+     OPENAI_API_KEY=your_openai_key_here
+     GEMINI_API_KEY=your_gemini_key_here
+     ```
 
 2. Initial setup:
    - A default admin user is created on first run: `admin@example.com` (password is set during first run)
    - Use the admin interface to configure system settings
+   - The API server must be running for full functionality
 
 ## Development
 

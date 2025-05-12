@@ -3,25 +3,17 @@
  */
 
 export const apiRequest = async (endpoint, method = 'GET', data = null, customConfig = {}) => {
-  const API_BASE_URL = '';  // Base URL is empty for relative URLs
-  const url = `${API_BASE_URL}${endpoint}`;
+  const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
   
-  // Default headers
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-  
-  // Add Authorization header if token exists
+  // Updated to use accessToken for consistency with other files
   const token = localStorage.getItem('accessToken');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
   
-  // Prepare the config
   const config = {
     method,
     headers: {
-      ...headers,
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...customConfig.headers
     },
     ...customConfig
@@ -30,9 +22,8 @@ export const apiRequest = async (endpoint, method = 'GET', data = null, customCo
   // Add request body for POST, PUT, PATCH
   if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
     if (data instanceof FormData) {
-      // If FormData is passed, don't stringify it and remove Content-Type to let browser set it
       config.body = data;
-      delete config.headers['Content-Type'];
+      delete config.headers['Content-Type']; // Let browser set content type for FormData
     } else {
       config.body = JSON.stringify(data);
     }

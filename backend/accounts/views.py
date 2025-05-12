@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, UserProfile
-from .serializers import UserSerializer, UserProfileSerializer, RegisterSerializer
+from .serializers import UserSerializer, UserProfileSerializer, RegisterSerializer, UserRegistrationSerializer
 from .services import AuthService
 import requests
 from django.conf import settings
@@ -55,40 +55,21 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(user=self.request.user) # Ensure user association on update
 
-class RegisterView(generics.CreateAPIView):
-    """
-    API endpoint for user registration.
-    """
-    queryset = User.objects.all()
-    permission_classes = (permissions.AllowAny,)
-    serializer_class = RegisterSerializer
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]  # Add this line to allow unauthenticated access
     
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            print(f"Registration validation errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        # Log the incoming request data for debugging
+        print(f"Received registration data: {request.data}")
         
-        # Connect to FastAPI for user registration
-        auth_service = AuthService()
-        api_response = auth_service.register_user(serializer.validated_data)
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         
-        # Create local user record from the response
-        user_data = api_response.get('user', {})
-        user = User.objects.create_user(
-            email=user_data.get('email'),
-            password=serializer.validated_data['password'],
-            first_name=user_data.get('first_name'),
-            last_name=user_data.get('last_name'),
-            role=user_data.get('role')
-        )
-        
-        # Return response with user data
-        user_data = UserSerializer(user).data
-        return Response({
-            "user": user_data,
-            "message": "User registered successfully"
-        }, status=status.HTTP_201_CREATED)
+        # Log validation errors
+        print(f"Validation errors: {serializer.errors}")
+        return Response({"detail": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomTokenObtainPairView(APIView):
     """

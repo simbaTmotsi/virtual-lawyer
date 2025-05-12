@@ -35,9 +35,7 @@ const DocumentAnalysis = () => {
       setError(null);
       setAnalysis(null);
       
-      const response = await apiRequest(`/api/research/analyze-document/${selectedDocument}/`, {
-        method: 'POST'
-      });
+      const response = await apiRequest(`/api/research/analyze-document/${selectedDocument}/`, 'POST');
 
       setAnalysis(response);
     } catch (err) {

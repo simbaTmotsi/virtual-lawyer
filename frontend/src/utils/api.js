@@ -1,80 +1,110 @@
 import axios from 'axios';
 
-// Create axios instance with base URL
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+// Create custom instances
+export const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',  // Make sure /api is included
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add a request interceptor to include auth token
-api.interceptors.request.use(
-  (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('accessToken');
-    
-    // If token exists, add to headers
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+// Set authorization header if token exists
+const token = localStorage.getItem('accessToken');
+if (token) {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
-// Add response interceptor to handle token refresh on 401 errors
+// Handle token refresh properly
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // Attempt to refresh token
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
-          throw new Error('No refresh token available');
+          throw new Error("No refresh token available");
         }
         
-        const response = await axios.post('/auth/refresh/', { refresh: refreshToken });
+        // Use the correct endpoint with base URL for token refresh
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/accounts/refresh/`, 
+          { refresh: refreshToken }
+        );
         const { access } = response.data;
         
         localStorage.setItem('accessToken', access);
-        originalRequest.headers.Authorization = `Bearer ${access}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+        originalRequest.headers['Authorization'] = `Bearer ${access}`;
         
         return api(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, logout
+        // Handle refresh failure (usually by logging out user)
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
+    
     return Promise.reject(error);
   }
 );
 
-// Auth API endpoints
 export const AuthAPI = {
-  login: (credentials) => api.post('/auth/login/', credentials),
-  register: (userData) => {
-    // Ensure password2 is included for FastAPI validation
-    if (!userData.password2 && userData.password) {
-      userData = { ...userData, password2: userData.password };
+  login: async (credentials) => {
+    // Use the full URL for login endpoint
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/accounts/proxy-login/`,
+      credentials
+    );
+    
+    // Automatically set the Authorization header after login
+    if (response.data.access) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access}`;
+    } else if (response.data.access_token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${response.data.access_token}`;
     }
-    return api.post('/auth/register/', userData);
+    
+    return response.data;
   },
-  refreshToken: (refreshToken) => api.post('/auth/refresh/', { refresh: refreshToken }),
-  getCurrentUser: () => api.get('/accounts/me/'),
-  logout: async () => {
-    await api.post('/auth/logout/');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  register: async (userData) => {
+    // Ensure password2 is included in the request payload
+    // If password2 isn't provided but password is, use password as password2
+    const dataToSend = { ...userData };
+    if (!dataToSend.password2 && dataToSend.password) {
+      dataToSend.password2 = dataToSend.password;
+    }
+    
+    try {
+      // Fix the URL construction to ensure /api prefix
+      const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      // Make sure the URL format is consistent: baseUrl + /api/accounts/register/
+      const apiUrl = `${baseUrl}/api/accounts/register/`;
+        
+      console.log("Registration API URL:", apiUrl);
+      
+      const response = await axios.post(
+        apiUrl,
+        dataToSend,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      console.log("Registration successful:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Registration error status:", error.response?.status);
+      console.error("Registration error details:", error.response?.data || error.message);
+      throw error;
+    }
+  },
+  getCurrentUser: async () => {
+    const response = await api.get('/accounts/me/');
+    return response.data;
   },
 };
 
@@ -107,4 +137,3 @@ const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = fa
 };
 
 export default apiRequest;
-export { api };

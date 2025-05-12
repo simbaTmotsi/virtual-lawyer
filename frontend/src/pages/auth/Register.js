@@ -93,6 +93,7 @@ const Register = () => {
     setLoading(true);
     
     try {
+      console.log("Submitting registration data...");
       await register(formData);
       navigate('/login', { state: { registrationSuccess: true } });
     } catch (err) {
