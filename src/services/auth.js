@@ -44,8 +44,12 @@ export const register = async (userData) => {
 // Add login function for consistency
 export const login = async (credentials) => {
   try {
+    // Make sure the URL has the /api prefix
+    const apiUrl = `${API_URL}/api/accounts/proxy-login/`;
+    console.log('Attempting login with endpoint:', apiUrl);
+    
     const response = await axios.post(
-      `${API_URL}/api/accounts/proxy-login/`, 
+      apiUrl, 
       credentials,
       {
         headers: {

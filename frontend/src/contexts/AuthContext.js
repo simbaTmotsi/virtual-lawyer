@@ -69,7 +69,9 @@ export const AuthProvider = ({ children }) => {
   const login = async ({ email, password }) => {
     try {
       setIsLoading(true);
-      // Update the URL to match backend routes - use accounts/proxy-login/ instead of auth/login/
+      console.log("Attempting login for:", email);
+      
+      // Use the AuthAPI.login to ensure consistent URL construction
       const response = await AuthAPI.login({ email, password });
       
       // Store tokens in localStorage - handle both formats that might be returned from the backend

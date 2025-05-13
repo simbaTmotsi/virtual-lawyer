@@ -54,10 +54,19 @@ api.interceptors.response.use(
 
 export const AuthAPI = {
   login: async (credentials) => {
-    // Use the full URL for login endpoint
+    // Use the full URL with /api for login endpoint
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    const apiUrl = `${baseUrl}/api/accounts/proxy-login/`;
+    console.log("Login API URL:", apiUrl);
+    
     const response = await axios.post(
-      `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/accounts/proxy-login/`,
-      credentials
+      apiUrl,
+      credentials,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      }
     );
     
     // Automatically set the Authorization header after login
@@ -103,7 +112,7 @@ export const AuthAPI = {
     }
   },
   getCurrentUser: async () => {
-    const response = await api.get('/accounts/me/');
+    const response = await api.get('/api/accounts/me/');
     return response.data;
   },
 };
