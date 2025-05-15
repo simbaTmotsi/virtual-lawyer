@@ -1,8 +1,7 @@
-import React, { Fragment, useState } from 'react';
+import React, { Fragment } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
 import { 
-  BellIcon, 
   SunIcon, 
   MoonIcon, 
   Bars3Icon, 
@@ -19,12 +18,12 @@ import { useDarkMode } from '../../contexts/DarkModeContext';
 import Tooltip from '../ui/Tooltip';
 import KeyboardShortcutsModal from '../ui/KeyboardShortcutsModal';
 import { useKeyboardShortcuts } from '../../utils/keyboardShortcuts';
+import NotificationsMenu from './NotificationsMenu';
 
 const Header = ({ setSidebarOpen }) => {
   const { user, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
-  const [notificationsCount] = useState(3); // Mock notification count
   
   // Register keyboard shortcuts
   const { shortcutsModalOpen, setShortcutsModalOpen } = useKeyboardShortcuts(navigate, {
@@ -37,7 +36,7 @@ const Header = ({ setSidebarOpen }) => {
       <Tooltip content="Toggle sidebar" position="bottom">
         <button
           type="button"
-          className="border-r border-gray-200 dark:border-gray-700 px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
+          className="md:hidden border-r border-gray-200 dark:border-gray-700 px-4 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open sidebar"
         >
@@ -111,21 +110,7 @@ const Header = ({ setSidebarOpen }) => {
           </Tooltip>
           
           {/* Notifications */}
-          <Tooltip content="View notifications" position="bottom">
-            <button
-              type="button"
-              className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 relative"
-              aria-label="View notifications"
-            >
-              <span className="sr-only">View notifications</span>
-              <BellIcon className="h-6 w-6" aria-hidden="true" />
-              {notificationsCount > 0 && (
-                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-red-500 text-xs text-white flex items-center justify-center transform translate-x-1/4 -translate-y-1/4">
-                  {notificationsCount}
-                </span>
-              )}
-            </button>
-          </Tooltip>
+          <NotificationsMenu />
 
           {/* Profile dropdown */}
           <Menu as="div" className="relative ml-3">

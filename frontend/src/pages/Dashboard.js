@@ -8,10 +8,13 @@ import {
   ArrowTrendingUpIcon,
   ClipboardDocumentCheckIcon,
   BookOpenIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  DocumentTextIcon,
+  AcademicCapIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../contexts/AuthContext';
-import apiRequest from '../utils/api';
+import { api } from '../utils/api';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -34,10 +37,10 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const [stats, deadlines, events, cases] = await Promise.all([
-        apiRequest.get('/dashboard/stats/').then(res => res.data),
-        apiRequest.get('/dashboard/deadlines/').then(res => res.data),
-        apiRequest.get('/calendar/events/upcoming/').then(res => res.data),
-        apiRequest.get('/dashboard/active-cases/').then(res => res.data)
+        api.get('/api/dashboard/stats/').then(res => res.data),
+        api.get('/api/dashboard/deadlines/').then(res => res.data),
+        api.get('/api/calendar/events/upcoming/').then(res => res.data),
+        api.get('/api/dashboard/active-cases/').then(res => res.data)
       ]);
       
       setDashboardData({
@@ -191,6 +194,29 @@ const Dashboard = () => {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* More quick actions */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <Link to="/documents" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-gray-700/10 hover:shadow-md transition-shadow flex items-center">
+          <DocumentTextIcon className="h-6 w-6 text-primary-500 mr-3" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Documents</span>
+        </Link>
+        
+        <Link to="/billing" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-gray-700/10 hover:shadow-md transition-shadow flex items-center">
+          <CurrencyDollarIcon className="h-6 w-6 text-primary-500 mr-3" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Billing</span>
+        </Link>
+        
+        <Link to="/research" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-gray-700/10 hover:shadow-md transition-shadow flex items-center">
+          <AcademicCapIcon className="h-6 w-6 text-primary-500 mr-3" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Research</span>
+        </Link>
+        
+        <Link to="/analytics" className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow dark:shadow-gray-700/10 hover:shadow-md transition-shadow flex items-center">
+          <ChartBarIcon className="h-6 w-6 text-primary-500 mr-3" />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Analytics</span>
+        </Link>
       </div>
 
       {/* Stats */}

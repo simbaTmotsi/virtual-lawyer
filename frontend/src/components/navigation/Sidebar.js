@@ -51,15 +51,15 @@ const Sidebar = ({ isMobile, setSidebarOpen, showAdminLink = false }) => {
   };
 
   return (
-    <div className="flex flex-col h-full pt-5 overflow-y-auto bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col h-full overflow-y-auto bg-white dark:bg-gray-800 shadow-md">
       {/* Logo */}
-      <div className="flex items-center flex-shrink-0 px-6 mb-6">
+      <div className="flex items-center flex-shrink-0 px-6 py-5 border-b border-gray-200 dark:border-gray-700 h-16">
         <ScaleIcon className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-        <span className="ml-2 text-2xl font-semibold text-gray-900 dark:text-white">EasyLaw</span>
+        <span className="ml-2 text-xl font-semibold text-gray-900 dark:text-white">EasyLaw</span>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 mt-5 flex flex-col px-3">
+      <div className="flex-1 flex flex-col px-3 mt-2">
         <nav className="flex-1 space-y-1">
           {navItems.map((item, idx) => 
             item.divider ? (

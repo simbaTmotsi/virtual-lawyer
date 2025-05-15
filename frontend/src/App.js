@@ -6,6 +6,8 @@ import {
   Outlet
 } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import NotificationsProvider from './contexts/NotificationsContext';
+import { DarkModeProvider } from './contexts/DarkModeContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Layout components
@@ -64,6 +66,10 @@ import ResearchDashboard from './pages/research/ResearchDashboard';
 // Tasks page
 import Tasks from './pages/Tasks';
 
+// User profile
+import UserProfile from './pages/profile/UserProfile';
+import UserSettings from './pages/profile/UserSettings';
+
 // Global auth check wrapper - modified to redirect based on user role
 const AuthCheck = () => {
   const { user } = useAuth();
@@ -107,7 +113,15 @@ function App() {
         // Main application routes (protected)
         {
           path: "/",
-          element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
+          element: (
+            <ProtectedRoute>
+              <DarkModeProvider>
+                <NotificationsProvider>
+                  <MainLayout />
+                </NotificationsProvider>
+              </DarkModeProvider>
+            </ProtectedRoute>
+          ),
           children: [
             { index: true, element: <Dashboard /> },
             { path: "clients", element: <ClientsList /> },
@@ -129,21 +143,31 @@ function App() {
             { path: "billing/invoices/:id", element: <InvoiceDetail /> },
             { path: "billing/reports", element: <BillingReports /> },
             
-            // Add research routes
+            // Research routes
             { path: "research", element: <ResearchDashboard /> },
 
-            // Add analytics route
+            // Analytics route
             { path: "analytics", element: <AnalyticsDashboard /> },
 
-            // Add tasks route
+            // Tasks route
             { path: "tasks", element: <Tasks /> },
+            
+            // Profile routes
+            { path: "profile", element: <UserProfile /> },
+            { path: "settings", element: <UserSettings /> },
           ],
         },
 
         // Admin routes (protected and admin only)
         {
           path: "/admin",
-          element: <ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>,
+          element: (
+            <ProtectedRoute adminOnly={true}>
+              <DarkModeProvider>
+                <AdminLayout />
+              </DarkModeProvider>
+            </ProtectedRoute>
+          ),
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: "users", element: <UsersManagement /> },
@@ -151,15 +175,6 @@ function App() {
             { path: "settings", element: <SystemSettings /> },
             { path: "analytics", element: <AnalyticsDashboard /> },
           ],
-        },
-
-        // Analytics route
-        {
-          path: "/analytics",
-          element: <MainLayout />,
-          children: [
-            { index: true, element: <AnalyticsDashboard /> },
-          ]
         },
       ]
     },
