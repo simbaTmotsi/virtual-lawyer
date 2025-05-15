@@ -2,15 +2,27 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-# from .models import ResearchQuery # Assuming a model exists
-# from .serializers import ResearchQuerySerializer # Assuming a serializer exists
+from django.db.models import Prefetch
+from .models import ResearchQuery, ResearchResult
+from .serializers import ResearchQuerySerializer, ResearchResultSerializer
 # from .services import perform_ai_research # Placeholder for AI service call
 
-class ResearchViewSet(viewsets.ViewSet):
+class ResearchViewSet(viewsets.ModelViewSet):
     """
     ViewSet for handling AI-powered legal research tasks.
     """
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ResearchQuerySerializer
+    
+    def get_queryset(self):
+        """
+        Return queries for the current user only.
+        """
+        return ResearchQuery.objects.filter(
+            user=self.request.user
+        ).prefetch_related(
+            Prefetch('results', queryset=ResearchResult.objects.order_by('-relevance_score'))
+        ).order_by('-timestamp')
 
     @action(detail=False, methods=['post'])
     def perform_search(self, request):
@@ -24,19 +36,38 @@ class ResearchViewSet(viewsets.ViewSet):
             return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Placeholder: Call a service function to interact with the LLM API
-            # results = perform_ai_research(query_text, jurisdiction)
+            # Save the query to the database
+            research_query = ResearchQuery.objects.create(
+                user=request.user,
+                query_text=query_text,
+                jurisdiction=jurisdiction
+            )
             
-            # Mock results for now
-            results = [
-                {"title": f"Mock Result 1 for '{query_text}'", "excerpt": "Relevant excerpt...", "source": "Case Law DB", "relevance": 0.95},
-                {"title": f"Mock Result 2 for '{query_text}'", "excerpt": "Another relevant excerpt...", "source": "Statute DB", "relevance": 0.88},
+            # Placeholder: Call a service function to interact with the LLM API
+            # ai_results = perform_ai_research(query_text, jurisdiction)
+            
+            # Mock results for now - in production this would be real AI results
+            mock_results = [
+                {"title": f"Mock Result 1 for '{query_text}'", "excerpt": "Relevant excerpt...", "source": "Case Law DB", "relevance_score": 0.95},
+                {"title": f"Mock Result 2 for '{query_text}'", "excerpt": "Another relevant excerpt...", "source": "Statute DB", "relevance_score": 0.88},
             ]
             
-            # Optionally save the query and results
-            # ResearchQuery.objects.create(user=request.user, query=query_text, ...)
-
-            return Response(results, status=status.HTTP_200_OK)
+            # Save mock results to database
+            for result in mock_results:
+                ResearchResult.objects.create(
+                    query=research_query,
+                    title=result['title'],
+                    excerpt=result['excerpt'],
+                    source=result['source'],
+                    relevance_score=result['relevance_score']
+                )
+            
+            # Return serialized query with results
+            serializer = self.get_serializer(research_query)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Log the exception e
+            return Response({"error": f"An error occurred during research: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             # Log the exception e
             return Response({"error": "An error occurred during research."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -47,25 +78,43 @@ class ResearchViewSet(viewsets.ViewSet):
         Analyzes a specific document using an integrated LLM.
         Requires document ID (pk).
         """
-        # from documents.models import Document # Import here or globally
-        
         try:
-            # document = Document.objects.get(pk=pk, owner_organization=request.user.profile.organization) # Add appropriate filtering
-            # analysis = perform_document_analysis(document.file.path) # Placeholder service call
+            # Import document model here to avoid circular imports
+            from documents.models import Document
             
-            # Mock analysis for now
-            analysis = {
-                "summary": "This document appears to be a standard non-disclosure agreement.",
-                "key_clauses": ["Confidentiality", "Term", "Governing Law"],
-                "potential_issues": ["Ambiguity in definition of 'Confidential Information'"],
-            }
-
-            return Response(analysis, status=status.HTTP_200_OK)
-        # except Document.DoesNotExist:
-        #     return Response({"error": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
+            try:
+                document = Document.objects.get(pk=pk)
+                # In production, add access control checks here
+                # e.g., check if the document belongs to a case the user has access to
+                
+                # Mock analysis for now - in production call an actual AI service
+                analysis = {
+                    "summary": "This document appears to be a standard non-disclosure agreement.",
+                    "key_clauses": ["Confidentiality", "Term", "Governing Law"],
+                    "potential_issues": ["Ambiguity in definition of 'Confidential Information'"],
+                }
+                
+                # Optionally save this analysis to the database
+                research_query = ResearchQuery.objects.create(
+                    user=request.user,
+                    query_text=f"Document Analysis: {document.name}",
+                )
+                
+                for i, clause in enumerate(analysis["key_clauses"]):
+                    ResearchResult.objects.create(
+                        query=research_query,
+                        title=f"Key Clause: {clause}",
+                        excerpt=f"Analysis of the {clause} clause",
+                        source=document.name,
+                        relevance_score=0.9 - (i * 0.1)  # Just for ordering
+                    )
+                
+                return Response(analysis, status=status.HTTP_200_OK)
+            except Document.DoesNotExist:
+                return Response({"error": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             # Log the exception e
-            return Response({"error": "An error occurred during document analysis."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"An error occurred during document analysis: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # If using ModelViewSet, it would look more like this:
 # class ResearchQueryViewSet(viewsets.ModelViewSet):

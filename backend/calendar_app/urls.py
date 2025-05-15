@@ -7,10 +7,10 @@ router = DefaultRouter()
 router.register(r'events', views.EventViewSet)
 
 urlpatterns = [
-    # Temporary mock routes that don't require database access
-    path('events/', mock_views.mock_events_list, name='mock-events-list'),
-    path('events/upcoming/', mock_views.mock_events_upcoming, name='mock-events-upcoming'),
+    # Use real views that interact with the database
+    path('', include(router.urls)),
     
-    # Keep the router URLs but commented out until migrations are applied
-    # path('', include(router.urls)),
+    # If we need to fallback to mock views for testing
+    # path('mock/events/', mock_views.mock_events_list, name='mock-events-list'),
+    # path('mock/events/upcoming/', mock_views.mock_events_upcoming, name='mock-events-upcoming'),
 ]

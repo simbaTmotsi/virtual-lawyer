@@ -29,7 +29,15 @@ const Calendar = () => {
         let eventsData = [], casesData = [], staffData = [];
         
         try {
-          eventsData = await apiRequest('/api/calendar/events/');
+          // Use the updated API endpoint with correct router
+          const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+          const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+          
+          // Format dates as YYYY-MM-DD
+          const formattedStartDate = startDate.toISOString().split('T')[0];
+          const formattedEndDate = endDate.toISOString().split('T')[0];
+          
+          eventsData = await apiRequest(`/api/calendar/events/?start=${formattedStartDate}&end=${formattedEndDate}`);
         } catch (err) {
           console.warn('Failed to fetch events:', err);
           // Use empty array as fallback

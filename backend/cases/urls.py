@@ -7,6 +7,9 @@ router = DefaultRouter()
 router.register(r'', views.CaseViewSet, basename='case')
 
 urlpatterns = [
+    # Use the real database-connected views
     path('', include(router.urls)),
-    path('', mock_views.mock_cases_list, name='mock-cases-list'),
+    
+    # Uncomment this for testing with mock data if needed
+    # path('mock/', mock_views.mock_cases_list, name='mock-cases-list'),
 ]
