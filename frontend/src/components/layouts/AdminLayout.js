@@ -1,7 +1,19 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Cog6ToothIcon, UsersIcon, AcademicCapIcon, ChartBarIcon, ArrowLeftOnRectangleIcon, HomeIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { 
+  Cog6ToothIcon, 
+  UsersIcon, 
+  AcademicCapIcon, 
+  ChartBarIcon, 
+  ArrowLeftOnRectangleIcon, 
+  HomeIcon, 
+  CurrencyDollarIcon,
+  SunIcon,
+  MoonIcon
+} from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext'; // Adjust path if needed
+import { useDarkMode } from '../../contexts/DarkModeContext';
+import Tooltip from '../ui/Tooltip';
 
 const adminNav = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
@@ -15,6 +27,7 @@ const adminNav = [
 const AdminLayout = () => {
   const location = useLocation();
   const { logout } = useAuth();
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
   return (
     <div className="min-h-screen flex bg-gray-100 dark:bg-gray-900">
@@ -52,28 +65,54 @@ const AdminLayout = () => {
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <Link
             to="/"
-            className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 mb-2"
+            className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <HomeIcon className="mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
             Back to Main App
           </Link>
-          <button
-            onClick={logout}
-            className="group w-full flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
-            Sign Out
-          </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center px-6">
-          {/* Can add breadcrumbs or page title here */}
+        <header className="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-6">
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
             {adminNav.find(item => location.pathname === item.href || (item.href !== '/admin' && location.pathname.startsWith(item.href)))?.name || 'Admin'}
           </h1>
+          
+          {/* Action buttons */}
+          <div className="flex items-center space-x-3">
+            {/* Dark Mode Toggle */}
+            <Tooltip 
+              content={darkMode ? "Switch to light mode (Shift+D)" : "Switch to dark mode (Shift+D)"} 
+              position="bottom"
+            >
+              <button
+                type="button"
+                className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                onClick={toggleDarkMode}
+                aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {darkMode ? (
+                  <SunIcon className="h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <MoonIcon className="h-6 w-6" aria-hidden="true" />
+                )}
+              </button>
+            </Tooltip>
+            
+            {/* Sign Out Button */}
+            <Tooltip content="Sign out" position="bottom">
+              <button
+                type="button"
+                onClick={logout}
+                className="rounded-full bg-white dark:bg-gray-700 p-1 text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                aria-label="Sign out"
+              >
+                <ArrowLeftOnRectangleIcon className="h-6 w-6" aria-hidden="true" />
+              </button>
+            </Tooltip>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">
           {/* Admin page content goes here */}
