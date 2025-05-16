@@ -37,7 +37,7 @@ const AdminDashboard = () => {
       setLoading(true);
       // Try to fetch data from API, but use fallback data if it fails
       try {
-        const data = await apiRequest('/api/admin/system-status/');
+        const data = await apiRequest('/admin/system-status/');
         setSystemStatus(data);
       } catch (apiError) {
         console.log('Using fallback system status data');

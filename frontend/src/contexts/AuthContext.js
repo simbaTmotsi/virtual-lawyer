@@ -1,7 +1,8 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useTransition } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { AuthAPI, api } from '../utils/api';
 import axios from 'axios';
+import { Outlet } from 'react-router-dom';
 
 const AuthContext = createContext(null);
 
@@ -10,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [accessToken, setAccessToken] = useState(localStorage.getItem('accessToken'));
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -28,23 +30,29 @@ export const AuthProvider = ({ children }) => {
             try {
               // Token is valid, fetch current user info
               const userResponse = await AuthAPI.getCurrentUser();
-              setUser(userResponse);
-              setIsAuthenticated(true);
+              startTransition(() => {
+                setUser(userResponse);
+                setIsAuthenticated(true);
+              });
             } catch (error) {
               // Error fetching user info
               console.error('Error fetching user data:', error);
               localStorage.removeItem('accessToken');
               localStorage.removeItem('refreshToken');
-              setUser(null);
-              setIsAuthenticated(false);
+              startTransition(() => {
+                setUser(null);
+                setIsAuthenticated(false);
+              });
             }
           } else {
             // Token expired, clear local storage
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             delete api.defaults.headers.common['Authorization'];
-            setUser(null);
-            setIsAuthenticated(false);
+            startTransition(() => {
+              setUser(null);
+              setIsAuthenticated(false);
+            });
           }
         } catch (error) {
           console.error('Error initializing auth:', error);
@@ -176,7 +184,11 @@ export const AuthProvider = ({ children }) => {
     isAdmin
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children || <Outlet />}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
