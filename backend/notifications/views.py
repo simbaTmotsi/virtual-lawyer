@@ -6,7 +6,17 @@ from .models import Notification
 from .serializers import NotificationSerializer
 
 class NotificationViewSet(viewsets.ModelViewSet):
-    """API endpoint that allows notifications to be viewed or edited."""
+    """
+    API endpoint that allows notifications to be viewed or edited.
+    
+    This ViewSet automatically provides:
+    - GET /api/notifications/ - list all notifications for current user
+    - POST /api/notifications/ - create new notification
+    - GET /api/notifications/{id}/ - retrieve a specific notification
+    - PUT/PATCH /api/notifications/{id}/ - update a notification
+    - DELETE /api/notifications/{id}/ - delete a notification
+    - POST /api/notifications/mark-all-read/ - mark all notifications as read
+    """
     serializer_class = NotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
     
