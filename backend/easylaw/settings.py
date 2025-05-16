@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'billing',
     'calendar_app',
     'dashboard',
+    'notifications',
 ]
 
 MIDDLEWARE = [

@@ -13,7 +13,7 @@ const NotificationsProvider = ({ children }) => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/notifications/');
+      const response = await api.get('/notifications/');
       const notificationData = response.data || [];
       setNotifications(notificationData);
       setUnreadCount(notificationData.filter(notification => !notification.read).length);
@@ -28,7 +28,7 @@ const NotificationsProvider = ({ children }) => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await api.patch(`/api/notifications/${notificationId}/`, { read: true });
+      await api.patch(`/notifications/${notificationId}/`, { read: true });
       
       // Update local state
       setNotifications(notifications.map(notification => 
@@ -47,7 +47,7 @@ const NotificationsProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      await api.post('/api/notifications/mark-all-read/');
+      await api.post('/notifications/mark-all-read/');
       
       // Update local state
       setNotifications(notifications.map(notification => ({ ...notification, read: true })));
