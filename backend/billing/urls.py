@@ -11,6 +11,9 @@ urlpatterns = [
     # Use real database views
     path('', include(router.urls)),
     
+    # Add client-summary endpoint that matches the frontend request path
+    path('client-summary/', mock_views.mock_client_billing_summary, name='client-billing-summary'),
+    
     # Fallback to mock views for any endpoints not yet implemented in real views
     path('mock/client-summary/', mock_views.mock_client_billing_summary, name='mock-client-billing-summary'),
     path('mock/time-entries/', mock_views.mock_time_entries_list, name='mock-time-entries-list'),
