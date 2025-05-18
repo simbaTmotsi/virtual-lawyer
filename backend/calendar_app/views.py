@@ -8,6 +8,44 @@ from .serializers import EventSerializer
 from django.utils import timezone
 from datetime import timedelta
 
+def upcoming_events(request):
+    """
+    Function-based view to get upcoming events within the next 7 days.
+    This is an alternative to the ViewSet action method.
+    """
+    if not request.user.is_authenticated:
+        return Response({"detail": "Authentication required"}, status=401)
+    
+    now = timezone.now()
+    end_date = now + timedelta(days=7)
+    
+    # Handle user permissions (staff vs. regular users)
+    user = request.user
+    if user.is_staff:
+        events = Event.objects.filter(
+            start_time__gte=now,
+            start_time__lte=end_date
+        )
+    else:
+        # For non-staff, only show events they're invited to or related to their cases
+        events = Event.objects.filter(
+            start_time__gte=now,
+            start_time__lte=end_date
+        ).filter(
+            attendees=user
+        ) | Event.objects.filter(
+            start_time__gte=now,
+            start_time__lte=end_date,
+            case__client=user
+        )
+    
+    # Order by start time
+    events = events.order_by('start_time')
+    
+    # Serialize and return the data
+    serializer = EventSerializer(events, many=True)
+    return Response(serializer.data)
+
 class EventViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows calendar events to be viewed or edited.

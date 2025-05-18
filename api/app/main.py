@@ -2,6 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .dependencies import get_settings
 from .routers import auth, admin, clients, cases, documents, research, billing, calendar
+from .models import init_db
+from .database import get_db
+from sqlalchemy.orm import Session
 
 # Create FastAPI app
 app = FastAPI(
@@ -9,6 +12,12 @@ app = FastAPI(
     description="Backend API for the EasyLaw legal practice management platform",
     version="1.0.0"
 )
+
+# Initialize database tables on startup
+@app.on_event("startup")
+async def startup_db_client():
+    init_db.create_tables()
+    print("Database tables created successfully")
 
 # Add CORS middleware
 app.add_middleware(

@@ -9,8 +9,9 @@ router.register(r'events', views.EventViewSet)
 urlpatterns = [
     # Use real views that interact with the database
     path('', include(router.urls)),
+    path('events/upcoming/', views.upcoming_events, name='upcoming-events'),
     
-    # If we need to fallback to mock views for testing
-    # path('mock/events/', mock_views.mock_events_list, name='mock-events-list'),
-    # path('mock/events/upcoming/', mock_views.mock_events_upcoming, name='mock-events-upcoming'),
+    # Keep mock views for testing but with a mock/ prefix
+    path('mock/events/', mock_views.mock_events_list, name='mock-events-list'),
+    path('mock/events/upcoming/', mock_views.mock_events_upcoming, name='mock-events-upcoming'),
 ]

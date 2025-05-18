@@ -15,5 +15,7 @@ urlpatterns = [
     path('proxy-login/', proxy_login_view, name='proxy-login'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Added standard JWT refresh view
     path('me/', CurrentUserView.as_view(), name='current-user'),
-    path('users/', mock_views.mock_users_list, name='mock-users-list'),
+    
+    # Add mock endpoint with mock/ prefix for testing
+    path('mock/users/', mock_views.mock_users_list, name='mock-users-list'),
 ]

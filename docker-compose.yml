@@ -42,13 +42,19 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    command: >
+      sh -c "sleep 10 &&  # Wait for DB to be ready
+             uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
     volumes:
       - ./api:/app
       - ./.env:/app/.env
     ports:
       - "8001:8001"
     depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
       - backend
     env_file:
       - .env

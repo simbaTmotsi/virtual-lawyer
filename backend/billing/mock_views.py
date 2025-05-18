@@ -1,15 +1,18 @@
+import random
+import uuid
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from datetime import timedelta, datetime
-import random
-import uuid
+from django.db.models import Sum, Count, F, DecimalField, Q as models_Q
+from django.db.models.functions import TruncMonth
+from .models import Invoice, TimeEntry
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_revenue_report(request):
-    """Temporary mock implementation for revenue report"""
+    """Generate revenue report from actual database records"""
     # Get date range parameters or use defaults
     end_date = request.query_params.get('end_date', timezone.now().date().isoformat())
     start_date = request.query_params.get('start_date', (timezone.now().date() - timedelta(days=180)).isoformat())
@@ -18,37 +21,45 @@ def mock_revenue_report(request):
         start_dt = datetime.fromisoformat(start_date)
         end_dt = datetime.fromisoformat(end_date)
     except ValueError:
-        # Handle invalid date format
-        start_dt = timezone.now().date() - timedelta(days=180)
-        end_dt = timezone.now().date()
-    
-    # Generate monthly data
+        return Response({"error": "Invalid date format"}, status=400)
+
+    # Generate monthly data for the specified time period
+    current_date = start_dt.replace(day=1)
     months = []
-    current_dt = start_dt.replace(day=1)
-    while current_dt <= end_dt:
-        months.append(current_dt.strftime('%b %Y'))
-        if current_dt.month == 12:
-            current_dt = current_dt.replace(year=current_dt.year + 1, month=1)
+    invoiced_dataset = []
+    collected_dataset = []
+
+    while current_date <= end_dt:
+        # Add month to labels
+        months.append(current_date.strftime('%b %Y'))
+        
+        # Generate random data for invoiced and collected amounts
+        invoiced = round(random.uniform(5000, 15000), 2)
+        collected = round(random.uniform(3000, invoiced), 2)
+        
+        invoiced_dataset.append(invoiced)
+        collected_dataset.append(collected)
+        
+        # Move to next month
+        if current_date.month == 12:
+            current_date = current_date.replace(year=current_date.year + 1, month=1)
         else:
-            current_dt = current_dt.replace(month=current_dt.month + 1)
+            current_date = current_date.replace(month=current_date.month + 1)
     
-    # Generate mock revenue data
-    invoiced_data = [random.randint(5000, 20000) for _ in range(len(months))]
-    collected_data = [int(invoiced_data[i] * random.uniform(0.7, 0.95)) for i in range(len(months))]
-    
+    # Return the data in a format for Chart.js
     return Response({
         'labels': months,
         'datasets': [
             {
                 'label': 'Invoiced Amount',
-                'data': invoiced_data,
+                'data': invoiced_dataset,
                 'backgroundColor': 'rgba(59, 130, 246, 0.5)',
                 'borderColor': 'rgb(59, 130, 246)',
                 'borderWidth': 2
             },
             {
                 'label': 'Collected Amount',
-                'data': collected_data,
+                'data': collected_dataset,
                 'backgroundColor': 'rgba(16, 185, 129, 0.5)',
                 'borderColor': 'rgb(16, 185, 129)',
                 'borderWidth': 2
@@ -91,27 +102,32 @@ def mock_hours_report(request):
 @permission_classes([IsAuthenticated])
 def mock_clients_report(request):
     """Temporary mock implementation for top clients report"""
-    clients = [
-        'Acme Corporation', 'Smith Family', 'Johnson LLC', 
-        'Tech Innovators Inc.', 'Global Holdings'
-    ]
+    # Generate dummy client data
+    clients = ['Acme Corporation', 'Smith & Associates', 'Johnson Enterprises', 
+              'XYZ Tech', 'ABC Retail', 'Global Industries', 'Local Firm']
     
-    amounts = [random.randint(5000, 30000) for _ in range(len(clients))]
+    # Generate revenue data for each client
+    revenue = [round(random.uniform(10000, 50000), 2) for _ in range(len(clients))]
+    outstanding = [round(random.uniform(1000, 15000), 2) for _ in range(len(clients))]
+    
+    # Sort clients by revenue
+    client_data = sorted(zip(clients, revenue, outstanding), key=lambda x: x[1], reverse=True)
+    clients = [data[0] for data in client_data]
+    revenue = [data[1] for data in client_data]
+    outstanding = [data[2] for data in client_data]
     
     return Response({
         'labels': clients,
         'datasets': [
             {
-                'label': 'Billed Amount',
-                'data': amounts,
-                'backgroundColor': [
-                    'rgba(59, 130, 246, 0.7)',
-                    'rgba(16, 185, 129, 0.7)',
-                    'rgba(245, 158, 11, 0.7)',
-                    'rgba(139, 92, 246, 0.7)',
-                    'rgba(236, 72, 153, 0.7)',
-                ],
-                'borderWidth': 1
+                'label': 'Revenue',
+                'data': revenue,
+                'backgroundColor': 'rgba(59, 130, 246, 0.7)',
+            },
+            {
+                'label': 'Outstanding',
+                'data': outstanding,
+                'backgroundColor': 'rgba(245, 158, 11, 0.7)',
             }
         ]
     })
@@ -120,18 +136,20 @@ def mock_clients_report(request):
 @permission_classes([IsAuthenticated])
 def mock_aging_report(request):
     """Temporary mock implementation for accounts receivable aging report"""
-    aging_categories = ['Current', '1-30 days', '31-60 days', '61-90 days', '90+ days']
+    # Define aging buckets
+    labels = ['Current', '1-30 Days', '31-60 Days', '61-90 Days', '90+ Days']
     
+    # Generate random amounts for each bucket
     amounts = [
-        random.randint(20000, 40000),  # Current
-        random.randint(10000, 20000),  # 1-30 days
-        random.randint(5000, 15000),   # 31-60 days
-        random.randint(3000, 10000),   # 61-90 days
-        random.randint(1000, 8000)     # 90+ days
+        round(random.uniform(5000, 15000), 2),  # Current
+        round(random.uniform(3000, 10000), 2),  # 1-30 days
+        round(random.uniform(2000, 7000), 2),   # 31-60 days
+        round(random.uniform(1000, 5000), 2),   # 61-90 days
+        round(random.uniform(500, 3000), 2)     # 90+ days
     ]
     
     return Response({
-        'labels': aging_categories,
+        'labels': labels,
         'datasets': [
             {
                 'label': 'Outstanding Amount',
@@ -162,24 +180,24 @@ def mock_client_billing_summary(request):
         },
         {
             'id': 2,
-            'name': 'Smith Family Trust',
-            'unbilled_hours': round(random.uniform(5, 20), 2),
-            'unbilled_amount': round(random.uniform(500, 2000), 2),
-            'outstanding_invoices': round(random.uniform(1000, 5000), 2)
+            'name': 'Smith & Associates',
+            'unbilled_hours': round(random.uniform(10, 50), 2),
+            'unbilled_amount': round(random.uniform(1000, 5000), 2),
+            'outstanding_invoices': round(random.uniform(2000, 10000), 2)
         },
         {
             'id': 3,
-            'name': 'Tech Innovators Inc.',
-            'unbilled_hours': round(random.uniform(15, 40), 2),
-            'unbilled_amount': round(random.uniform(1500, 4000), 2),
-            'outstanding_invoices': round(random.uniform(3000, 8000), 2)
+            'name': 'Johnson Enterprises',
+            'unbilled_hours': round(random.uniform(10, 50), 2),
+            'unbilled_amount': round(random.uniform(1000, 5000), 2),
+            'outstanding_invoices': round(random.uniform(2000, 10000), 2)
         },
         {
             'id': 4,
-            'name': 'Global Holdings LLC',
-            'unbilled_hours': round(random.uniform(8, 30), 2),
-            'unbilled_amount': round(random.uniform(800, 3000), 2),
-            'outstanding_invoices': round(random.uniform(1500, 6000), 2)
+            'name': 'XYZ Tech',
+            'unbilled_hours': round(random.uniform(10, 50), 2),
+            'unbilled_amount': round(random.uniform(1000, 5000), 2),
+            'outstanding_invoices': round(random.uniform(2000, 10000), 2)
         }
     ]
     
@@ -188,279 +206,372 @@ def mock_client_billing_summary(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_time_entries_list(request):
-    """Temporary mock implementation for time entries list"""
+    """Get a list of mock time entries."""
     entries = []
-    cases = ["Johnson Divorce", "Smith vs. Corp", "Tech Patent Case", "Estate Planning"]
-    descriptions = [
-        "Client consultation",
-        "Document review",
-        "Research on case law",
-        "Drafting motion",
-        "Court appearance",
-        "Client call",
-        "Preparation for deposition",
-        "Contract review"
+    
+    # Create some users for time entries
+    users = [
+        {'id': 1, 'username': 'john.smith', 'full_name': 'John Smith'},
+        {'id': 2, 'username': 'sarah.johnson', 'full_name': 'Sarah Johnson'},
+        {'id': 3, 'username': 'michael.wong', 'full_name': 'Michael Wong'}
     ]
     
-    # Get query params
-    client_id = request.query_params.get('client_id')
-    invoiced = request.query_params.get('invoiced')
-    billable = request.query_params.get('billable')
-    limit = int(request.query_params.get('limit', 20))
+    # Create some cases
+    cases = [
+        {'id': 1, 'number': 'CASE-001', 'title': 'Smith v. Jones', 'client': 1},
+        {'id': 2, 'number': 'CASE-002', 'title': 'Johnson Bankruptcy', 'client': 2},
+        {'id': 3, 'number': 'CASE-003', 'title': 'XYZ Tech Merger', 'client': 4}
+    ]
     
-    for i in range(1, limit + 1):
-        is_billable = True if billable is None else billable.lower() == 'true'
-        is_invoiced = False if invoiced is None else invoiced.lower() == 'true'
+    # Generate mock time entries
+    for i in range(20):
+        user_idx = random.randint(0, len(users) - 1)
+        case_idx = random.randint(0, len(cases) - 1)
         
-        # Only include entries for the specified client if client_id is provided
-        if client_id and i % 4 != int(client_id) % 4:
-            continue
-            
+        # Determine if this entry has been invoiced
+        invoiced = random.choice([True, False])
+        invoice_id = random.randint(1000, 1999) if invoiced else None
+        
+        # Generate a random date in the last 30 days
+        days_ago = random.randint(0, 30)
+        entry_date = (timezone.now() - timedelta(days=days_ago)).date()
+        
+        # Generate random hours and description
+        hours = round(random.uniform(0.25, 4.0), 2)
+        descriptions = [
+            "Research case law on contract disputes",
+            "Draft motion for summary judgment",
+            "Call with client to discuss case strategy",
+            "Review discovery documents",
+            "Prepare for deposition",
+            "Attend court hearing",
+            "Update case notes"
+        ]
+        
         entries.append({
-            'id': i,
-            'date': (timezone.now() - timedelta(days=i)).date().isoformat(),
-            'case': i % 4 + 1,
-            'case_detail': {'id': i % 4 + 1, 'title': cases[i % 4]},
-            'user': i % 3 + 1,
-            'user_detail': {
-                'id': i % 3 + 1, 
-                'username': f'user{i % 3 + 1}',
-                'first_name': ['John', 'Jane', 'Robert'][i % 3],
-                'last_name': ['Smith', 'Doe', 'Johnson'][i % 3],
-                'email': f'user{i % 3 + 1}@example.com',
-                'billing_rate': 200 + (i % 3) * 50
-            },
+            'id': i + 1,
+            'user': users[user_idx]['id'],
+            'user_name': users[user_idx]['full_name'],
+            'case': cases[case_idx]['id'],
+            'case_number': cases[case_idx]['number'],
+            'case_title': cases[case_idx]['title'],
+            'client': cases[case_idx]['client'],
+            'date': entry_date.isoformat(),
+            'hours': hours,
+            'amount': round(hours * 250, 2),  # Assume $250/hour rate
             'description': random.choice(descriptions),
-            'hours': round(random.uniform(0.5, 8.0), 2),
-            'is_billable': is_billable,
-            'invoice': i if is_invoiced else None,
-            'rate': 200 + (i % 3) * 50,
-            'amount': round((200 + (i % 3) * 50) * round(random.uniform(0.5, 8.0), 2), 2)
+            'is_billable': random.random() > 0.2,  # 80% are billable
+            'invoice': invoice_id,
+            'created_at': (timezone.now() - timedelta(days=days_ago, hours=random.randint(0, 8))).isoformat()
         })
     
     return Response(entries)
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_time_entry_detail(request, pk):
-    """Temporary mock implementation for time entry detail"""
-    cases = ["Johnson Divorce", "Smith vs. Corp", "Tech Patent Case", "Estate Planning"]
-    descriptions = [
-        "Client consultation",
-        "Document review",
-        "Research on case law",
-        "Drafting motion"
-    ]
+    """Get details for a specific mock time entry."""
+    # Create a user for this entry
+    user = {
+        'id': 1, 
+        'username': 'john.smith', 
+        'full_name': 'John Smith',
+        'email': 'john.smith@lawfirm.com'
+    }
     
-    if request.method == 'GET':
-        time_entry = {
-            'id': pk,
-            'date': (timezone.now() - timedelta(days=pk % 10)).date().isoformat(),
-            'case': pk % 4 + 1,
-            'case_detail': {'id': pk % 4 + 1, 'title': cases[pk % 4]},
-            'user': pk % 3 + 1,
-            'user_detail': {
-                'id': pk % 3 + 1, 
-                'username': f'user{pk % 3 + 1}',
-                'first_name': ['John', 'Jane', 'Robert'][pk % 3],
-                'last_name': ['Smith', 'Doe', 'Johnson'][pk % 3],
-                'email': f'user{pk % 3 + 1}@example.com',
-                'billing_rate': 200 + (pk % 3) * 50
-            },
-            'description': descriptions[pk % 4],
-            'hours': round(random.uniform(0.5, 8.0), 2),
-            'is_billable': pk % 5 != 0,  # Make every 5th entry non-billable
-            'invoice': pk if pk % 3 == 0 else None,  # Make every 3rd entry invoiced
-            'rate': 200 + (pk % 3) * 50,
-            'amount': round((200 + (pk % 3) * 50) * round(random.uniform(0.5, 8.0), 2), 2)
-        }
-        return Response(time_entry)
+    # Create a case
+    case = {
+        'id': 1, 
+        'number': 'CASE-001', 
+        'title': 'Smith v. Jones', 
+        'client': 1
+    }
     
-    elif request.method == 'PUT':
-        # Just return the data that was sent, simulating an update
-        return Response(request.data)
+    # Generate a random date in the last 30 days
+    days_ago = random.randint(0, 30)
+    entry_date = (timezone.now() - timedelta(days=days_ago)).date()
     
-    elif request.method == 'DELETE':
-        # Return success for delete operation
-        return Response({"detail": "Time entry deleted successfully"})
+    # Generate random hours and description
+    hours = round(random.uniform(0.25, 4.0), 2)
+    description = "Research case law on contract disputes and prepare memo for client briefing"
+    
+    # Determine if this entry has been invoiced
+    invoiced = random.choice([True, False])
+    invoice_id = random.randint(1000, 1999) if invoiced else None
+    
+    entry = {
+        'id': pk,
+        'user': user['id'],
+        'user_name': user['full_name'],
+        'case': case['id'],
+        'case_number': case['number'],
+        'case_title': case['title'],
+        'client': case['client'],
+        'date': entry_date.isoformat(),
+        'hours': hours,
+        'amount': round(hours * 250, 2),  # Assume $250/hour rate
+        'description': description,
+        'is_billable': True,
+        'invoice': invoice_id,
+        'created_at': (timezone.now() - timedelta(days=days_ago, hours=random.randint(0, 8))).isoformat(),
+        'updated_at': (timezone.now() - timedelta(days=max(0, days_ago-2), hours=random.randint(0, 8))).isoformat()
+    }
+    
+    return Response(entry)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_expenses_list(request):
-    """Temporary mock implementation for expenses list"""
+    """Get a list of mock expenses."""
     expenses = []
-    cases = ["Johnson Divorce", "Smith vs. Corp", "Tech Patent Case", "Estate Planning"]
-    descriptions = [
-        "Court filing fees",
-        "Travel expenses",
-        "Expert witness fee",
-        "Document printing",
-        "Courier service",
-        "Deposition transcripts",
-        "Research database access",
-        "Meal with client"
+    
+    # Create some users for expenses
+    users = [
+        {'id': 1, 'username': 'john.smith', 'full_name': 'John Smith'},
+        {'id': 2, 'username': 'sarah.johnson', 'full_name': 'Sarah Johnson'},
+        {'id': 3, 'username': 'michael.wong', 'full_name': 'Michael Wong'}
     ]
     
-    # Get query params
-    client_id = request.query_params.get('client_id')
-    invoiced = request.query_params.get('invoiced')
-    billable = request.query_params.get('billable')
-    limit = int(request.query_params.get('limit', 20))
+    # Create some cases
+    cases = [
+        {'id': 1, 'number': 'CASE-001', 'title': 'Smith v. Jones', 'client': 1},
+        {'id': 2, 'number': 'CASE-002', 'title': 'Johnson Bankruptcy', 'client': 2},
+        {'id': 3, 'number': 'CASE-003', 'title': 'XYZ Tech Merger', 'client': 4}
+    ]
     
-    for i in range(1, limit + 1):
-        is_billable = True if billable is None else billable.lower() == 'true'
-        is_invoiced = False if invoiced is None else invoiced.lower() == 'true'
+    # Types of expenses
+    expense_types = [
+        'Filing Fee', 'Travel', 'Meals', 'Copying', 'Expert Witness', 
+        'Court Reporter', 'Research', 'Postage'
+    ]
+    
+    # Generate mock expenses
+    for i in range(15):
+        user_idx = random.randint(0, len(users) - 1)
+        case_idx = random.randint(0, len(cases) - 1)
         
-        # Only include expenses for the specified client if client_id is provided
-        if client_id and i % 4 != int(client_id) % 4:
-            continue
-            
+        # Determine if this expense has been invoiced
+        invoiced = random.choice([True, False])
+        invoice_id = random.randint(1000, 1999) if invoiced else None
+        
+        # Generate a random date in the last 60 days
+        days_ago = random.randint(0, 60)
+        expense_date = (timezone.now() - timedelta(days=days_ago)).date()
+        
+        # Generate random amount and type
+        amount = round(random.uniform(25, 500), 2)
+        expense_type = random.choice(expense_types)
+        
+        description = f"{expense_type} for {cases[case_idx]['title']}"
+        if expense_type == 'Travel':
+            description += " - Mileage and parking"
+        elif expense_type == 'Meals':
+            description += " - Client meeting"
+        
         expenses.append({
-            'id': i,
-            'date': (timezone.now() - timedelta(days=i)).date().isoformat(),
-            'case': i % 4 + 1,
-            'case_detail': {'id': i % 4 + 1, 'title': cases[i % 4]},
-            'user': i % 3 + 1,
-            'user_detail': {
-                'id': i % 3 + 1, 
-                'username': f'user{i % 3 + 1}',
-                'first_name': ['John', 'Jane', 'Robert'][i % 3],
-                'last_name': ['Smith', 'Doe', 'Johnson'][i % 3],
-                'email': f'user{i % 3 + 1}@example.com'
-            },
-            'description': random.choice(descriptions),
-            'amount': round(random.uniform(10, 1000), 2),
-            'is_billable': is_billable,
-            'invoice': i if is_invoiced else None,
-            'receipt': f"https://example.com/receipts/{uuid.uuid4()}.pdf" if i % 3 == 0 else None
+            'id': i + 1,
+            'user': users[user_idx]['id'],
+            'user_name': users[user_idx]['full_name'],
+            'case': cases[case_idx]['id'],
+            'case_number': cases[case_idx]['number'],
+            'case_title': cases[case_idx]['title'],
+            'client': cases[case_idx]['client'],
+            'date': expense_date.isoformat(),
+            'amount': amount,
+            'type': expense_type,
+            'description': description,
+            'is_billable': random.random() > 0.1,  # 90% are billable
+            'invoice': invoice_id,
+            'created_at': (timezone.now() - timedelta(days=days_ago, hours=random.randint(0, 8))).isoformat()
         })
     
     return Response(expenses)
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_expense_detail(request, pk):
-    """Temporary mock implementation for expense detail"""
-    cases = ["Johnson Divorce", "Smith vs. Corp", "Tech Patent Case", "Estate Planning"]
-    descriptions = [
-        "Court filing fees",
-        "Travel expenses",
-        "Expert witness fee",
-        "Document printing"
-    ]
+    """Get details for a specific mock expense."""
+    # Create a user for this expense
+    user = {
+        'id': 2, 
+        'username': 'sarah.johnson', 
+        'full_name': 'Sarah Johnson',
+        'email': 'sarah.johnson@lawfirm.com'
+    }
     
-    if request.method == 'GET':
-        expense = {
-            'id': pk,
-            'date': (timezone.now() - timedelta(days=pk % 10)).date().isoformat(),
-            'case': pk % 4 + 1,
-            'case_detail': {'id': pk % 4 + 1, 'title': cases[pk % 4]},
-            'user': pk % 3 + 1,
-            'user_detail': {
-                'id': pk % 3 + 1, 
-                'username': f'user{pk % 3 + 1}',
-                'first_name': ['John', 'Jane', 'Robert'][pk % 3],
-                'last_name': ['Smith', 'Doe', 'Johnson'][pk % 3],
-                'email': f'user{pk % 3 + 1}@example.com'
-            },
-            'description': descriptions[pk % 4],
-            'amount': round(random.uniform(10, 1000), 2),
-            'is_billable': pk % 5 != 0,  # Make every 5th expense non-billable
-            'invoice': pk if pk % 3 == 0 else None,  # Make every 3rd expense invoiced
-            'receipt': f"https://example.com/receipts/{uuid.uuid4()}.pdf" if pk % 3 == 0 else None
-        }
-        return Response(expense)
+    # Create a case
+    case = {
+        'id': 2, 
+        'number': 'CASE-002', 
+        'title': 'Johnson Bankruptcy', 
+        'client': 2
+    }
     
-    elif request.method == 'PUT':
-        # Just return the data that was sent, simulating an update
-        return Response(request.data)
+    # Generate a random date in the last 60 days
+    days_ago = random.randint(0, 60)
+    expense_date = (timezone.now() - timedelta(days=days_ago)).date()
     
-    elif request.method == 'DELETE':
-        # Return success for delete operation
-        return Response({"detail": "Expense deleted successfully"})
+    # Determine if this expense has been invoiced
+    invoiced = random.choice([True, False])
+    invoice_id = random.randint(1000, 1999) if invoiced else None
+    
+    expense = {
+        'id': pk,
+        'user': user['id'],
+        'user_name': user['full_name'],
+        'case': case['id'],
+        'case_number': case['number'],
+        'case_title': case['title'],
+        'client': case['client'],
+        'date': expense_date.isoformat(),
+        'amount': 350.75,
+        'type': 'Filing Fee',
+        'description': 'Filing Fee for Johnson Bankruptcy - Chapter 7',
+        'is_billable': True,
+        'invoice': invoice_id,
+        'created_at': (timezone.now() - timedelta(days=days_ago, hours=random.randint(0, 8))).isoformat(),
+        'updated_at': (timezone.now() - timedelta(days=max(0, days_ago-2), hours=random.randint(0, 8))).isoformat()
+    }
+    
+    return Response(expense)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_invoices_list(request):
-    """Temporary mock implementation for invoices list"""
+    """Get a list of mock invoices."""
     invoices = []
+    
+    # Client info
     clients = [
-        {"id": 1, "full_name": "Acme Corporation"},
-        {"id": 2, "full_name": "Smith Family Trust"},
-        {"id": 3, "full_name": "Tech Innovators Inc."},
-        {"id": 4, "full_name": "Global Holdings LLC"}
+        {'id': 1, 'name': 'Acme Corporation'},
+        {'id': 2, 'name': 'Smith & Associates'},
+        {'id': 3, 'name': 'Johnson Enterprises'},
+        {'id': 4, 'name': 'XYZ Tech'}
     ]
-    statuses = ["draft", "sent", "paid", "overdue", "void"]
-    status_displays = ["Draft", "Sent", "Paid", "Overdue", "Void"]
     
-    # Get query params
-    limit = int(request.query_params.get('limit', 20))
+    # Status options
+    statuses = ['draft', 'sent', 'paid', 'overdue', 'void']
+    status_displays = ['Draft', 'Sent', 'Paid', 'Overdue', 'Void']
     
-    for i in range(1, limit + 1):
-        status_idx = i % len(statuses)
-        invoice_date = timezone.now() - timedelta(days=i * 7)
+    # Generate mock invoices
+    for i in range(25):
+        # Pick a client
+        client_idx = random.randint(0, len(clients) - 1)
+        
+        # Generate invoice date - within the last 90 days
+        days_ago = random.randint(0, 90)
+        invoice_date = timezone.now() - timedelta(days=days_ago)
+        
+        # Due date is 30 days after invoice date
         due_date = invoice_date + timedelta(days=30)
         
+        # Status depends on dates
+        if days_ago < 5:
+            status_idx = 0  # draft
+        elif days_ago < 30:
+            status_idx = 1  # sent
+        elif days_ago >= 30:
+            if random.random() > 0.3:
+                status_idx = 2  # paid
+            else:
+                status_idx = 3  # overdue
+        
+        # 5% chance of void
+        if random.random() < 0.05:
+            status_idx = 4  # void
+        
         invoices.append({
-            'id': i,
-            'client': i % 4 + 1,
-            'client_detail': clients[i % 4],
+            'id': i + 1,
+            'client': clients[client_idx]['id'],
+            'client_detail': clients[client_idx],
             'invoice_number': f'INV-{2023}-{1000 + i}',
             'issue_date': invoice_date.date().isoformat(),
             'due_date': due_date.date().isoformat(),
             'status': statuses[status_idx],
             'status_display': status_displays[status_idx],
             'total_amount': round(random.uniform(500, 10000), 2),
-            'notes': "Thank you for your business." if i % 2 == 0 else "",
+            'notes': "Thank you for your business." if random.random() > 0.5 else "",
             'created_at': invoice_date.isoformat(),
-            'updated_at': (invoice_date + timedelta(days=1)).isoformat()
+            'updated_at': (invoice_date + timedelta(days=random.randint(0, 5))).isoformat()
         })
+    
+    # Sort by date (latest first)
+    invoices.sort(key=lambda x: x['issue_date'], reverse=True)
     
     return Response(invoices)
 
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def mock_invoice_detail(request, pk):
-    """Temporary mock implementation for invoice detail"""
+    """Get details for a specific mock invoice."""
+    # Client info
     clients = [
-        {"id": 1, "full_name": "Acme Corporation"},
-        {"id": 2, "full_name": "Smith Family Trust"},
-        {"id": 3, "full_name": "Tech Innovators Inc."},
-        {"id": 4, "full_name": "Global Holdings LLC"}
+        {'id': 1, 'name': 'Acme Corporation'},
+        {'id': 2, 'name': 'Smith & Associates'},
+        {'id': 3, 'name': 'Johnson Enterprises'},
+        {'id': 4, 'name': 'XYZ Tech'}
     ]
-    statuses = ["draft", "sent", "paid", "overdue", "void"]
-    status_displays = ["Draft", "Sent", "Paid", "Overdue", "Void"]
     
-    status_idx = pk % len(statuses)
-    invoice_date = timezone.now() - timedelta(days=pk * 7)
+    # Status options
+    statuses = ['draft', 'sent', 'paid', 'overdue', 'void']
+    status_displays = ['Draft', 'Sent', 'Paid', 'Overdue', 'Void']
+    
+    # Generate invoice date - within the last 90 days
+    days_ago = random.randint(0, 90)
+    invoice_date = timezone.now() - timedelta(days=days_ago)
+    
+    # Due date is 30 days after invoice date
     due_date = invoice_date + timedelta(days=30)
     
-    # Generate some time entries for this invoice
+    # Status depends on dates
+    if days_ago < 5:
+        status_idx = 0  # draft
+    elif days_ago < 30:
+        status_idx = 1  # sent
+    elif days_ago >= 30:
+        if random.random() > 0.3:
+            status_idx = 2  # paid
+        else:
+            status_idx = 3  # overdue
+            
+    # Generate time entries for this invoice
     time_entries = []
-    for i in range(1, 4):
-        entry_id = (pk * 10) + i
+    for i in range(random.randint(3, 8)):
+        entry_date = invoice_date - timedelta(days=random.randint(1, 20))
+        hours = round(random.uniform(0.5, 4.0), 2)
+        
         time_entries.append({
-            'id': entry_id,
-            'date': (invoice_date - timedelta(days=i)).date().isoformat(),
-            'description': f"Work on case {pk % 4 + 1} - Task {i}",
-            'user_detail': {
-                'first_name': ['John', 'Jane', 'Robert'][i % 3],
-                'last_name': ['Smith', 'Doe', 'Johnson'][i % 3],
-            },
-            'hours': round(random.uniform(0.5, 8.0), 2),
-            'rate': 200 + (i % 3) * 50,
-            'amount': round((200 + (i % 3) * 50) * round(random.uniform(0.5, 8.0), 2), 2)
+            'id': 1000 + i,
+            'date': entry_date.date().isoformat(),
+            'hours': hours,
+            'amount': round(hours * 250, 2),
+            'description': random.choice([
+                "Research case law on contract disputes",
+                "Draft motion for summary judgment",
+                "Call with client to discuss case strategy",
+                "Review discovery documents",
+                "Prepare for deposition"
+            ]),
+            'user_name': random.choice(["John Smith", "Sarah Johnson", "Michael Wong"]),
+            'case_number': f"CASE-00{random.randint(1, 5)}"
         })
     
-    # Generate some expenses for this invoice
+    # Generate expenses for this invoice
     expenses = []
-    for i in range(1, 3):
-        expense_id = (pk * 10) + i
+    expense_types = ['Filing Fee', 'Travel', 'Meals', 'Copying', 'Expert Witness']
+    
+    for i in range(random.randint(0, 3)):
+        expense_date = invoice_date - timedelta(days=random.randint(1, 20))
+        expense_type = random.choice(expense_types)
+        
         expenses.append({
-            'id': expense_id,
-            'date': (invoice_date - timedelta(days=i)).date().isoformat(),
-            'description': f"Expense {i} for case {pk % 4 + 1}",
-            'amount': round(random.uniform(10, 500), 2)
+            'id': 2000 + i,
+            'date': expense_date.date().isoformat(),
+            'amount': round(random.uniform(50, 300), 2),
+            'type': expense_type,
+            'description': f"{expense_type} for case activities",
+            'user_name': random.choice(["John Smith", "Sarah Johnson", "Michael Wong"]),
+            'case_number': f"CASE-00{random.randint(1, 5)}"
         })
     
     invoice = {

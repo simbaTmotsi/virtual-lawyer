@@ -50,6 +50,21 @@ def create_database():
         cursor.close()
         conn.close()
         
+        # Now connect to the actual database to create tables if needed
+        print(f"Connecting to {db_name} database to check/create tables...")
+        try:
+            # This will be used in Django migrations, not here
+            pass
+        except Exception as e:
+            print(f"Error connecting to {db_name} database: {e}")
+            
+    except Exception as e:
+        print(f"Error connecting to PostgreSQL server: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    create_database()
+        
         return True
     except psycopg2.OperationalError as e:
         print(f"Error connecting to PostgreSQL server: {e}")

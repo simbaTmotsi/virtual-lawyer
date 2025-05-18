@@ -5,6 +5,7 @@ This script creates initial migrations for all apps.
 """
 import os
 import subprocess
+import django
 
 def create_migrations():
     """Create initial migrations for all apps."""
@@ -12,12 +13,15 @@ def create_migrations():
     apps = [
         'accounts',
         'admin_portal',
+        'analytics',
         'clients',
         'cases',
         'documents',
         'research',
         'billing',
         'calendar_app',
+        'dashboard',
+        'notifications',
     ]
     
     # Create migrations
@@ -30,7 +34,13 @@ def create_migrations():
             print(f"❌ Failed to create migrations for {app}")
             print(f"Error: {result.stderr}")
     
+    # Create migrations for any apps that might have been missed
+    print("Creating migrations for any remaining apps...")
+    subprocess.run(['python', 'manage.py', 'makemigrations'])
+    
     print("\nAll migrations created. Now run 'python manage.py migrate accounts' first, then 'python manage.py migrate'")
 
 if __name__ == "__main__":
+    # Set Django settings module
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     create_migrations()
