@@ -13,10 +13,22 @@ const NotificationsProvider = ({ children }) => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/notifications/');
-      const notificationData = response.data || [];
-      setNotifications(notificationData);
-      setUnreadCount(notificationData.filter(notification => !notification.read).length);
+      
+      // First check authentication status using the public endpoint
+      const statusResponse = await api.get('/api/notifications/status/');
+      
+      // Only fetch notifications if the user is authenticated
+      if (statusResponse.data && statusResponse.data.authenticated) {
+        const response = await api.get('/api/notifications/');
+        const notificationData = response.data || [];
+        setNotifications(notificationData);
+        setUnreadCount(notificationData.filter(notification => !notification.read).length);
+      } else {
+        // User is not authenticated, just update unread count from status
+        setUnreadCount(statusResponse.data?.unread_count || 0);
+        setNotifications([]);
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Failed to fetch notifications:', err);
@@ -61,12 +73,13 @@ const NotificationsProvider = ({ children }) => {
     }
   };
 
-  // Fetch notifications when the component mounts
+  // Fetch notifications when the component mounts and set up polling
   useEffect(() => {
+    // Initial fetch
     fetchNotifications();
     
-    // Set up polling for new notifications (every 60 seconds)
-    const intervalId = setInterval(fetchNotifications, 60000);
+    // Set up polling for new notifications (every 2 minutes)
+    const intervalId = setInterval(fetchNotifications, 120000); // Increased from 60s to 120s to reduce server load
     
     return () => clearInterval(intervalId);
   }, []);

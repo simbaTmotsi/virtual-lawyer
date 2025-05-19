@@ -20,7 +20,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Check if error is 401 Unauthorized and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Skip token refresh for notification endpoints to avoid login redirects during polling
+      const isNotificationEndpoint = originalRequest.url.includes('/api/notifications/') && 
+                                    !originalRequest.url.includes('/api/notifications/status/');
+      
+      // For notification requests, just fail silently without refresh attempts
+      if (isNotificationEndpoint) {
+        console.warn("Authentication required for notifications endpoint. Skipping refresh attempt.");
+        return Promise.reject(error);
+      }
+      
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
