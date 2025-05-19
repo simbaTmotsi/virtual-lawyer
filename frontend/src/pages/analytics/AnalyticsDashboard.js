@@ -5,7 +5,9 @@ import {
   CurrencyDollarIcon, 
   BriefcaseIcon,
   ArrowPathIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  CalendarIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api';
 import ChartComponent from '../../components/charts/ChartComponent';
@@ -19,7 +21,8 @@ const AnalyticsDashboard = () => {
     timeTracking: null,
     billingOverview: null,
     performanceComparison: null,
-    clientDistribution: null
+    clientDistribution: null,
+    upcomingDeadlines: []
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,48 +60,40 @@ const AnalyticsDashboard = () => {
     if (selectedLawyer) {
       fetchAnalyticsData();
     }
-  }, [period, selectedLawyer]);
-
-  const fetchAnalyticsData = async () => {
+  }, [period, selectedLawyer]);  const fetchAnalyticsData = async () => {
     setRefreshing(true);
     
     try {
-      // Use mock data instead of API calls
-      const stats = [
-        {
-          name: 'Active Cases',
-          value: '7',
-          change: '+2'
-        },
-        {
-          name: 'Billable Hours',
-          value: '42 hrs',
-          change: '+8%'
-        },
-        {
-          name: 'Monthly Revenue',
-          value: '$12,450',
-          change: '+15%'
-        },
-        {
-          name: 'Client Satisfaction',
-          value: '94%',
-          change: '+3%'
-        }
-      ];
+      // Try to fetch real data from API endpoints
+      let stats;
       
+      try {
+        // Fetch summary data from real API
+        stats = await apiRequest('/api/analytics/summary/');
+      } catch (err) {
+        console.error('Could not fetch analytics summary:', err);
+        // Fallback to mock data
+        stats = [
+          { name: 'Active Cases', value: '7', change: '+2', description: 'Cases currently in progress' },
+          { name: 'Billable Hours (30d)', value: '42.5 hrs', change: '+8%', description: 'Total billable time in last 30 days' },
+          { name: 'Avg. Hourly Rate', value: '$293/hr', change: '+5%', description: 'Your effective hourly rate' },
+          { name: 'Utilization Rate', value: '83%', change: '+3%', description: 'Billable hours vs. available hours' }
+        ];
+      }
+      
+      // For other data, we'll use mock data for now but could be replaced with real API calls
       const caseMetrics = {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        labels: ['Family Law', 'Corporate', 'Real Estate', 'Criminal', 'Employment', 'Other'],
         datasets: [
           {
-            label: 'Hours Billed',
-            data: [12, 15, 8, 7],
+            label: 'Active Cases',
+            data: [3, 2, 1, 1, 0, 0],
             backgroundColor: 'rgba(59, 130, 246, 0.5)',
             borderColor: 'rgb(59, 130, 246)'
           },
           {
-            label: 'Cases Closed',
-            data: [1, 0, 2, 1],
+            label: 'Completed Cases',
+            data: [2, 1, 1, 0, 1, 1],
             backgroundColor: 'rgba(16, 185, 129, 0.5)',
             borderColor: 'rgb(16, 185, 129)'
           }
@@ -106,18 +101,18 @@ const AnalyticsDashboard = () => {
       };
       
       const timeTracking = {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [
           {
             label: 'Billable Hours',
-            data: [28, 35, 20, 42],
+            data: [6.5, 7.2, 8.0, 5.5, 6.8, 2.0, 0.0],
             borderColor: 'rgb(59, 130, 246)',
             tension: 0.1,
             fill: false
           },
           {
             label: 'Non-Billable Hours',
-            data: [10, 8, 12, 6],
+            data: [1.5, 1.0, 1.2, 2.0, 1.5, 0.5, 0.0],
             borderColor: 'rgb(209, 213, 219)',
             tension: 0.1,
             fill: false
@@ -126,16 +121,17 @@ const AnalyticsDashboard = () => {
       };
       
       const clientDistribution = {
-        labels: ['Client A', 'Client B', 'Client C', 'Client D', 'Other Clients'],
+        labels: ['Jones Family Trust', 'Acme Corporation', 'Riverside Properties', 'Smith Divorce', 'Johnson Estate', 'Other Clients'],
         datasets: [
           {
-            label: 'Hours Worked',
-            data: [18, 12, 10, 8, 15],
+            label: 'Billable Hours Last 30 Days',
+            data: [18, 12, 10, 8, 6, 4],
             backgroundColor: [
               'rgba(59, 130, 246, 0.7)',
               'rgba(16, 185, 129, 0.7)',
               'rgba(245, 158, 11, 0.7)',
               'rgba(139, 92, 246, 0.7)',
+              'rgba(236, 72, 153, 0.7)',
               'rgba(209, 213, 219, 0.7)'
             ]
           }
@@ -143,19 +139,25 @@ const AnalyticsDashboard = () => {
       };
       
       const billingOverview = {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
         datasets: [
           {
-            label: 'Billed',
-            data: [12500, 15000, 11200, 18000, 9500, 12450],
+            label: 'Billed ($)',
+            data: [12500, 15000, 11200, 18000, 9500],
             backgroundColor: 'rgba(59, 130, 246, 0.5)',
             borderColor: 'rgb(59, 130, 246)'
           },
           {
-            label: 'Collected',
-            data: [10000, 13500, 10200, 16000, 8500, 11000],
+            label: 'Collected ($)',
+            data: [10000, 13500, 10200, 16000, 8500],
             backgroundColor: 'rgba(16, 185, 129, 0.5)',
             borderColor: 'rgb(16, 185, 129)'
+          },
+          {
+            label: 'Outstanding ($)',
+            data: [2500, 1500, 1000, 2000, 1000],
+            backgroundColor: 'rgba(245, 158, 11, 0.5)',
+            borderColor: 'rgb(245, 158, 11)'
           }
         ]
       };
@@ -163,15 +165,16 @@ const AnalyticsDashboard = () => {
       const performanceComparison = {
         labels: [
           'Billable Hours', 
-          'Case Completion', 
+          'Case Completion Rate',
           'Client Retention',
           'Revenue Generation',
-          'Efficiency'
+          'Documentation Quality',
+          'Case Win Rate'
         ],
         datasets: [
           {
             label: 'Your Performance',
-            data: [85, 78, 92, 80, 88],
+            data: [85, 78, 92, 80, 88, 83],
             backgroundColor: 'rgba(59, 130, 246, 0.2)',
             borderColor: 'rgb(59, 130, 246)',
             pointBackgroundColor: 'rgb(59, 130, 246)',
@@ -179,7 +182,7 @@ const AnalyticsDashboard = () => {
           },
           {
             label: 'Firm Average',
-            data: [70, 65, 75, 68, 72],
+            data: [70, 65, 75, 68, 72, 70],
             backgroundColor: 'rgba(107, 114, 128, 0.2)',
             borderColor: 'rgb(107, 114, 128)',
             pointBackgroundColor: 'rgb(107, 114, 128)',
@@ -187,7 +190,7 @@ const AnalyticsDashboard = () => {
           },
           {
             label: 'Top Performers',
-            data: [95, 88, 96, 92, 95],
+            data: [95, 88, 96, 92, 95, 90],
             backgroundColor: 'rgba(16, 185, 129, 0.2)',
             borderColor: 'rgb(16, 185, 129)',
             pointBackgroundColor: 'rgb(16, 185, 129)',
@@ -196,13 +199,50 @@ const AnalyticsDashboard = () => {
         ]
       };
       
+      // Mock upcoming deadlines data
+      const upcomingDeadlines = [
+        {
+          id: 1,
+          title: 'Jones v. Smith - File Motion for Summary Judgment',
+          dueDate: '2025-05-22',
+          priority: 'high',
+          caseName: 'Jones Family Trust',
+          caseId: 'C-2025-0042'
+        },
+        {
+          id: 2,
+          title: 'Acme Corp. - Contract Review Deadline',
+          dueDate: '2025-05-23',
+          priority: 'medium',
+          caseName: 'Acme Corporation',
+          caseId: 'C-2025-0038'
+        },
+        {
+          id: 3,
+          title: 'Johnson Estate - File Tax Documents',
+          dueDate: '2025-05-25',
+          priority: 'high',
+          caseName: 'Johnson Estate',
+          caseId: 'C-2025-0044'
+        },
+        {
+          id: 4,
+          title: 'Riverside Properties - Draft Purchase Agreement',
+          dueDate: '2025-05-28',
+          priority: 'medium',
+          caseName: 'Riverside Properties',
+          caseId: 'C-2025-0040'
+        }
+      ];
+      
       setAnalyticsData({
         stats,
         caseMetrics,
         timeTracking,
         billingOverview,
         clientDistribution,
-        performanceComparison
+        performanceComparison,
+        upcomingDeadlines
       });
       setError(null);
     } catch (err) {
@@ -318,9 +358,9 @@ const AnalyticsDashboard = () => {
               <div className="flex items-center">
                 <div className="flex-shrink-0 rounded-md bg-primary-500 p-3">
                   {stat.name.includes('Case') && <BriefcaseIcon className="h-6 w-6 text-white" />}
-                  {stat.name.includes('Hours') && <ClockIcon className="h-6 w-6 text-white" />}
-                  {stat.name.includes('Revenue') && <CurrencyDollarIcon className="h-6 w-6 text-white" />}
-                  {!stat.name.includes('Case') && !stat.name.includes('Hours') && !stat.name.includes('Revenue') && <ChartBarIcon className="h-6 w-6 text-white" />}
+                  {stat.name.includes('Hour') && <ClockIcon className="h-6 w-6 text-white" />}
+                  {stat.name.includes('Rate') && <CurrencyDollarIcon className="h-6 w-6 text-white" />}
+                  {!stat.name.includes('Case') && !stat.name.includes('Hour') && !stat.name.includes('Rate') && <ChartBarIcon className="h-6 w-6 text-white" />}
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -329,6 +369,9 @@ const AnalyticsDashboard = () => {
                     </dt>
                     <dd className="text-2xl font-semibold text-gray-900 dark:text-white">
                       {stat.value}
+                    </dd>
+                    <dd className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {stat.description}
                     </dd>
                   </dl>
                 </div>
@@ -352,7 +395,8 @@ const AnalyticsDashboard = () => {
       {/* Time Tracking vs. Billing */}
       {analyticsData.timeTracking && (
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Billable Hours Breakdown</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Weekly Time Distribution</h3>
+          <p className="text-sm text-gray-500 mb-4">Your billable vs. non-billable hours for the current week</p>
           <div className="h-80">
             <ChartComponent 
               type="line"
@@ -365,7 +409,8 @@ const AnalyticsDashboard = () => {
       {/* Client Distribution */}
       {analyticsData.clientDistribution && (
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Client Distribution</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Top Client Matters</h3>
+          <p className="text-sm text-gray-500 mb-4">Distribution of your billable hours across client matters</p>
           <div className="h-80">
             <ChartComponent 
               type="pie"
@@ -378,7 +423,8 @@ const AnalyticsDashboard = () => {
       {/* Case Types and Status */}
       {analyticsData.caseMetrics && (
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Case Metrics</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Practice Area Distribution</h3>
+          <p className="text-sm text-gray-500 mb-4">Breakdown of your cases by practice area and status</p>
           <div className="h-80">
             <ChartComponent 
               type="bar"
@@ -391,7 +437,8 @@ const AnalyticsDashboard = () => {
       {/* Revenue Generation */}
       {analyticsData.billingOverview && (
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Revenue Generation</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Billing & Collection Performance</h3>
+          <p className="text-sm text-gray-500 mb-4">Your billing and collection trends over the past months</p>
           <div className="h-80">
             <ChartComponent 
               type="bar"
@@ -401,16 +448,107 @@ const AnalyticsDashboard = () => {
         </div>
       )}
       
+      {/* Upcoming Deadlines */}
+      {analyticsData.upcomingDeadlines && analyticsData.upcomingDeadlines.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+            <CalendarIcon className="h-5 w-5 mr-2 text-primary-500" /> 
+            Upcoming Deadlines
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">Critical dates requiring your attention in the near future</p>
+          
+          <div className="overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900/30">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Deadline
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Due Date
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Case
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Priority
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {analyticsData.upcomingDeadlines.map((deadline) => {
+                  // Calculate days remaining
+                  const today = new Date();
+                  const dueDate = new Date(deadline.dueDate);
+                  const daysRemaining = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                  
+                  let urgencyClass = '';
+                  if (daysRemaining <= 3) {
+                    urgencyClass = 'text-red-600 dark:text-red-400 font-medium';
+                  } else if (daysRemaining <= 7) {
+                    urgencyClass = 'text-amber-600 dark:text-amber-400';
+                  }
+                  
+                  return (
+                    <tr key={deadline.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <div className="flex items-center">
+                          {deadline.priority === 'high' && (
+                            <ExclamationCircleIcon className="h-4 w-4 text-red-500 mr-2" />
+                          )}
+                          {deadline.title}
+                        </div>
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${urgencyClass}`}>
+                        {new Date(deadline.dueDate).toLocaleDateString()} 
+                        <span className="ml-2 text-xs">
+                          ({daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining)
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                        {deadline.caseName}
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {deadline.caseId}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          deadline.priority === 'high' 
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
+                            : deadline.priority === 'medium'
+                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                        }`}>
+                          {deadline.priority.charAt(0).toUpperCase() + deadline.priority.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+      
       {/* Performance Comparison (anonymized) */}
       {analyticsData.performanceComparison && (
         <div className="bg-white dark:bg-gray-800 shadow dark:shadow-gray-700/10 rounded-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Performance Benchmarking</h3>
-          <p className="text-sm text-gray-500 mb-4">How your performance compares to other attorneys (anonymized)</p>
+          <p className="text-sm text-gray-500 mb-4">Comparing your key performance metrics against firm averages and top performers</p>
           <div className="h-80">
             <ChartComponent 
               type="radar"
               data={analyticsData.performanceComparison}
             />
+          </div>
+          <div className="mt-4 border-t pt-4 border-gray-200 dark:border-gray-700">
+            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-2">Performance Insights</h4>
+            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-disc pl-5">
+              <li>Your client retention rate is excellent, ranking in the top 15% of all attorneys</li>
+              <li>Your case completion rate is slightly above average but has room for improvement</li>
+              <li>Your documentation quality scores are strong, showing attention to detail</li>
+            </ul>
           </div>
         </div>
       )}

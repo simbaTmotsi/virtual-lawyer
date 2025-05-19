@@ -9,9 +9,13 @@ urlpatterns = [
     path('time-tracking/', views.analytics_time_tracking, name='analytics-time-tracking'),
     path('billing/', views.analytics_billing, name='analytics-billing'),
     path('summary/', views.analytics_summary, name='analytics-summary'),
+    path('admin-summary/', views.admin_analytics_summary, name='admin-analytics-summary'),
     path('user-signups/', views.user_signups, name='analytics-user-signups'),
+    path('admin-user-signups/', views.admin_user_signups, name='admin-analytics-user-signups'),
     path('api-usage/', views.api_usage, name='analytics-api-usage'),
+    path('admin-api-usage/', views.admin_api_usage, name='admin-analytics-api-usage'),
     path('case-distribution/', views.case_distribution, name='analytics-case-distribution'),
+    path('admin-case-distribution/', views.admin_case_distribution, name='admin-analytics-case-distribution'),
     
     # Keep mock endpoints as fallbacks with different URLs
     path('mock/stats/', mock_views.mock_analytics_stats, name='mock-analytics-stats'),

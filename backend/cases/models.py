@@ -26,6 +26,12 @@ class Case(models.Model):
         limit_choices_to={'role__in': ['attorney', 'paralegal', 'admin']}, # Limit to relevant staff roles
         blank=True
     )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_cases'
+    )
     # Add other relevant fields: court, judge, opposing counsel, key dates, budget, etc.
     # court = models.CharField(max_length=150, blank=True)
     # judge = models.CharField(max_length=100, blank=True)

@@ -28,16 +28,25 @@ def upcoming_events(request):
         )
     else:
         # For non-staff, only show events they're invited to or related to their cases
-        events = Event.objects.filter(
-            start_time__gte=now,
-            start_time__lte=end_date
-        ).filter(
-            attendees=user
-        ) | Event.objects.filter(
+        user_events = Event.objects.filter(
             start_time__gte=now,
             start_time__lte=end_date,
-            case__client=user
+            attendees=user
         )
+        
+        # Add events for cases where the user is linked to a client profile
+        try:
+            if hasattr(user, 'client_profile') and user.client_profile:
+                client_events = Event.objects.filter(
+                    start_time__gte=now,
+                    start_time__lte=end_date,
+                    case__client=user.client_profile
+                )
+                events = user_events | client_events
+            else:
+                events = user_events
+        except:
+            events = user_events
     
     # Order by start time
     events = events.order_by('start_time')
@@ -68,11 +77,19 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # Filter by user access
         if not user.is_staff:
-            queryset = queryset.filter(
-                attendees=user
-            ) | queryset.filter(
-                case__client=user
-            )
+            # Get events where user is an attendee
+            user_events = queryset.filter(attendees=user)
+            
+            # Get events for cases where the user is linked to a client profile
+            try:
+                if hasattr(user, 'client_profile') and user.client_profile:
+                    client_events = queryset.filter(case__client=user.client_profile)
+                    queryset = user_events | client_events
+                else:
+                    queryset = user_events
+            except Exception as e:
+                print(f"Error filtering events by client: {e}")
+                queryset = user_events
         
         # Filter by attendee if provided
         attendee_id = self.request.query_params.get('attendee')
@@ -116,7 +133,11 @@ class EventViewSet(viewsets.ModelViewSet):
         now = timezone.now()
         end_date = now + timedelta(days=7)
         
-        events = self.get_queryset().filter(
+        # Get the base queryset
+        queryset = self.get_queryset()
+        
+        # Filter by date range
+        events = queryset.filter(
             start_time__gte=now,
             start_time__lte=end_date
         ).order_by('start_time')

@@ -140,7 +140,29 @@ const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = fa
     const response = await api(config);
     return response.data;
   } catch (error) {
-    console.error(`API request failed: ${endpoint}`, error);
+    // Improve error handling and logging
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error(`API request failed: ${endpoint}`, error);
+      
+      // Special handling for common error codes
+      if (error.response.status === 403) {
+        console.error(`Permission denied for endpoint: ${endpoint}. User may not have required permissions.`);
+      }
+      
+      if (error.response.status === 401) {
+        console.error(`Unauthorized access to endpoint: ${endpoint}. User may need to log in again.`);
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error(`API request received no response: ${endpoint}`, error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error(`API request setup error: ${endpoint}`, error.message);
+    }
+    
+    // Re-throw the error for the calling code to handle
     throw error;
   }
 };

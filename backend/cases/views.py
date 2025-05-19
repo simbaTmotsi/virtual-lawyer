@@ -47,12 +47,11 @@ class CaseViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(client__user_account=user)
             elif user.role in ['attorney', 'paralegal']:
                 # Attorneys and paralegals should see cases assigned to them
-                queryset = queryset.filter(Q(assigned_attorneys=user) | Q(created_by=user))
+                queryset = queryset.filter(assigned_attorneys=user)
                 
         return queryset
 
     def perform_create(self, serializer):
-        """Optionally set default fields or perform actions on creation."""
-        # Example: Assign creating user if needed
-        # serializer.save(created_by=self.request.user)
-        serializer.save()
+        """Set the creator and handle other pre-save operations."""
+        # Set the current user as the creator
+        serializer.save(created_by=self.request.user)
