@@ -56,7 +56,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Custom middleware
-    'analytics.middleware.AnalyticsMiddleware',
+    'analytics.middleware.RequestBodyCaptureMiddleware',  # Must come before APIUsageMiddleware
+    'analytics.middleware.APIUsageMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

@@ -55,7 +55,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'analytics.middleware.APIUsageMiddleware',  # Add API usage tracking
+    # Custom middleware
+    'analytics.middleware.RequestBodyCaptureMiddleware',  # Must come before APIUsageMiddleware
+    'analytics.middleware.APIUsageMiddleware',
 ]
 
 ROOT_URLCONF = 'easylaw.urls'
