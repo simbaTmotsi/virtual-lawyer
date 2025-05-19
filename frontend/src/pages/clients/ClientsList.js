@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { PlusIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { Link, useLocation } from 'react-router-dom';
+import { PlusIcon, EyeIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import apiRequest from '../../utils/api'; // Import API utility
 
 const ClientsList = () => {
+  const location = useLocation();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(location.state?.message || null);
+  const [notificationType, setNotificationType] = useState(location.state?.type || 'success');
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -25,7 +29,21 @@ const ClientsList = () => {
     };
 
     fetchClients();
-  }, []);
+    
+    // Clear location state after reading message
+    if (location.state?.message) {
+      window.history.replaceState({}, document.title);
+    }
+    
+    // Auto-dismiss notification after 5 seconds
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [notification, location.state]);
 
   if (loading) {
     return (
@@ -46,6 +64,32 @@ const ClientsList = () => {
 
   return (
     <div>
+      {notification && (
+        <div className={`mb-4 flex items-center justify-between p-4 rounded-md shadow-sm ${
+          notificationType === 'success' 
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' 
+            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+        }`}>
+          <div className="flex items-center">
+            {notificationType === 'success' ? (
+              <CheckCircleIcon className="h-5 w-5 mr-2" />
+            ) : (
+              <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
+            )}
+            <span>{notification}</span>
+          </div>
+          <button 
+            onClick={() => setNotification(null)}
+            className={notificationType === 'success' ? 
+              "text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100" :
+              "text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100"
+            }
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+      
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Clients List</h2>
         <Link

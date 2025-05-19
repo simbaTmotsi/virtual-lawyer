@@ -24,7 +24,7 @@ class Client(models.Model):
     # Add other relevant fields: company name, notes, status, etc.
     # company_name = models.CharField(max_length=200, blank=True)
     # status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive'), ('prospect', 'Prospect')], default='active')
-    # notes = models.TextField(blank=True)
+    notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   UserPlusIcon, 
   PencilSquareIcon, 
@@ -9,6 +10,7 @@ import apiRequest from '../../utils/api';
 import { toast } from '../../utils/notification';
 
 const UsersManagement = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -97,7 +99,10 @@ const UsersManagement = () => {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center sm:justify-between mb-6">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Users Management</h2>
-        <button className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md shadow-sm hover:bg-primary-700">
+        <button 
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md shadow-sm hover:bg-primary-700"
+          onClick={() => navigate('/admin/users/add')}
+        >
           <UserPlusIcon className="h-4 w-4 mr-2" /> Add New User
         </button>
       </div>
@@ -167,7 +172,7 @@ const UsersManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                     <button 
                       className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-200"
-                      onClick={() => window.location.href = `/admin/users/${user.id}/edit`}
+                      onClick={() => navigate(`/admin/users/${user.id}/edit`)}
                     >
                       <PencilSquareIcon className="h-5 w-5" />
                     </button>

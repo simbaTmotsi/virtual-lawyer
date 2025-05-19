@@ -1,7 +1,11 @@
 from time import time
 import json
+import logging
 from django.utils import timezone
 from analytics.models import APIUsage
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 class RequestBodyCaptureMiddleware:
     """Middleware to capture the request body before it gets consumed."""
@@ -14,8 +18,10 @@ class RequestBodyCaptureMiddleware:
         if request.method in ['POST', 'PUT', 'PATCH'] and request.path.startswith('/api/'):
             try:
                 request._body = request.body
+                if request.path == '/api/clients/':
+                    print(f"DEBUG: Original request body for client creation: {request.body.decode('utf-8')}")
             except Exception as e:
-                print(f"Failed to store request body: {str(e)}")
+                print(f"DEBUG: Failed to store request body: {str(e)}")
                 request._body = None
                 
         return self.get_response(request)
@@ -46,13 +52,14 @@ class APIUsageMiddleware:
                     # Try to parse JSON body from our stored copy
                     if request._body:
                         data = json.loads(request._body)
+                        print(f"DEBUG: Request body in middleware for {request.path}: {data}")
                         # Remove sensitive fields
                         sensitive_fields = ['password', 'token', 'secret', 'auth', 'key', 'credential']
                         if isinstance(data, dict):
                             request_data = {k: '****' if any(s in k.lower() for s in sensitive_fields) else v 
                                            for k, v in data.items()}
                 except Exception as e:
-                    print(f"Error parsing request body: {str(e)}")
+                    print(f"DEBUG: Error parsing request body: {str(e)}")
                     request_data = None
             
             # Store the API usage data
@@ -65,5 +72,7 @@ class APIUsageMiddleware:
                 request_data=request_data,
                 timestamp=timezone.now()
             )
+        
+        return response
         
         return response

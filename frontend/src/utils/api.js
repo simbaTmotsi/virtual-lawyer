@@ -25,25 +25,35 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) {
-          throw new Error("No refresh token available");
+          // No refresh token available, redirect to login
+          console.error("No refresh token available");
+          window.location.href = '/login';
+          return Promise.reject(error);
         }
         
         // Use the correct endpoint with base URL for token refresh
+        const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
         const response = await axios.post(
-          `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/accounts/refresh/`, 
-          { refresh: refreshToken }
+          `${baseUrl}/accounts/refresh/`, 
+          { refresh: refreshToken },
+          { headers: { 'Content-Type': 'application/json' } }
         );
+        
         const { access } = response.data;
         
+        // Store the new token
         localStorage.setItem('accessToken', access);
         api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
         originalRequest.headers['Authorization'] = `Bearer ${access}`;
         
+        console.log("Token refreshed successfully");
         return api(originalRequest);
       } catch (refreshError) {
-        // Handle refresh failure (usually by logging out user)
+        // Handle refresh failure by redirecting to login
+        console.error("Token refresh failed:", refreshError);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
@@ -118,11 +128,16 @@ export const AuthAPI = {
 };
 
 // General API request function
-const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = false) => {
+const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = false, customHeaders = {}) => {
   try {
+    console.log(`Making ${method} request to ${endpoint}`);
+    
     const config = {
       method: method,
       url: endpoint,
+      headers: {
+        ...customHeaders
+      }
     };
     
     if (data) {
@@ -136,6 +151,14 @@ const apiRequest = async (endpoint, method = 'GET', data = null, isFormData = fa
         config.data = data;
       }
     }
+    
+    // Ensure token is set in default headers if available
+    const token = localStorage.getItem('accessToken');
+    if (token && !customHeaders['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    console.log('Request config:', { ...config, headers: { ...config.headers } });
     
     const response = await api(config);
     return response.data;

@@ -33,6 +33,7 @@ import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
 import ClientsList from './pages/clients/ClientsList';
 import ClientDetails from './pages/clients/ClientDetails';
 import NewClient from './pages/clients/NewClient';
+import EditClient from './pages/clients/EditClient';
 
 // Case management
 import CasesList from './pages/cases/CasesList';
@@ -104,6 +105,7 @@ function App() {
         { path: "clients", element: <ClientsList /> },
         { path: "clients/new", element: <NewClient /> },
         { path: "clients/:id", element: <ClientDetails /> },
+        { path: "clients/:id/edit", element: <EditClient /> },
         { path: "cases", element: <CasesList /> },
         { path: "cases/new", element: <NewCase /> },
         { path: "cases/:id", element: <CaseDetails /> },

@@ -18,4 +18,5 @@ urlpatterns = [
     
     # Add mock endpoint with mock/ prefix for testing
     path('mock/users/', mock_views.mock_users_list, name='mock-users-list'),
+    path('mock/token/', mock_views.get_test_token, name='get-test-token'),
 ]
