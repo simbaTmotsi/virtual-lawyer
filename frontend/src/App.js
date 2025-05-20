@@ -63,6 +63,7 @@ import ExpensesList from './pages/billing/ExpensesList';
 
 // Research pages
 import ResearchDashboard from './pages/research/ResearchDashboard';
+import CaseResearchDashboard from './pages/research/CaseResearchDashboard';
 
 // Tasks page
 import Tasks from './pages/Tasks';
@@ -123,6 +124,7 @@ function App() {
         { path: "billing/reports", element: <BillingReports /> },
         
         { path: "research", element: <ResearchDashboard /> },
+        { path: "research/case/:caseId", element: <CaseResearchDashboard /> },
         { path: "analytics", element: <AnalyticsDashboard /> },
         { path: "tasks", element: <Tasks /> },
         { path: "profile", element: <UserProfile /> },

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from .dependencies import get_settings
-from .routers import auth, admin, clients, cases, documents, research, billing, calendar
+from .routers import auth, admin, clients, cases, documents, research, billing, calendar, legal_research
 from .models import init_db
 from .database import get_db
 from sqlalchemy.orm import Session
@@ -35,6 +35,7 @@ app.include_router(clients.router, prefix="/clients", tags=["Client Management"]
 app.include_router(cases.router, prefix="/cases", tags=["Case Management"])
 app.include_router(documents.router, prefix="/documents", tags=["Document Management"])
 app.include_router(research.router, prefix="/research", tags=["Legal Research"])
+app.include_router(legal_research.router, prefix="/legal-research", tags=["Advanced Legal Research"])
 app.include_router(billing.router, prefix="/billing", tags=["Billing & Payments"])
 app.include_router(calendar.router, prefix="/calendar", tags=["Calendar & Reminders"])
 

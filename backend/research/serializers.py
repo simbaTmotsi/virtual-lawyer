@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import ResearchQuery, ResearchResult
 from accounts.serializers import UserSerializer
+from cases.serializers import SimpleCaseSerializer
 
 class ResearchResultSerializer(serializers.ModelSerializer):
     """Serializer for ResearchResult model"""
@@ -16,17 +17,19 @@ class ResearchResultSerializer(serializers.ModelSerializer):
 class ResearchQuerySerializer(serializers.ModelSerializer):
     """Serializer for ResearchQuery model"""
     user_details = UserSerializer(source='user', read_only=True)
+    case_details = SimpleCaseSerializer(source='case', read_only=True)
     results = ResearchResultSerializer(many=True, read_only=True)
     
     class Meta:
         model = ResearchQuery
         fields = [
             'id', 'query_text', 'jurisdiction', 'timestamp',
-            'user', 'user_details', 'results'
+            'user', 'user_details', 'case', 'case_details', 'results'
         ]
         read_only_fields = ['timestamp']
         extra_kwargs = {
-            'user': {'write_only': True}
+            'user': {'write_only': True},
+            'case': {'write_only': True, 'required': False}
         }
     
     def create(self, validated_data):

@@ -65,6 +65,8 @@ All components are containerized using Docker to ensure consistent development a
   - Integration with LLMs (OpenAI, Google Gemini)
   - Legal precedent search
   - Document analysis
+  - Case-based research organization
+  - Research history tracking
   
 - **Billing & Payments**:
   - Time tracking

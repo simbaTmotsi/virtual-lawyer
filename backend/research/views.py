@@ -17,12 +17,35 @@ class ResearchViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Return queries for the current user only.
+        Optionally filter by case if specified.
         """
-        return ResearchQuery.objects.filter(
-            user=self.request.user
-        ).prefetch_related(
+        queryset = ResearchQuery.objects.filter(user=self.request.user)
+        
+        # Filter by case if a case_id is provided in query params
+        case_id = self.request.query_params.get('case_id', None)
+        if case_id:
+            queryset = queryset.filter(case_id=case_id)
+            
+        return queryset.prefetch_related(
             Prefetch('results', queryset=ResearchResult.objects.order_by('-relevance_score'))
         ).order_by('-timestamp')
+        
+    @action(detail=False, methods=['get'])
+    def case_research(self, request):
+        """
+        Get research queries associated with a specific case.
+        Requires case_id query parameter.
+        """
+        case_id = request.query_params.get('case_id')
+        if not case_id:
+            return Response(
+                {"error": "case_id query parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        queryset = self.get_queryset().filter(case_id=case_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'])
     def perform_search(self, request):
@@ -31,17 +54,30 @@ class ResearchViewSet(viewsets.ModelViewSet):
         """
         query_text = request.data.get('query')
         jurisdiction = request.data.get('jurisdiction')
+        case_id = request.data.get('case_id')
 
         if not query_text:
             return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # Save the query to the database
-            research_query = ResearchQuery.objects.create(
-                user=request.user,
-                query_text=query_text,
-                jurisdiction=jurisdiction
-            )
+            create_data = {
+                'user': request.user,
+                'query_text': query_text,
+                'jurisdiction': jurisdiction
+            }
+            
+            # Add case reference if provided
+            if case_id:
+                try:
+                    from cases.models import Case
+                    case = Case.objects.get(id=case_id)
+                    create_data['case'] = case
+                except Case.DoesNotExist:
+                    return Response({"error": f"Case with ID {case_id} not found."}, 
+                                   status=status.HTTP_400_BAD_REQUEST)
+            
+            research_query = ResearchQuery.objects.create(**create_data)
             
             # Placeholder: Call a service function to interact with the LLM API
             # ai_results = perform_ai_research(query_text, jurisdiction)
@@ -82,6 +118,18 @@ class ResearchViewSet(viewsets.ModelViewSet):
             # Import document model here to avoid circular imports
             from documents.models import Document
             
+            # Check for case_id in request data
+            case_id = request.data.get('case_id')
+            case = None
+            
+            if case_id:
+                try:
+                    from cases.models import Case
+                    case = Case.objects.get(id=case_id)
+                except Case.DoesNotExist:
+                    return Response({"error": f"Case with ID {case_id} not found."}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+            
             try:
                 document = Document.objects.get(pk=pk)
                 # In production, add access control checks here
@@ -94,11 +142,21 @@ class ResearchViewSet(viewsets.ModelViewSet):
                     "potential_issues": ["Ambiguity in definition of 'Confidential Information'"],
                 }
                 
-                # Optionally save this analysis to the database
-                research_query = ResearchQuery.objects.create(
-                    user=request.user,
-                    query_text=f"Document Analysis: {document.name}",
-                )
+                # If case is provided, add case-specific analysis
+                if case:
+                    analysis["case_relevance"] = f"This document is directly relevant to the {case.title} case as it establishes confidentiality requirements between the parties involved."
+                
+                # Create query data with or without case reference
+                query_data = {
+                    'user': request.user,
+                    'query_text': f"Document Analysis: {document.name}",
+                }
+                
+                if case:
+                    query_data['case'] = case
+                
+                # Save the research query
+                research_query = ResearchQuery.objects.create(**query_data)
                 
                 for i, clause in enumerate(analysis["key_clauses"]):
                     ResearchResult.objects.create(

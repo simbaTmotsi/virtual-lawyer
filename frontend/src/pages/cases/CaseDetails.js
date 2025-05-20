@@ -9,6 +9,7 @@ import {
   PlusIcon 
 } from '@heroicons/react/24/outline';
 import apiRequest from '../../utils/api'; // Import API utility
+import CaseResearchWidget from '../../components/research/CaseResearchWidget'; // Import research widget
 
 const CaseDetails = () => {
   const { id } = useParams();
@@ -194,6 +195,20 @@ const CaseDetails = () => {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Case Research Widget */}
+          <div className="mt-6">
+            <CaseResearchWidget caseId={caseData.id} caseName={caseData.title} />
+            {/* Link to dedicated case research dashboard */}
+            <div className="mt-3 text-center">
+              <Link 
+                to={`/research/case/${caseData.id}`} 
+                className="inline-flex items-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+              >
+                View complete research dashboard for this case
+              </Link>
+            </div>
           </div>
         </div>
       </div>

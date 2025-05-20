@@ -51,3 +51,60 @@ def get_settings() -> Settings:
     into route handlers and other dependencies.
     """
     return Settings()
+
+# Authentication dependencies
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from datetime import datetime, timedelta
+from typing import Dict, Any
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    """
+    Dependency for extracting and validating the current authenticated user.
+    Returns user information from the provided JWT token.
+    
+    Args:
+        token: JWT token from the Authorization header
+        
+    Returns:
+        Dict containing the current user's information
+        
+    Raises:
+        HTTPException: If the token is invalid or the user is not found
+    """
+    # Simple placeholder implementation - in production, validate JWT properly
+    try:
+        # For demonstration, we'll just extract user ID from the token format: "user_{id}_token"
+        if token.startswith("user_") and "_token" in token:
+            user_id = token.split("_")[1]
+            return {
+                "id": int(user_id),
+                "email": f"user{user_id}@example.com",  # Placeholder
+                "role": "user"
+            }
+        
+        # Demo admin user
+        if token == "admin_token":
+            return {
+                "id": 0,
+                "email": "admin@example.com",
+                "role": "admin"
+            }
+            
+        # Demo token
+        if token == "demo_token":
+            return {
+                "id": 999,
+                "email": "demo@example.com",
+                "role": "user"
+            }
+        
+        raise ValueError("Invalid token format")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
