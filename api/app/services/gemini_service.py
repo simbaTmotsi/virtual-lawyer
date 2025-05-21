@@ -6,31 +6,37 @@ from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Configure the Gemini API with your API key
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+from asgiref.sync import sync_to_async
+from backend.admin_portal.models import APIKeyStorage # This import needs Django to be setup
 
-# Initialize Gemini
-try:
-    genai.configure(api_key=GEMINI_API_KEY)
-    default_model = genai.GenerativeModel('gemini-pro')
-    logger.info("Gemini API initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize Gemini API: {e}")
-    default_model = None
+# logger is already defined above
 
+# Global variable to store the key, though direct use is minimized
+# current_gemini_api_key = None 
+
+# genai configuration and model initialization will be handled by load_and_configure_gemini
 
 class GeminiService:
     """Service to interact with Google's Gemini AI models"""
     
+    _instance = None
+
+    # Make it a singleton
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(GeminiService, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, model_name: str = 'gemini-pro'):
-        """Initialize the Gemini service with a specific model"""
-        try:
-            self.model = genai.GenerativeModel(model_name)
-            self.initialized = True
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini model {model_name}: {e}")
-            self.model = default_model
-            self.initialized = default_model is not None
+        """Initialize the Gemini service. Key fetching and model setup are deferred."""
+        # Ensure __init__ is only run once for the singleton
+        if not hasattr(self, '_initialized_once'): 
+            self.model_name = model_name # Store model name for later use
+            self.model = None
+            self.initialized = False
+            self.current_api_key = None # Store the currently configured API key
+            logger.info(f"GeminiService instance created. Waiting for asynchronous initialization with model '{model_name}'.")
+            self._initialized_once = True
     
     def query_gemini(
         self, 
@@ -80,6 +86,13 @@ class GeminiService:
             return {
                 "error": str(e),
                 "response": "I'm sorry, but I encountered an error while processing your request. Please try again."
+            }
+        
+        if not self.model:
+             logger.error("Gemini model not available for query_gemini. Service might not be initialized correctly.")
+             return {
+                "error": "Gemini model not available",
+                "response": "I'm sorry, but the AI model is not available. Please check system configuration."
             }
     
     def _construct_prompt(
@@ -205,4 +218,91 @@ Remember to follow these guidelines:
 
 
 # Create a singleton instance
-gemini_service = GeminiService()
+gemini_service = GeminiService() # model_name can be passed if different from 'gemini-pro'
+
+async def load_and_configure_gemini(service_instance: GeminiService):
+    """
+    Fetches the Gemini API key from Django's APIKeyStorage,
+    configures the genai library, and initializes the GeminiService instance.
+    """
+    
+    logger.info(f"Attempting to load and configure Gemini API key for instance {id(service_instance)}...")
+    try:
+        # Django should be set up by main.py's startup event
+        api_key_from_db = await sync_to_async(APIKeyStorage.get_api_key)('gemini_api_key')
+        
+        if api_key_from_db:
+            genai.configure(api_key=api_key_from_db)
+            service_instance.current_api_key = api_key_from_db
+            logger.info("Gemini API key fetched and genai configured successfully.")
+            
+            try:
+                service_instance.model = genai.GenerativeModel(service_instance.model_name)
+                service_instance.initialized = True
+                logger.info(f"GeminiService model '{service_instance.model_name}' initialized successfully for instance {id(service_instance)}.")
+            except Exception as e:
+                service_instance.model = None
+                service_instance.initialized = False
+                service_instance.current_api_key = None # Key is problematic
+                logger.error(f"Failed to initialize Gemini model '{service_instance.model_name}' after key configuration: {e}")
+        else:
+            service_instance.current_api_key = None
+            service_instance.initialized = False
+            service_instance.model = None
+            logger.warning("Gemini API key not found in storage. Gemini service remains uninitialized.")
+
+    except Exception as e:
+        service_instance.current_api_key = None
+        service_instance.initialized = False
+        service_instance.model = None
+        logger.error(f"An error occurred during Gemini API key fetching/configuration: {e}", exc_info=True)
+
+async def refresh_gemini_client(service_instance: Optional[GeminiService] = None):
+    """
+    Refreshes the Gemini client by fetching the latest API key from storage
+    and re-initializing the genai model if the key has changed or service is not initialized.
+    """
+    if service_instance is None:
+        service_instance = gemini_service # Use the global singleton
+
+    logger.info(f"Attempting to refresh Gemini client for instance {id(service_instance)}...")
+    try:
+        new_api_key = await sync_to_async(APIKeyStorage.get_api_key)('gemini_api_key')
+
+        if new_api_key:
+            if new_api_key != service_instance.current_api_key or not service_instance.initialized:
+                logger.info(f"New or different Gemini API key found, or service uninitialized. Re-configuring. Old key: {'***' if service_instance.current_api_key else 'None'}")
+                genai.configure(api_key=new_api_key)
+                service_instance.current_api_key = new_api_key
+                
+                try:
+                    service_instance.model = genai.GenerativeModel(service_instance.model_name)
+                    service_instance.initialized = True
+                    logger.info(f"GeminiService model '{service_instance.model_name}' refreshed and initialized successfully.")
+                except Exception as model_init_e:
+                    service_instance.model = None
+                    service_instance.initialized = False
+                    # Keep current_api_key as it was set, but log model init failure
+                    logger.error(f"Failed to initialize Gemini model '{service_instance.model_name}' during refresh: {model_init_e}", exc_info=True)
+            else:
+                logger.info("Gemini API key unchanged and service already initialized. No refresh needed.")
+        else:
+            logger.warning("Gemini API key not found in storage during refresh. De-initializing Gemini service.")
+            service_instance.current_api_key = None
+            service_instance.initialized = False
+            service_instance.model = None
+            # It's good practice to clear the API key in genai if possible, 
+            # but genai.configure(api_key=None) might error or not be supported.
+            # The main thing is self.initialized = False will prevent usage.
+            # If genai library holds onto the last valid key, subsequent calls without a key might still work if that key was valid.
+            # However, our service logic relies on `self.initialized`.
+
+    except Exception as e:
+        logger.error(f"An error occurred during Gemini client refresh: {e}", exc_info=True)
+        # Potentially mark as uninitialized depending on the error
+        # For now, if an error occurs during fetch/configure, it might be safer to mark as uninitialized.
+        service_instance.initialized = False
+        service_instance.model = None
+        # service_instance.current_api_key could be left as is, or cleared.
+        # Clearing it might be safer if the error implies the key is no longer valid.
+        # service_instance.current_api_key = None 
