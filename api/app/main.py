@@ -22,14 +22,14 @@ async def startup_db_client():
     # Set up Django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
     django.setup()
-    print("Django setup successfully")
+    logger.info("Django setup successfully")
 
     init_db.create_tables()
-    print("Database tables created successfully")
+    logger.info("Database tables created successfully")
 
     # Initialize Gemini Service
     await load_and_configure_gemini(gemini_service)
-    print("Gemini Service initialization attempted.")
+    logger.info("Gemini Service initialization attempted.")
 
 # Add CORS middleware
 app.add_middleware(
