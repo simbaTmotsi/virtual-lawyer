@@ -153,6 +153,9 @@ EXTERNAL_AUTH_LOGIN_URL = 'http://localhost:8001/auth/login'
 # Enable/disable external authentication (set to False to only use Django auth)
 USE_EXTERNAL_AUTH = True  
 
+# External API URL (FastAPI service)
+EXTERNAL_API_URL = os.environ.get('EXTERNAL_API_URL', 'http://localhost:8001')
+
 # LLM API settings
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')

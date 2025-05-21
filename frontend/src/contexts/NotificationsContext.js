@@ -21,8 +21,10 @@ const NotificationsProvider = ({ children }) => {
       if (statusResponse.data && statusResponse.data.authenticated) {
         const response = await api.get('/api/notifications/');
         const notificationData = response.data || [];
-        setNotifications(notificationData);
-        setUnreadCount(notificationData.filter(notification => !notification.read).length);
+        // Ensure notificationData is an array before using filter
+        const notificationsArray = Array.isArray(notificationData) ? notificationData : [];
+        setNotifications(notificationsArray);
+        setUnreadCount(notificationsArray.filter(notification => !notification.read).length);
       } else {
         // User is not authenticated, just update unread count from status
         setUnreadCount(statusResponse.data?.unread_count || 0);

@@ -46,6 +46,60 @@ class ResearchViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(case_id=case_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def query_gemini(self, request):
+        """
+        Sends a query to the Gemini API through the FastAPI service.
+        Requires 'query' in the request data. Optionally accepts 'documentContext' and 'chatHistory'.
+        """
+        query = request.data.get('query')
+        document_context = request.data.get('documentContext', [])
+        chat_history = request.data.get('chatHistory', [])
+        
+        if not query:
+            return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Record the query
+            research_query = ResearchQuery.objects.create(
+                user=request.user,
+                query_text=query
+            )
+            
+            # Get FastAPI URL from settings (could be configured in Django settings)
+            import requests
+            import json
+            from django.conf import settings
+            
+            # Default to localhost if API_URL not specified in settings
+            api_url = getattr(settings, 'EXTERNAL_API_URL', 'http://localhost:8001')
+            
+            # Forward the request to the FastAPI service
+            response = requests.post(
+                f"{api_url}/research/query-gemini",
+                json={
+                    "query": query,
+                    "documentContext": document_context,
+                    "chatHistory": chat_history
+                },
+                headers={"Content-Type": "application/json"}
+            )
+            
+            # Check if the request to the API was successful
+            if response.status_code == 200:
+                return Response(response.json(), status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": f"Failed to get response from Gemini API: {response.text}"},
+                    status=status.HTTP_502_BAD_GATEWAY
+                )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred while processing your query: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['post'])
     def perform_search(self, request):

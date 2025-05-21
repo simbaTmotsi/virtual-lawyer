@@ -24,6 +24,7 @@ GEMINI_API_KEY=
 # External Auth
 EXTERNAL_AUTH_LOGIN_URL=http://localhost:8001/auth/login
 USE_EXTERNAL_AUTH=True
+EXTERNAL_API_URL=http://localhost:8001
 
 # Debug Settings
 DJANGO_DEBUG=True
