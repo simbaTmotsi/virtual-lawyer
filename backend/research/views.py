@@ -2,9 +2,11 @@ from django.shortcuts import render
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count
 from .models import ResearchQuery, ResearchResult
 from .serializers import ResearchQuerySerializer, ResearchResultSerializer
+import re
+from collections import Counter
 # from .services import perform_ai_research # Placeholder for AI service call
 
 class ResearchViewSet(viewsets.ModelViewSet):
@@ -77,18 +79,27 @@ class ResearchViewSet(viewsets.ModelViewSet):
             
             # Forward the request to the FastAPI service
             response = requests.post(
-                f"{api_url}/research/query-gemini",
+                f"{api_url}/api/gemini/query",
                 json={
                     "query": query,
                     "documentContext": document_context,
-                    "chatHistory": chat_history
+                    "chatHistory": chat_history,
+                    "user_id": str(request.user.id)
                 },
                 headers={"Content-Type": "application/json"}
             )
             
             # Check if the request to the API was successful
             if response.status_code == 200:
-                return Response(response.json(), status=status.HTTP_200_OK)
+                result_data = response.json()
+                ResearchResult.objects.create(
+                    query=research_query,
+                    title=f"AI Response: {query[:50]}...",
+                    excerpt=result_data.get('response', '')[:500],
+                    source="Google Gemini AI",
+                    relevance_score=1.0
+                )
+                return Response(result_data, status=status.HTTP_200_OK)
             else:
                 return Response(
                     {"error": f"Failed to get response from Gemini API: {response.text}"},
@@ -227,6 +238,321 @@ class ResearchViewSet(viewsets.ModelViewSet):
         except Exception as e:
             # Log the exception e
             return Response({"error": f"An error occurred during document analysis: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def search_legal_databases(self, request):
+        """
+        Searches legal databases via the FastAPI service.
+        """
+        query = request.data.get('query')
+        database = request.data.get('database', 'all')
+        jurisdiction = request.data.get('jurisdiction')
+        doc_type = request.data.get('doc_type')
+        date_from = request.data.get('date_from')
+        date_to = request.data.get('date_to')
+
+        if not query:
+            return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            research_query = ResearchQuery.objects.create(
+                user=request.user,
+                query_text=f"[{database}] {query}",
+                jurisdiction=jurisdiction
+            )
+
+            import requests
+            from django.conf import settings
+            
+            api_url = getattr(settings, 'EXTERNAL_API_URL', 'http://localhost:8001')
+            
+            payload = {
+                "query": query,
+                "database": database,
+                "jurisdiction": jurisdiction,
+                "doc_type": doc_type,
+                "date_from": date_from,
+                "date_to": date_to,
+                "user_id": str(request.user.id)
+            }
+            
+            response = requests.post(
+                f"{api_url}/api/legal-databases/search",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+
+            if response.status_code == 200:
+                results_data = response.json()
+                for idx, result_item in enumerate(results_data.get('items', [])):
+                    ResearchResult.objects.create(
+                        query=research_query,
+                        title=result_item.get('title', f"Result {idx+1}"),
+                        excerpt=result_item.get('excerpt', '')[:500],
+                        source=f"{database.upper()}: {result_item.get('type', 'Unknown')}",
+                        url=result_item.get('url', ''),
+                        relevance_score=float(0.95 - (idx * 0.05)) # Ensure float
+                    )
+                return Response(results_data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": f"Failed to search legal databases: {response.text}"},
+                    status=status.HTTP_502_BAD_GATEWAY
+                )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred while searching legal databases: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def comprehensive_research(self, request):
+        """
+        Performs comprehensive research using AI analysis and legal database search
+        via the FastAPI service.
+        """
+        query = request.data.get('query')
+        jurisdiction = request.data.get('jurisdiction')
+        case_id = request.data.get('case_id')
+        document_ids = request.data.get('document_ids', [])
+
+        if not query:
+            return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            create_data = {
+                'user': request.user,
+                'query_text': query,
+                'jurisdiction': jurisdiction
+            }
+
+            if case_id:
+                from cases.models import Case
+                try:
+                    case = Case.objects.get(id=case_id)
+                    create_data['case'] = case
+                except Case.DoesNotExist:
+                    return Response({"error": f"Case with ID {case_id} not found."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            research_query = ResearchQuery.objects.create(**create_data)
+
+            document_context = []
+            if document_ids:
+                from documents.models import Document
+                for doc_id in document_ids:
+                    try:
+                        doc = Document.objects.get(id=doc_id)
+                        # Ensure user has access to this document if necessary
+                        # For now, assuming access is granted or handled by document model/permissions
+                        document_context.append({
+                            "id": str(doc.id),
+                            "name": doc.name,
+                            "content": doc.content # Consider implications of sending full content
+                        })
+                    except Document.DoesNotExist:
+                        # Optionally log or notify if a specific document_id is not found
+                        pass 
+            
+            import requests
+            from django.conf import settings
+            
+            api_url = getattr(settings, 'EXTERNAL_API_URL', 'http://localhost:8001')
+            
+            payload = {
+                "query": query,
+                "jurisdiction": jurisdiction,
+                "documentContext": document_context,
+                "user_id": str(request.user.id)
+            }
+            
+            response = requests.post(
+                f"{api_url}/api/research/comprehensive",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+
+            if response.status_code == 200:
+                result_data = response.json()
+                
+                # Save AI Response
+                if 'ai_response' in result_data:
+                    ResearchResult.objects.create(
+                        query=research_query,
+                        title="AI Analysis",
+                        excerpt=result_data.get('ai_response', '')[:500], # Ensure excerpt limit
+                        source="Google Gemini AI", # Or other configured AI
+                        relevance_score=1.0 
+                    )
+                
+                # Save Database Results
+                for idx, db_result_item in enumerate(result_data.get('legal_database_results', [])):
+                    ResearchResult.objects.create(
+                        query=research_query,
+                        title=db_result_item.get('title', f"Legal DB Result {idx+1}"),
+                        excerpt=db_result_item.get('excerpt', '')[:500], # Ensure excerpt limit
+                        source=db_result_item.get('source', 'Legal Database'),
+                        url=db_result_item.get('url', ''),
+                        relevance_score=float(0.9 - (idx * 0.05)) # Ensure float for score
+                    )
+                
+                return Response(result_data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": f"Failed to complete comprehensive research: {response.text}"},
+                    status=status.HTTP_502_BAD_GATEWAY
+                )
+        except Exception as e:
+            # Log the exception e for server-side review
+            return Response(
+                {"error": f"An error occurred during comprehensive research: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def dashboard(self, request):
+        """
+        Provides aggregated dashboard data for the user's research activities.
+        """
+        try:
+            # Get User's Recent Queries
+            recent_queries_qs = ResearchQuery.objects.filter(user=request.user).order_by('-timestamp')[:10]
+            recent_queries_serializer = self.get_serializer(recent_queries_qs, many=True)
+
+            # Get Most Used Jurisdictions
+            jurisdictions_qs = ResearchQuery.objects.filter(user=request.user)\
+                .values('jurisdiction')\
+                .annotate(count=Count('jurisdiction'))\
+                .order_by('-count')[:5]
+
+            # Get Common Search Terms
+            all_query_texts = ResearchQuery.objects.filter(user=request.user).values_list('query_text', flat=True)
+            words = []
+            for query_text in all_query_texts:
+                words.extend(re.findall(r'\b\w+\b', query_text.lower())) # Corrected regex
+            
+            common_terms_list = Counter(words).most_common(10)
+
+            # Calculate Overall Stats
+            total_queries_count = ResearchQuery.objects.filter(user=request.user).count()
+            total_results_count = ResearchResult.objects.filter(query__user=request.user).count()
+            avg_results_val = total_results_count / total_queries_count if total_queries_count > 0 else 0
+
+            return Response({
+                'recent_queries': recent_queries_serializer.data,
+                'jurisdictions': list(jurisdictions_qs),
+                'common_terms': common_terms_list,
+                'stats': {
+                    'total_queries': total_queries_count,
+                    'total_results': total_results_count,
+                    'avg_results_per_query': round(avg_results_val, 2)
+                }
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            # Log the exception e for server-side review
+            return Response(
+                {"error": f"An error occurred retrieving dashboard data: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def recommend_cases(self, request):
+        """
+        Recommends relevant cases based on a description, case, or document.
+        """
+        description = request.data.get('description')
+        case_id = request.data.get('case_id')
+        document_id = request.data.get('document_id')
+        jurisdiction = request.data.get('jurisdiction')
+
+        if not any([description, case_id, document_id]):
+            return Response({"error": "Either a description, case_id, or document_id must be provided."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            context = ""
+            if description:
+                context = description
+
+            if case_id:
+                from cases.models import Case
+                try:
+                    case_instance = Case.objects.get(id=case_id)
+                    context += f"\nCase Title: {case_instance.title}"
+                    # Assuming case_instance.description might not exist or be None
+                    if hasattr(case_instance, 'description') and case_instance.description:
+                         context += f"\nCase Description: {case_instance.description}"
+                except Case.DoesNotExist:
+                    return Response({"error": f"Case with ID {case_id} not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+            if document_id:
+                from documents.models import Document
+                try:
+                    document_instance = Document.objects.get(id=document_id)
+                    doc_content = ""
+                    if document_instance.file:
+                        try:
+                            with document_instance.file.open('rb') as f:
+                                doc_content = f.read().decode(errors='ignore')[:500]
+                        except Exception as e: # Could be FileNotFoundError or other read issues
+                            # Log this error server-side for diagnostics
+                            print(f"Error reading document file {document_id}: {str(e)}") 
+                            # Optionally, inform client context might be incomplete
+                            pass # Or set doc_content to indicate an issue, e.g. "[Error reading document content]"
+                    context += f"\nDocument: {document_instance.name}\nContent: {doc_content}"
+                except Document.DoesNotExist:
+                    return Response({"error": f"Document with ID {document_id} not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+            query_text = "Case recommendation"
+            if description:
+                query_text = description[:50] + "..." if len(description) > 50 else description
+            
+            research_query = ResearchQuery.objects.create(
+                user=request.user,
+                query_text=query_text,
+                jurisdiction=jurisdiction
+            )
+
+            import requests
+            from django.conf import settings
+            
+            api_url = getattr(settings, 'EXTERNAL_API_URL', 'http://localhost:8001')
+            
+            payload = {
+                "context": context.strip(), 
+                "jurisdiction": jurisdiction,
+                "user_id": str(request.user.id)
+            }
+            
+            response = requests.post(
+                f"{api_url}/api/research/recommend-cases",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+
+            if response.status_code == 200:
+                recommendations = response.json()
+                for idx, case_rec in enumerate(recommendations.get('recommended_cases', [])):
+                    ResearchResult.objects.create(
+                        query=research_query,
+                        title=case_rec.get('title', f"Case {idx+1}"),
+                        excerpt=case_rec.get('summary', '')[:500],
+                        source=case_rec.get('citation', 'Case Law'),
+                        url=case_rec.get('url', ''),
+                        relevance_score=0.95 - (idx * 0.05)
+                    )
+                return Response(recommendations, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": f"Failed to generate case recommendations: {response.text}"},
+                    status=status.HTTP_502_BAD_GATEWAY
+                )
+        except Exception as e:
+            # Log the exception e for server-side review
+            return Response(
+                {"error": f"An error occurred while generating case recommendations: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 # If using ModelViewSet, it would look more like this:
 # class ResearchQueryViewSet(viewsets.ModelViewSet):
