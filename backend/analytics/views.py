@@ -640,7 +640,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 
 class GoogleApiUsageMetricViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = GoogleApiUsageMetric.objects.all()
+    queryset = None  # Temporarily set to None until model is properly defined
     serializer_class = GoogleApiUsageMetricSerializer
     permission_classes = [permissions.IsAdminUser] 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
