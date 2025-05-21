@@ -87,13 +87,6 @@ class GeminiService:
                 "error": str(e),
                 "response": "I'm sorry, but I encountered an error while processing your request. Please try again."
             }
-        
-        if not self.model:
-             logger.error("Gemini model not available for query_gemini. Service might not be initialized correctly.")
-             return {
-                "error": "Gemini model not available",
-                "response": "I'm sorry, but the AI model is not available. Please check system configuration."
-            }
     
     def _construct_prompt(
         self, 
