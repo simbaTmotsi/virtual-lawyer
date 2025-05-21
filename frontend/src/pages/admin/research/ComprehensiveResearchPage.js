@@ -25,8 +25,11 @@ const ComprehensiveResearchPage = () => {
       const payload = { query: params.query };
       if (params.jurisdiction) payload.jurisdiction = params.jurisdiction;
       if (params.case_id) payload.case_id = params.case_id;
-      if (params.document_ids) {
-        payload.document_ids = params.document_ids.split(',').map(id => id.trim()).filter(id => id);
+      if (params.document_ids.trim()) {
+        const documentIdsArray = params.document_ids.split(',').map(id => id.trim()).filter(id => id);
+        if (documentIdsArray.length > 0) {
+          payload.document_ids = documentIdsArray;
+        }
       }
       const data = await callComprehensiveResearch(payload);
       setResults(data);
