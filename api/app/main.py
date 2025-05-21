@@ -36,7 +36,7 @@ app.include_router(cases.router, prefix="/cases", tags=["Case Management"])
 app.include_router(documents.router, prefix="/documents", tags=["Document Management"])
 app.include_router(research.router, prefix="/research", tags=["Legal Research"])
 app.include_router(legal_research.router, prefix="/legal-research", tags=["Advanced Legal Research"])
-app.include_router(gemini.router, prefix="/research", tags=["Gemini AI Integration"])
+app.include_router(gemini.router, prefix="/api", tags=["Gemini AI Integration"])  # Changed prefix to /api
 app.include_router(billing.router, prefix="/billing", tags=["Billing & Payments"])
 app.include_router(calendar.router, prefix="/calendar", tags=["Calendar & Reminders"])
 

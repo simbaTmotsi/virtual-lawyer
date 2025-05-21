@@ -7,7 +7,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 router = APIRouter(
-    prefix="/research",
+    prefix="/gemini",  # Changed from /research to /gemini
     tags=["Research"],
     responses={404: {"description": "Not found"}},
 )
