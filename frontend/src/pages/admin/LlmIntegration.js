@@ -19,10 +19,10 @@ const LlmIntegration = () => {
         setFetchLoading(true);
         const settings = await apiRequest('/api/admin/llm-settings/');
         
-        // Only set API key placeholders - don't show actual keys for security
+        // Use masked keys if available
         setApiKeys({
-          openai: settings.openai_key ? '••••••••••••••••••••••••••' : '',
-          gemini: settings.gemini_key ? '••••••••••••••••••••••••••' : '',
+          openai: settings.openai_key_masked || '',
+          gemini: settings.gemini_key_masked || '',
         });
         
         setSelectedModel(settings.preferred_model || 'openai');
@@ -61,21 +61,22 @@ const LlmIntegration = () => {
         preferred_model: selectedModel,
       };
       
-      if (apiKeys.openai && !apiKeys.openai.includes('•')) {
+      if (apiKeys.openai && !apiKeys.openai.includes('*')) {
         payload.openai_key = apiKeys.openai;
       }
       
-      if (apiKeys.gemini && !apiKeys.gemini.includes('•')) {
+      if (apiKeys.gemini && !apiKeys.gemini.includes('*')) {
         payload.gemini_key = apiKeys.gemini;
       }
       
       await apiRequest('/api/admin/llm-settings/', 'PUT', payload);
       setSuccess(true);
       
-      // Reset form to show placeholders
+      // Refresh the settings to get the updated masked keys
+      const settings = await apiRequest('/api/admin/llm-settings/');
       setApiKeys({
-        openai: payload.openai_key ? '••••••••••••••••••••••••••' : '',
-        gemini: payload.gemini_key ? '••••••••••••••••••••••••••' : '',
+        openai: settings.openai_key_masked || '',
+        gemini: settings.gemini_key_masked || '',
       });
     } catch (err) {
       console.error('Failed to save LLM settings:', err);

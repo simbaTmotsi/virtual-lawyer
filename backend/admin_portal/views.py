@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from django.conf import settings as django_settings
 from accounts.models import User
 from accounts.serializers import UserSerializer # Assuming UserSerializer exists
-from .models import SystemSetting
+from .models import SystemSetting, APIKeyStorage
 from .serializers import SystemSettingSerializer
 from .permissions import IsAdminUser # Custom permission
 
@@ -148,19 +148,117 @@ class LlmSettingsView(generics.GenericAPIView):
      permission_classes = [permissions.IsAdminUser]
 
      def get(self, request, *args, **kwargs):
-         # Return masked keys or just confirmation they are set
+         """
+         Get current LLM settings with masked API keys for security.
+         """
+         # Get masked versions of the keys if they exist
+         openai_key_masked = APIKeyStorage.get_masked_api_key('openai_api_key')
+         gemini_key_masked = APIKeyStorage.get_masked_api_key('gemini_api_key')
+         
+         # Get the preferred model setting
+         preferred_model = 'openai'  # Default
+         try:
+             system_settings = SystemSetting.load()
+             if hasattr(system_settings, 'preferred_llm'):
+                 preferred_model = system_settings.preferred_llm
+         except Exception as e:
+             print(f"Error retrieving preferred model: {e}")
+         
          return Response({
-             "openai_key_set": bool(django_settings.OPENAI_API_KEY),
-             "gemini_key_set": bool(django_settings.GEMINI_API_KEY),
-             # "selected_model": get_selected_llm_model() # Need a way to store this preference
+             "openai_key_set": bool(openai_key_masked),
+             "gemini_key_set": bool(gemini_key_masked),
+             "preferred_model": preferred_model,
+             "openai_key_masked": openai_key_masked or "",
+             "gemini_key_masked": gemini_key_masked or ""
          })
 
      def post(self, request, *args, **kwargs):
-         # This is highly insecure - DO NOT store keys directly from request in production.
-         # Use environment variables or a secure secrets manager.
-         # This endpoint might just update the 'selected_model' preference.
-         selected_model = request.data.get('selected_model')
-         # save_selected_llm_model(selected_model) # Persist the preference
-         return Response({"message": "LLM preference updated (API keys managed via environment/secrets)."})
+         """
+         Update the preferred LLM model only.
+         """
+         selected_model = request.data.get('preferred_model')
+         
+         if selected_model in ['openai', 'gemini']:
+             try:
+                 # Update the system settings
+                 system_settings = SystemSetting.load()
+                 system_settings.preferred_llm = selected_model
+                 system_settings.save()
+                 
+                 return Response({
+                     "message": "LLM preference updated successfully",
+                     "preferred_model": selected_model
+                 })
+             except Exception as e:
+                 return Response({
+                     "error": f"Failed to update LLM preference: {str(e)}"
+                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+         else:
+             return Response({
+                 "error": "Invalid preferred_model value. Must be 'openai' or 'gemini'."
+             }, status=status.HTTP_400_BAD_REQUEST)
+         
+     def put(self, request, *args, **kwargs):
+         """
+         Handle PUT requests for updating LLM settings.
+         Securely stores API keys in the database using encryption.
+         """
+         preferred_model = request.data.get('preferred_model')
+         openai_key = request.data.get('openai_key')
+         gemini_key = request.data.get('gemini_key')
+         
+         # Store keys securely if provided
+         responses = {}
+         
+         if openai_key:
+             try:
+                 APIKeyStorage.store_api_key('openai_api_key', openai_key)
+                 responses["openai_key"] = "OpenAI API key updated successfully"
+             except Exception as e:
+                 responses["openai_key_error"] = f"Failed to update OpenAI API key: {str(e)}"
+         
+         if gemini_key:
+             try:
+                 APIKeyStorage.store_api_key('gemini_api_key', gemini_key)
+                 responses["gemini_key"] = "Gemini API key updated successfully"
+             except Exception as e:
+                 responses["gemini_key_error"] = f"Failed to update Gemini API key: {str(e)}"
+         
+         # Update preferred model if provided
+         if preferred_model:
+             if preferred_model in ['openai', 'gemini']:
+                 try:
+                     system_settings = SystemSetting.load()
+                     if not hasattr(system_settings, 'preferred_llm'):
+                         # Add the field if it doesn't exist
+                         SystemSetting._meta.get_field('preferred_llm')
+                     system_settings.preferred_llm = preferred_model
+                     system_settings.save()
+                     responses["preferred_model"] = f"Preferred model set to {preferred_model}"
+                 except Exception as e:
+                     responses["preferred_model_error"] = f"Failed to update preferred model: {str(e)}"
+             else:
+                 responses["preferred_model_error"] = "Invalid preferred_model value. Must be 'openai' or 'gemini'."
+         
+         # Get current status for response
+         openai_key_masked = APIKeyStorage.get_masked_api_key('openai_api_key')
+         gemini_key_masked = APIKeyStorage.get_masked_api_key('gemini_api_key')
+         
+         # Get the current preferred model setting
+         try:
+             system_settings = SystemSetting.load()
+             current_model = getattr(system_settings, 'preferred_llm', 'openai')
+         except Exception:
+             current_model = 'openai'
+         
+         return Response({
+             "message": "LLM settings updated successfully",
+             "details": responses,
+             "openai_key_set": bool(openai_key_masked),
+             "gemini_key_set": bool(gemini_key_masked),
+             "openai_key_masked": openai_key_masked or "",
+             "gemini_key_masked": gemini_key_masked or "",
+             "preferred_model": preferred_model or current_model
+         })
 
 # Add views for Analytics Dashboard data if needed

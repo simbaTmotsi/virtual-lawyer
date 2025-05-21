@@ -8,11 +8,24 @@ from rest_framework.exceptions import PermissionDenied
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
 import random
 
-from .models import UserActivity, APIUsage, AnalyticsSummary, GoogleApiUsageMetric
+from .models import UserActivity, APIUsage, AnalyticsSummary
 from accounts.models import User
 from cases.models import Case
 from billing.models import TimeEntry, Invoice
-from documents.models import Document
+from documents.mofrom rest_framework import viewsets, permissions
+from .models import GoogleApiUsageMetric  # Import the model properly
+from .serializers import GoogleApiUsageMetricSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
+
+class GoogleApiUsageMetricViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GoogleApiUsageMetric.objects.all()  # Use the actual model
+    serializer_class = GoogleApiUsageMetricSerializer
+    permission_classes = [permissions.IsAdminUser] 
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['metric_date', 'service_name', 'metric_name', 'unit']
+    ordering_fields = ['metric_date', 'service_name', 'metric_name', 'cost', 'metric_value']
+    ordering = ['-metric_date']cument
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -634,6 +647,7 @@ def analytics_billing(request):
     })
 
 from rest_framework import viewsets, permissions
+from .models import GoogleApiUsageMetric  # Import the model properly
 from .serializers import GoogleApiUsageMetricSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
