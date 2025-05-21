@@ -9,7 +9,12 @@ import {
   HomeIcon, 
   CurrencyDollarIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  ChatBubbleLeftEllipsisIcon, // Icon for Gemini Query
+  CircleStackIcon, // Icon for Legal DB Search
+  DocumentMagnifyingGlassIcon, // Icon for Comprehensive Research
+  ScaleIcon, // Icon for Case Recommendations
+  ChartPieIcon // New Icon for API Usage Metrics
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext'; // Adjust path if needed
 import { useDarkMode } from '../../contexts/DarkModeContext';
@@ -22,6 +27,11 @@ const adminNav = [
   { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },
   { name: 'LLM Integration', href: '/admin/llm-integration', icon: AcademicCapIcon },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
+  { name: 'Gemini Query', href: '/admin/research/gemini-query', icon: ChatBubbleLeftEllipsisIcon },
+  { name: 'Legal DB Search', href: '/admin/research/legal-db-search', icon: CircleStackIcon },
+  { name: 'Comprehensive Research', href: '/admin/research/comprehensive-research', icon: DocumentMagnifyingGlassIcon },
+  { name: 'Case Recommendations', href: '/admin/research/case-recommendations', icon: ScaleIcon },
+  { name: 'API Usage Metrics', href: '/admin/analytics/api-usage', icon: ChartPieIcon }, // New Nav Link for API Usage Metrics
 ];
 
 const AdminLayout = () => {

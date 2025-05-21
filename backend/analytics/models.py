@@ -61,3 +61,23 @@ class AnalyticsSummary(models.Model):
     class Meta:
         verbose_name_plural = "Analytics Summaries"
         ordering = ['-date']
+
+class GoogleApiUsageMetric(models.Model):
+    metric_date = models.DateField()
+    service_name = models.CharField(max_length=255)
+    metric_name = models.CharField(max_length=255)
+    metric_value = models.BigIntegerField(default=0, null=True, blank=True)
+    cost = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    unit = models.CharField(max_length=50, blank=True)
+    fetched_at = models.DateTimeField(auto_now_add=True)
+    last_updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('metric_date', 'service_name', 'metric_name', 'unit')
+        ordering = ['-metric_date', 'service_name']
+        verbose_name = "Google API Usage Metric"
+        verbose_name_plural = "Google API Usage Metrics"
+
+    def __str__(self):
+        value = self.metric_value if self.metric_value not in (None, 0) else self.cost
+        return f"{self.service_name} - {self.metric_name} on {self.metric_date}: {value} {self.unit}"
