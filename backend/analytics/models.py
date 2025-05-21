@@ -79,4 +79,5 @@ class GoogleApiUsageMetric(models.Model):
         verbose_name_plural = "Google API Usage Metrics"
 
     def __str__(self):
-        return f"{self.service_name} - {self.metric_name} on {self.metric_date}: {self.metric_value if self.metric_value is not None else self.cost} {self.unit}"
+        value = self.metric_value if self.metric_value not in (None, 0) else self.cost
+        return f"{self.service_name} - {self.metric_name} on {self.metric_date}: {value} {self.unit}"
