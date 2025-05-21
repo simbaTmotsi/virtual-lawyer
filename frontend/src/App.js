@@ -28,6 +28,11 @@ import UsersManagement from './pages/admin/UsersManagement';
 import LlmIntegration from './pages/admin/LlmIntegration';
 import SystemSettings from './pages/admin/SystemSettings';
 import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
+import GeminiQueryPage from './pages/admin/research/GeminiQueryPage';
+import LegalDatabaseSearchPage from './pages/admin/research/LegalDatabaseSearchPage';
+import ComprehensiveResearchPage from './pages/admin/research/ComprehensiveResearchPage';
+import CaseRecommendationsPage from './pages/admin/research/CaseRecommendationsPage';
+import ApiUsageMetricsPage from './pages/admin/analytics/ApiUsageMetricsPage'; // Import for API Usage Metrics
 
 // Client management
 import ClientsList from './pages/clients/ClientsList';
@@ -142,6 +147,11 @@ function App() {
         { path: "llm-integration", element: <LlmIntegration /> },
         { path: "settings", element: <SystemSettings /> },
         { path: "analytics", element: <AnalyticsDashboard /> },
+        { path: "research/gemini-query", element: <GeminiQueryPage /> },
+        { path: "research/legal-db-search", element: <LegalDatabaseSearchPage /> },
+        { path: "research/comprehensive-research", element: <ComprehensiveResearchPage /> },
+        { path: "research/case-recommendations", element: <CaseRecommendationsPage /> },
+        { path: "analytics/api-usage", element: <ApiUsageMetricsPage /> }, // New route for API Usage Metrics
       ],
     },
     

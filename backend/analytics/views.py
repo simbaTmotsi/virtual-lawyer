@@ -632,3 +632,18 @@ def analytics_billing(request):
             'total': this_month['total'] or 0
         }
     })
+
+from rest_framework import viewsets, permissions
+#from .models import GoogleApiUsageMetric # Already imported via UserActivity, APIUsage etc.
+from .serializers import GoogleApiUsageMetricSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
+
+class GoogleApiUsageMetricViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = GoogleApiUsageMetric.objects.all()
+    serializer_class = GoogleApiUsageMetricSerializer
+    permission_classes = [permissions.IsAdminUser] 
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['metric_date', 'service_name', 'metric_name', 'unit']
+    ordering_fields = ['metric_date', 'service_name', 'metric_name', 'cost', 'metric_value']
+    ordering = ['-metric_date']

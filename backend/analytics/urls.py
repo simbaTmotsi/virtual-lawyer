@@ -27,3 +27,17 @@ urlpatterns = [
     path('mock/api-usage/', mock_views.mock_api_usage, name='mock-analytics-api-usage'),
     path('mock/case-distribution/', mock_views.mock_case_distribution, name='mock-analytics-case-distribution'),
 ]
+
+# Add router for ViewSets
+from rest_framework.routers import DefaultRouter
+from .views import GoogleApiUsageMetricViewSet # Ensure this import is correct
+
+router = DefaultRouter()
+router.register(r'google-api-metrics', GoogleApiUsageMetricViewSet, basename='googleapimetric')
+
+# Combine existing urlpatterns with the router's URLs
+from django.urls import include # Ensure include is imported
+
+urlpatterns += [
+    path('api/', include(router.urls)), # Prefix router URLs with 'api/' to avoid conflicts
+]

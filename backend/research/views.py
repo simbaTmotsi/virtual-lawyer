@@ -291,7 +291,7 @@ class ResearchViewSet(viewsets.ModelViewSet):
                         excerpt=result_item.get('excerpt', '')[:500],
                         source=f"{database.upper()}: {result_item.get('type', 'Unknown')}",
                         url=result_item.get('url', ''),
-                        relevance_score=float(max(0, 0.95 - (idx * 0.05))) # Ensure non-negative float
+                        relevance_score=float(0.95 - (idx * 0.05)) # Ensure float
                     )
                 return Response(results_data, status=status.HTTP_200_OK)
             else:
