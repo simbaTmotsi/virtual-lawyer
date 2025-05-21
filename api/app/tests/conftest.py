@@ -95,8 +95,6 @@ def mock_system_setting(mocker):
 @pytest.fixture
 def mock_refresh_gemini_client(mocker):
     """Mocks the refresh_gemini_client service function."""
-    mock = mocker.patch("api.app.services.gemini_service.refresh_gemini_client", new_callable=MagicMock)
-    # Make it an async mock if it's an async function
     from unittest.mock import AsyncMock
     # The function is imported into the router's namespace (admin.py)
     # So, we patch it where it's looked up by the router code.
