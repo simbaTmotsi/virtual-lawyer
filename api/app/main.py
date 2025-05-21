@@ -5,6 +5,9 @@ from .routers import auth, admin, clients, cases, documents, research, billing, 
 from .models import init_db
 from .database import get_db
 from sqlalchemy.orm import Session
+import os
+import django
+from .services.gemini_service import load_and_configure_gemini, gemini_service # Import the function and instance
 
 # Create FastAPI app
 app = FastAPI(
@@ -16,8 +19,17 @@ app = FastAPI(
 # Initialize database tables on startup
 @app.on_event("startup")
 async def startup_db_client():
+    # Set up Django
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+    django.setup()
+    logger.info("Django setup successfully")
+
     init_db.create_tables()
-    print("Database tables created successfully")
+    logger.info("Database tables created successfully")
+
+    # Initialize Gemini Service
+    await load_and_configure_gemini(gemini_service)
+    logger.info("Gemini Service initialization attempted.")
 
 # Add CORS middleware
 app.add_middleware(

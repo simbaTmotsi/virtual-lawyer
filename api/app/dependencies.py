@@ -108,3 +108,24 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+async def get_current_active_admin_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    """
+    Dependency for ensuring the current user is an authenticated admin.
+    
+    Args:
+        current_user: The user object obtained from get_current_user.
+        
+    Returns:
+        The user object if the user is an admin.
+        
+    Raises:
+        HTTPException: If the user is not an admin or not active (placeholder for active check).
+    """
+    if current_user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have administrative privileges",
+        )
+    # You might add checks here for user_is_active if your user model has such a field
+    return current_user
