@@ -48,40 +48,40 @@ const GeminiQueryPage = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="p-5">
       <h1>Gemini AI Query</h1>
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="gemini-query" style={{ display: 'block', marginBottom: '5px' }}>Query:</label>
+        <div className="mb-4">
+          <label htmlFor="gemini-query" className="block mb-1">Query:</label>
           <textarea
             id="gemini-query"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             required
             rows={5}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+            className="w-full p-2 border border-gray-300 rounded"
           />
         </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="gemini-doc-context" style={{ display: 'block', marginBottom: '5px' }}>Document Context (Optional):</label>
+        <div className="mb-4">
+          <label htmlFor="gemini-doc-context" className="block mb-1">Document Context (Optional):</label>
           <textarea
             id="gemini-doc-context"
             value={documentContext}
             onChange={(e) => setDocumentContext(e.target.value)}
             placeholder="Provide document context as JSON or plain text. For multiple documents, use an array of objects structure if sending JSON."
             rows={5}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+            className="w-full p-2 border border-gray-300 rounded"
           />
         </div>
-        <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="gemini-chat-history" style={{ display: 'block', marginBottom: '5px' }}>Chat History (Optional):</label>
+        <div className="mb-4">
+          <label htmlFor="gemini-chat-history" className="block mb-1">Chat History (Optional):</label>
           <textarea
             id="gemini-chat-history"
             value={chatHistory}
             onChange={(e) => setChatHistory(e.target.value)}
             placeholder="Provide chat history as JSON (e.g., array of {role: 'user/model', parts: [{text: '...'}) or plain text."
             rows={5}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+            className="w-full p-2 border border-gray-300 rounded"
           />
         </div>
         <button 
