@@ -5,8 +5,11 @@ from rest_framework.decorators import action
 from django.db.models import Prefetch, Count
 from .models import ResearchQuery, ResearchResult
 from .serializers import ResearchQuerySerializer, ResearchResultSerializer
+from admin_portal.models import APIKeyStorage, SystemSetting
 import re
 from collections import Counter
+import requests
+import json
 
 class ResearchViewSet(viewsets.ModelViewSet):
     """
@@ -41,14 +44,23 @@ class ResearchViewSet(viewsets.ModelViewSet):
             return Response({"error": "Query text is required."}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
+            # Get the API key from secure storage
+            api_key = APIKeyStorage.get_api_key('gemini_api_key')
+            if not api_key:
+                return Response(
+                    {"error": "Gemini API key not configured. Please configure it in the admin settings."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             # Record the query
             research_query = ResearchQuery.objects.create(
                 user=request.user,
                 query_text=query
             )
             
-            # In a real implementation, you would call an external API here
-            # For now, we'll just return a mock response
+            # In a real implementation, you would call the Gemini API here
+            # For demo purposes, we'll just return a mock response
+            # In production, implement actual Gemini API call
             
             result = {"response": f"This is a mock response to your query: {query}"}
             
