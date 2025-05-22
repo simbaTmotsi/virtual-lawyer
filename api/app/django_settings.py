@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     
     # Only essential apps for API functionality
-    'backend.admin_portal',
+    'admin_portal', # Changed from 'backend.admin_portal'
     # Temporarily comment out other apps to avoid import conflicts
     # 'backend.accounts',
     # 'backend.analytics',
