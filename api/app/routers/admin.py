@@ -3,11 +3,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from asgiref.sync import sync_to_async
 
-# This import assumes your Django apps are accessible in the PYTHONPATH
-# You might need to adjust the path based on your project structure
-from backend.admin_portal.models import APIKeyStorage, SystemSetting
+# Import depends on Django being set up, which happens in main.py startup
+# We'll use a function to get models only when needed
 from ..dependencies import get_current_active_admin_user # Assuming this dependency exists
 from ..services.gemini_service import gemini_service, refresh_gemini_client # Import for refresh
+from ..utils.django_utils import get_api_key_storage_model, get_system_setting_model
 from ..utils.logger import get_logger # Import logger
 
 logger = get_logger(__name__) # Initialize logger
@@ -43,6 +43,10 @@ async def get_llm_settings(current_user: dict = Depends(get_current_active_admin
     admin_email = current_user.get("email", "Unknown admin")
     logger.info(f"Admin user {admin_email} accessed LLM settings.")
     try:
+        # Get Django models through utility functions
+        APIKeyStorage = get_api_key_storage_model()
+        SystemSetting = get_system_setting_model()
+        
         openai_masked_key = await sync_to_async(APIKeyStorage.get_masked_api_key)('openai_api_key')
         gemini_masked_key = await sync_to_async(APIKeyStorage.get_masked_api_key)('gemini_api_key')
         
@@ -74,10 +78,17 @@ async def update_llm_settings(
     )
 
     try:
+        # Get Django models through utility functions
+        APIKeyStorage = get_api_key_storage_model()
+        SystemSetting = get_system_setting_model()
+        
         message_parts = []
 
         # Update API keys
         if settings_update.openai_key is not None:
+            # Get Django models through utility functions
+            APIKeyStorage = get_api_key_storage_model()
+            
             if settings_update.openai_key == "": # Explicitly clear key
                  await sync_to_async(APIKeyStorage.objects.filter(key_name='openai_api_key').delete)()
                  message_parts.append("OpenAI API key cleared.")
@@ -88,6 +99,9 @@ async def update_llm_settings(
                 logger.info(f"Admin user {admin_email} successfully updated OpenAI API key.")
 
         if settings_update.gemini_key is not None:
+            # We need APIKeyStorage again
+            APIKeyStorage = get_api_key_storage_model()
+            
             if settings_update.gemini_key == "": # Explicitly clear key
                 await sync_to_async(APIKeyStorage.objects.filter(key_name='gemini_api_key').delete)()
                 message_parts.append("Gemini API key cleared.")
@@ -106,6 +120,9 @@ async def update_llm_settings(
                     f"Admin user {admin_email} attempted to set invalid preferred model: {settings_update.preferred_model}."
                 )
                 raise HTTPException(status_code=400, detail="Invalid preferred model. Must be 'openai' or 'gemini'.")
+                
+            # Get SystemSetting model
+            SystemSetting = get_system_setting_model()
             system_settings = await sync_to_async(SystemSetting.load)()
             system_settings.preferred_llm = settings_update.preferred_model
             await sync_to_async(system_settings.save)()
@@ -113,6 +130,9 @@ async def update_llm_settings(
             logger.info(f"Admin user {admin_email} successfully updated preferred LLM to {settings_update.preferred_model}.")
 
         # Fetch updated settings to return
+        APIKeyStorage = get_api_key_storage_model()
+        SystemSetting = get_system_setting_model()
+        
         openai_masked_key = await sync_to_async(APIKeyStorage.get_masked_api_key)('openai_api_key')
         gemini_masked_key = await sync_to_async(APIKeyStorage.get_masked_api_key)('gemini_api_key')
         

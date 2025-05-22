@@ -39,6 +39,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    
+    # Custom apps
+    'backend.admin_portal',
+    'backend.accounts',
+    'backend.analytics',
+    'backend.billing',
+    'backend.calendar_app',
+    'backend.cases',
+    'backend.clients',
+    'backend.dashboard',
+    'backend.documents',
+    'backend.research',
+    'backend.diary_app',
+    'backend.notifications',
+    'backend.easylaw',
 ]
 
 MIDDLEWARE = [

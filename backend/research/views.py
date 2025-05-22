@@ -58,13 +58,40 @@ class ResearchViewSet(viewsets.ModelViewSet):
                 query_text=query
             )
             
-            # In a real implementation, you would call the Gemini API here
-            # For demo purposes, we'll just return a mock response
-            # In production, implement actual Gemini API call
-            
-            result = {"response": f"This is a mock response to your query: {query}"}
-            
-            return Response(result, status=status.HTTP_200_OK)
+            # Call the FastAPI Gemini integration
+            try:
+                # Call the FastAPI service that handles Gemini integration
+                api_url = 'http://localhost:8001/api/gemini/query-gemini'  # Use the correct port for FastAPI 
+                payload = {
+                    "query": query,
+                    "documentContext": request.data.get('documentContext'),  # Pass document context if available
+                    "chatHistory": request.data.get('chatHistory')       # Pass chat history if available
+                }
+                
+                response = requests.post(api_url, json=payload)
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    # Also save the result to database
+                    if "response" in result:
+                        ResearchResult.objects.create(
+                            query=research_query,
+                            content=result["response"],
+                            relevance_score=0.9,  # You might calculate this based on result quality
+                            source="Gemini AI"
+                        )
+                    
+                    return Response(result, status=status.HTTP_200_OK)
+                else:
+                    return Response(
+                        {"error": f"Gemini API request failed with status {response.status_code}"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+            except Exception as e:
+                return Response(
+                    {"error": f"An error occurred calling the Gemini API: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             
         except Exception as e:
             return Response(

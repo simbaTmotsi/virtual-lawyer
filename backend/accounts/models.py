@@ -55,6 +55,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def get_short_name(self):
         return self.first_name
+        
+    class Meta:
+        app_label = 'accounts'
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -67,6 +70,9 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"Profile for {self.user.get_full_name()}"
+        
+    class Meta:
+        app_label = 'accounts'
 
 class ExternalToken(models.Model):
     """Model to store external tokens from FastAPI"""
@@ -77,3 +83,6 @@ class ExternalToken(models.Model):
     
     def __str__(self):
         return f"Token for {self.user.email}"
+        
+    class Meta:
+        app_label = 'accounts'

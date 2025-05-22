@@ -26,6 +26,9 @@ class SystemSetting(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super(SystemSetting, self).save(*args, **kwargs)
+        
+    class Meta:
+        app_label = 'admin_portal'
 
     def delete(self, *args, **kwargs):
         # Prevent deletion of the singleton instance
@@ -42,6 +45,7 @@ class SystemSetting(models.Model):
 
     class Meta:
         verbose_name_plural = "System Settings"
+        app_label = 'admin_portal'  # Explicitly set the app label
 
 
 class APIKeyStorage(models.Model):
@@ -58,6 +62,7 @@ class APIKeyStorage(models.Model):
     class Meta:
         verbose_name = "API Key"
         verbose_name_plural = "API Keys"
+        app_label = 'admin_portal'  # Explicitly set the app label
     
     def __str__(self):
         return f"{self.key_name} - {'Active' if self.is_active else 'Inactive'}"

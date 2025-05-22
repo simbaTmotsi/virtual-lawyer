@@ -2,8 +2,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.utils import timezone
-from analytics.models import UserActivity
-from accounts.models import User
+from backend.analytics.models import UserActivity
+from backend.accounts.models import User
 
 @receiver(user_logged_in)
 def user_logged_in_handler(sender, request, user, **kwargs):
